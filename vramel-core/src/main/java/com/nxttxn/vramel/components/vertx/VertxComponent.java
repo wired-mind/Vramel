@@ -1,0 +1,24 @@
+package com.nxttxn.vramel.components.vertx;
+
+import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.impl.DefaultComponent;
+import org.vertx.java.core.json.JsonObject;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: chuck
+ * Date: 6/18/13
+ * Time: 8:43 PM
+ * To change this template use File | Settings | File Templates.
+ */
+public class VertxComponent extends DefaultComponent {
+    public VertxComponent(VramelContext vramelContext) {
+        super(vramelContext);
+    }
+
+    @Override
+    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
+        return new VertxChannelAdapter(getVramelContext(), remaining, config);
+    }
+}

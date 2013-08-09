@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:tns="http//tempuri.org/sample1"
+             xmlns:ns1="http//tempuri.org/sample1/types"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             targetNamespace="http//tempuri.org/sample1">
+    <types>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                    xmlns:tns="http//tempuri.org/sample1/types"
+                    targetNamespace="http//tempuri.org/sample1/types"
+                    elementFormDefault="qualified"
+                    attributeFormDefault="unqualified">
+            <xsd:element name="echoString">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="param" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="echoStringResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="param" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="EchoStringRequest">
+        <part name="part1" element="ns1:echoString"/>
+    </message>
+    <message name="EchoStringResponse">
+        <part name="part1" element="ns1:echoStringResponse"/>
+    </message>
+
+    <portType name="Sample1PortType">
+        <operation name="echoString">
+            <input message="tns:EchoStringRequest"/>
+            <output message="tns:EchoStringResponse"/>
+        </operation>
+    </portType>
+
+    <binding name="Sample1Soap11Binding" type="tns:Sample1PortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="echoString">
+            <soap:operation style="document" soapAction="urn:echoString"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+    <binding name="Sample1Soap12Binding" type="tns:Sample1PortType">
+        <soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="echoString">
+            <soap12:operation style="document" soapAction="urn:echoString"/>
+            <input>
+                <soap12:body use="literal"/>
+            </input>
+            <output>
+                <soap12:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <service name="Sample1Service">
+        <port name="Soap11Port" binding="tns:Sample1Soap11Binding">
+            <soap:address location="http://localhost:8080/axis2/services/Sample1Service"/>
+        </port>
+        <port name="Soap12Port" binding="tns:Sample1Soap12Binding">
+            <soap:address location="http://localhost:8080/axis2/services/Sample1Service"/>
+        </port>
+    </service>
+</definitions>

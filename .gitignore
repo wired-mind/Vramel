@@ -1,0 +1,29 @@
+*.class
+.gradle
+.idea
+# Package Files #
+*.war
+*.ear
+
+# OSX #
+.DS_Store
+
+# IntelliJ and project files #
+.idea/craig.xml
+.idea/dictionaries/
+.idea/gradle.xml
+.idea/misc.xml
+.idea/workspace.xml
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+build
+distributions
+boot
+mods
+mod.zip
+.gradle
+#**/lib/*.jar
+.spring_env
