@@ -4,18 +4,31 @@
  */
 
 
+
  apply plugin: 'java'
  apply plugin: 'maven'
- apply plugin: 'idea'
+ apply from: 'https://raw.github.com/bat-cha/gradle-plugin-git-dependencies/0.1/git-dependencies.gradle'
+
+ buildscript {
+     repositories {
+       mavenCentral()
+     }
+
+     dependencies {
+         classpath 'org.batcha.gradle.plugins:git-dependencies:0.1'
+     }
+
+ }
 
  repositories {
-     maven { url 'https://repository.apache.org/content/groups/snapshots'}
-     mavenRepo name: 'jline', url: "http://jline.sourceforge.net/m2repo"
-     mavenRepo url: "http://jpos.org/maven"
-     mavenRepo name: 'oracle', url: "http://download.oracle.com/maven"
-     mavenCentral()
-     mavenLocal()
+   maven { url 'https://repository.apache.org/content/groups/snapshots'}
+   mavenRepo name: 'jline', url: "http://jline.sourceforge.net/m2repo"
+   mavenRepo url: "http://jpos.org/maven"
+   mavenRepo name: 'oracle', url: "http://download.oracle.com/maven"
+   mavenCentral()
+   mavenLocal()
  }
+ 
  
 dependencies {
 
