@@ -1,2 +1,3 @@
 include 'vramel-core'
 include 'mod-vramel'
+include 'vertx-queue'
