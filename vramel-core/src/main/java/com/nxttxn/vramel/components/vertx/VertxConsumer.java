@@ -39,6 +39,7 @@ public class VertxConsumer extends DefaultConsumer {
                     DefaultExchangeHolder.unmarshal(exchange, message.body);
                     logger.debug("[Vertx Consumer] Unmarshalled exchange. Exchange transferred.");
                 } catch (Exception e) {
+                    logger.warn("[Vertx Consumer] Not valid for exchange transfer", e);
                     try {
                         final VertxMessage vertxMessage = (VertxMessage) SerializationUtils.deserialize(message.body);
                         exchange.getIn().setBody(vertxMessage.getBody());
