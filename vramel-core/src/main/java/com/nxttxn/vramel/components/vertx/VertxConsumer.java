@@ -37,13 +37,16 @@ public class VertxConsumer extends DefaultConsumer {
                 Exchange exchange = getEndpoint().createExchange();
                 try {
                     DefaultExchangeHolder.unmarshal(exchange, message.body);
+                    logger.debug("[Vertx Consumer] Unmarshalled exchange. Exchange transferred.");
                 } catch (Exception e) {
                     try {
                         final VertxMessage vertxMessage = (VertxMessage) SerializationUtils.deserialize(message.body);
                         exchange.getIn().setBody(vertxMessage.getBody());
                         exchange.getIn().setHeaders(vertxMessage.getHeaders());
+                        logger.debug("[Vertx Consumer] VertxMessage processed and new exchange created.");
                     } catch (Exception e1) {
                         exchange.getIn().setBody(message.body);
+                        logger.debug("[Vertx Consumer] New exchange created with message body.");
                     }
                 }
 
