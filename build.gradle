@@ -1,24 +1,36 @@
-group = 'com.nxttxn'
-version = '1.0.0'
-
 allprojects {
-  apply plugin: 'eclipse'
-  apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+
+    repositories {
+        maven { url 'https://repository.apache.org/content/groups/snapshots' }
+        mavenRepo name: 'jline', url: "http://jline.sourceforge.net/m2repo"
+        mavenRepo url: "http://jpos.org/maven"
+        mavenRepo name: 'oracle', url: "http://download.oracle.com/maven"
+        mavenCentral()
+        mavenLocal()
+    }
 
 }
 
-subprojects {
-  apply plugin: 'java'
-  
-  sourceCompatibility = '1.7'
-  targetCompatibility = '1.7'
+group = 'com.nxttxn'
 
-  defaultTasks = ['assemble']
-  group = rootProject.group
-  
-  repositories {
-    mavenCentral()
-  }
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+
+
+    group = rootProject.group
+    version = '1.0-SNAPSHOT'
+
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+
+    defaultTasks = ['assemble']
+
+    repositories {
+        mavenCentral()
+    }
 }
 
 task wrapper(type: Wrapper) {

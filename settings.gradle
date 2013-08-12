@@ -1,1 +1,2 @@
 include 'vramel-core'
+include 'mod-vramel'
