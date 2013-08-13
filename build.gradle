@@ -23,8 +23,6 @@ subprojects {
     group = rootProject.group
     version = '1.0-SNAPSHOT'
 
-    sourceCompatibility = '1.7'
-    targetCompatibility = '1.7'
 
     defaultTasks = ['assemble']
 
