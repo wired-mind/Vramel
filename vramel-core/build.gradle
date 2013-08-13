@@ -41,7 +41,8 @@ dependencies {
     //gson
     compile "com.google.code.gson:gson:2.2.4"
     //axis2
-    compile("com.nxttxn:vertx-transport:1.0.0").ext.git = "https://github.com/wired-mind/vert-x-transports.git"
+    compile("com.nxttxn:vertx-transport:1.0.0")
+//            .ext.git = "https://github.com/wired-mind/vert-x-transports.git"
 
     compile "org.apache.axis2:axis2-kernel:1.7.0-SNAPSHOT"
     compile "org.apache.axis2:axis2-transport-base:1.7.0-SNAPSHOT"
