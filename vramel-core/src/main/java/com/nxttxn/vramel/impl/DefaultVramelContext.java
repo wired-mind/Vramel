@@ -21,10 +21,7 @@ import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,6 +50,7 @@ public class DefaultVramelContext implements ModelVramelContext {
     private UuidGenerator uuidGenerator = createDefaultUuidGenerator();
     private Map<String, String> properties = new HashMap<String, String>();
     private PropertiesComponent propertiesComponent;
+    private final Set<Flow> flows = new LinkedHashSet<Flow>();
 
     private UuidGenerator createDefaultUuidGenerator() {
         return new JavaUuidGenerator();
@@ -117,6 +115,11 @@ public class DefaultVramelContext implements ModelVramelContext {
         }
 
         flowContexts.addAll(contexts);
+        addFlowCollection(flows);
+    }
+
+    private void addFlowCollection(List<Flow> flows) {
+        this.flows.addAll(flows);
     }
 
     @Override
@@ -199,6 +202,11 @@ public class DefaultVramelContext implements ModelVramelContext {
                 propertiesComponent = (PropertiesComponent) component;
             }
         }
+    }
+
+    @Override
+    public List<Flow> getFlows() {
+        return new ArrayList<>(flows);
     }
 
     @Override

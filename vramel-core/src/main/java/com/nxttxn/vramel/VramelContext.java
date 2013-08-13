@@ -70,4 +70,6 @@ public interface VramelContext {
     Map<String,String> getProperties();
 
     void addComponent(String componentName, Component component);
+
+    List<Flow> getFlows();
 }

@@ -112,6 +112,24 @@ public final class Builder {
     }
 
     /**
+     * Returns a predicate and value builder for the fault body on an
+     * exchange
+     */
+    public static ValueBuilder faultBody() {
+        Expression expression = ExpressionBuilder.faultBodyExpression();
+        return new ValueBuilder(expression);
+    }
+
+    /**
+     * Returns a predicate and value builder for the fault message body as a
+     * specific type
+     */
+    public static <T> ValueBuilder faultBodyAs(Class<T> type) {
+        Expression expression = ExpressionBuilder.faultBodyExpression(type);
+        return new ValueBuilder(expression);
+    }
+
+    /**
      * Returns a predicate and value builder for the exception message on an exchange
      */
     public static ValueBuilder exceptionMessage() {
