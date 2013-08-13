@@ -5,7 +5,7 @@
 
 
 
-
+apply plugin: 'java'
  apply from: 'https://raw.github.com/bat-cha/gradle-plugin-git-dependencies/0.1/git-dependencies.gradle'
 
  buildscript {

@@ -13,23 +13,16 @@ allprojects {
 
 }
 
-group = 'com.nxttxn'
 
 subprojects {
-
     apply plugin: 'maven'
+    apply plugin: 'java'
 
 
-    group = rootProject.group
-    version = '1.0-SNAPSHOT'
+    dependencies {
 
-    sourceCompatibility = '1.7'
-    targetCompatibility = '1.7'
 
-    defaultTasks = ['assemble']
-
-    repositories {
-        mavenCentral()
+        compile project(":vramel-core")
     }
 }
 
