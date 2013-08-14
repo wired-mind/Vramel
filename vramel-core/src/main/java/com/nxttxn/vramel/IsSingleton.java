@@ -14,26 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.impl.converter;
-
-import java.io.IOException;
+package com.nxttxn.vramel;
 
 /**
- * Will load all type converters from camel-core without classpath scanning, which makes
- * it much faster.
- * <p/>
- * The {@link CorePackageScanClassResolver} contains a hardcoded list of the type converter classes to load.
+ * Used for defining if a given class is singleton or not.  If the class is a singleton,
+ * then a single instance will be shared (and hence should be treated as immutable and
+ * be used in a thread-safe manner.)
+ *
+ * This interface is not implemented as a marker interface (i.e., it's necessary to read
+ * isSingleton() instead of instanceof(IsSingleton)).  This allows for subclasses to have
+ * a singleton status different from a parent and for objects to have this value dynamically
+ * changed.
+ *
+ * @version
  */
-public class CoreTypeConverterLoader extends AnnotationTypeConverterLoader {
+public interface IsSingleton {
 
-    public CoreTypeConverterLoader() {
-        super(new CorePackageScanClassResolver());
-    }
-
-    @Override
-    protected String[] findPackageNames() throws IOException {
-        // this method doesn't change the behavior of the CorePackageScanClassResolver
-        return new String[]{"com.nxttxn.vramel.converter", "com.nxttxn.vramel.component.bean", "com.nxttxn.vramel.component.file"};
-    }
+    /**
+     * Whether this class supports being singleton or not.
+     *
+     * @return <tt>true</tt> to be a single shared instance, <tt>false</tt> to create new instances.
+     */
+    boolean isSingleton();
 
 }

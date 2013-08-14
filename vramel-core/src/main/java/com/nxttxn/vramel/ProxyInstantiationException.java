@@ -14,26 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.impl.converter;
-
-import java.io.IOException;
+package com.nxttxn.vramel;
 
 /**
- * Will load all type converters from camel-core without classpath scanning, which makes
- * it much faster.
- * <p/>
- * The {@link CorePackageScanClassResolver} contains a hardcoded list of the type converter classes to load.
+ * Exception indicating a failure while trying to create a proxy of a given type and on a given endpoint
+ *
+ * @version
  */
-public class CoreTypeConverterLoader extends AnnotationTypeConverterLoader {
+public class ProxyInstantiationException extends RuntimeVramelException {
+    private static final long serialVersionUID = -2050115486047385506L;
 
-    public CoreTypeConverterLoader() {
-        super(new CorePackageScanClassResolver());
+    private final Class<?> type;
+    private final Endpoint endpoint;
+
+    public ProxyInstantiationException(Class<?> type, Endpoint endpoint, Throwable cause) {
+        super("Could not instantiate proxy of type " + type.getName() + " on endpoint " + endpoint, cause);
+        this.type = type;
+        this.endpoint = endpoint;
     }
 
-    @Override
-    protected String[] findPackageNames() throws IOException {
-        // this method doesn't change the behavior of the CorePackageScanClassResolver
-        return new String[]{"com.nxttxn.vramel.converter", "com.nxttxn.vramel.component.bean", "com.nxttxn.vramel.component.file"};
+    public Class<?> getType() {
+        return type;
     }
 
+    public Endpoint getEndpoint() {
+        return endpoint;
+    }
 }

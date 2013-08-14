@@ -2,6 +2,11 @@ package com.nxttxn.vramel.util;
 
 import com.nxttxn.vramel.*;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
@@ -118,6 +123,84 @@ public class ExchangeHelper {
      */
     public static boolean hasFaultMessage(Exchange exchange) {
         return exchange.hasOut() && exchange.getOut().isFault() && exchange.getOut().getBody() != null;
+    }
+
+
+    /**
+     * Extracts the body from the given future, that represents a handle to an asynchronous exchange.
+     * <p/>
+     * Will wait until the future task is complete.
+     *
+     * @param context the camel context
+     * @param future  the future handle
+     * @param type    the expected body response type
+     * @return the result body, can be <tt>null</tt>.
+     * @throws VramelExecutionException is thrown if the processing of the exchange failed
+     */
+    public static <T> T extractFutureBody(VramelContext context, Future<Object> future, Class<T> type) {
+        try {
+            return doExtractFutureBody(context, future.get(), type);
+        } catch (InterruptedException e) {
+            throw ObjectHelper.wrapRuntimeCamelException(e);
+        } catch (ExecutionException e) {
+            // execution failed due to an exception so rethrow the cause
+            throw ObjectHelper.wrapVramelExecutionException(null, e.getCause());
+        } finally {
+            // its harmless to cancel if task is already completed
+            // and in any case we do not want to get hold of the task a 2nd time
+            // and its recommended to cancel according to Brian Goetz in his Java Concurrency in Practice book
+            future.cancel(true);
+        }
+    }
+
+    /**
+     * Extracts the body from the given future, that represents a handle to an asynchronous exchange.
+     * <p/>
+     * Will wait for the future task to complete, but waiting at most the timeout value.
+     *
+     * @param context the camel context
+     * @param future  the future handle
+     * @param timeout timeout value
+     * @param unit    timeout unit
+     * @param type    the expected body response type
+     * @return the result body, can be <tt>null</tt>.
+     * @throws VramelExecutionException is thrown if the processing of the exchange failed
+     * @throws java.util.concurrent.TimeoutException is thrown if a timeout triggered
+     */
+    public static <T> T extractFutureBody(VramelContext context, Future<Object> future, long timeout, TimeUnit unit, Class<T> type) throws TimeoutException {
+        try {
+            if (timeout > 0) {
+                return doExtractFutureBody(context, future.get(timeout, unit), type);
+            } else {
+                return doExtractFutureBody(context, future.get(), type);
+            }
+        } catch (InterruptedException e) {
+            // execution failed due interruption so rethrow the cause
+            throw ObjectHelper.wrapVramelExecutionException(null, e);
+        } catch (ExecutionException e) {
+            // execution failed due to an exception so rethrow the cause
+            throw ObjectHelper.wrapVramelExecutionException(null, e.getCause());
+        } finally {
+            // its harmless to cancel if task is already completed
+            // and in any case we do not want to get hold of the task a 2nd time
+            // and its recommended to cancel according to Brian Goetz in his Java Concurrency in Practice book
+            future.cancel(true);
+        }
+    }
+
+    private static <T> T doExtractFutureBody(VramelContext context, Object result, Class<T> type) {
+        if (result == null) {
+            return null;
+        }
+        if (type.isAssignableFrom(result.getClass())) {
+            return type.cast(result);
+        }
+        if (result instanceof Exchange) {
+            Exchange exchange = (Exchange) result;
+            Object answer = ExchangeHelper.extractResultBody(exchange, exchange.getPattern());
+            return context.getTypeConverter().convertTo(type, exchange, answer);
+        }
+        return context.getTypeConverter().convertTo(type, result);
     }
 
 }

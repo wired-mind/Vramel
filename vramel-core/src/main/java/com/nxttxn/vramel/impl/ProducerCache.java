@@ -211,4 +211,55 @@ public class ProducerCache  {
     public String toString() {
         return "ProducerCache for source: " + source + ", capacity: " + getCapacity();
     }
+
+    /**
+     * Sends the exchange to the given endpoint.
+     * <p>
+     * This method will <b>not</b> throw an exception. If processing of the given
+     * Exchange failed then the exception is stored on the provided Exchange
+     *
+     * @param endpoint the endpoint to send the exchange to
+     * @param exchange the exchange to send
+     */
+    public void send(Endpoint endpoint, Exchange exchange) {
+        sendExchange(endpoint, null, null, exchange);
+    }
+
+    /**
+     * Sends an exchange to an endpoint using a supplied
+     * {@link Processor} to populate the exchange
+     * <p>
+     * This method will <b>not</b> throw an exception. If processing of the given
+     * Exchange failed then the exception is stored on the return Exchange
+     *
+     * @param endpoint the endpoint to send the exchange to
+     * @param processor the transformer used to populate the new exchange
+     * @throws org.apache.camel.CamelExecutionException is thrown if sending failed
+     * @return the exchange
+     */
+    public Exchange send(Endpoint endpoint, Processor processor) {
+        return sendExchange(endpoint, null, processor, null);
+    }
+
+    /**
+     * Sends an exchange to an endpoint using a supplied
+     * {@link Processor} to populate the exchange
+     * <p>
+     * This method will <b>not</b> throw an exception. If processing of the given
+     * Exchange failed then the exception is stored on the return Exchange
+     *
+     * @param endpoint the endpoint to send the exchange to
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
+     * @param processor the transformer used to populate the new exchange
+     * @return the exchange
+     */
+    public Exchange send(Endpoint endpoint, ExchangePattern pattern, Processor processor) {
+        return sendExchange(endpoint, pattern, processor, null);
+    }
+
+    protected Exchange sendExchange(final Endpoint endpoint, ExchangePattern pattern,
+                                    final Processor processor, Exchange exchange) {
+        throw new UnsupportedOperationException("Not functional right now. Come implement this method");
+    }
 }

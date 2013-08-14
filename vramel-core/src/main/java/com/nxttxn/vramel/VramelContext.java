@@ -10,6 +10,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,6 +20,14 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public interface VramelContext {
+
+    /**
+     * Gets the name (id) of the this context.
+     *
+     * @return the name
+     */
+    String getName();
+
     void addFlowDefinitions(List<FlowDefinition> flows) throws FailedToCreateRouteException, Exception;
 
     ServerFactory getServerFactory();
@@ -32,6 +41,16 @@ public interface VramelContext {
     Endpoint getEndpoint(String uri, JsonObject config);
 
     Endpoint getEndpoint(String uri);
+    /**
+     * Resolves the given name to an {@link Endpoint} of the specified type.
+     * If the name has a singleton endpoint registered, then the singleton is returned.
+     * Otherwise, a new {@link Endpoint} is created and registered.
+     *
+     * @param name         the name of the endpoint
+     * @param endpointType the expected type
+     * @return the endpoint
+     */
+    <T extends Endpoint> T getEndpoint(String name, Class<T> endpointType);
 
     EventBus getEventBus();
 
@@ -72,4 +91,11 @@ public interface VramelContext {
     void addComponent(String componentName, Component component);
 
     List<Flow> getFlows();
+
+    void setInjector(Injector injector);
+
+    void addService(Object object) throws Exception;
+
+    //Shouldn't be used in vramel
+    ExecutorServiceStrategy getExecutorServiceStrategy();
 }

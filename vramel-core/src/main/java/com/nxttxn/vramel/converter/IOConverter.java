@@ -42,9 +42,9 @@ import java.net.URL;
 import java.nio.charset.UnsupportedCharsetException;
 
 
+import com.nxttxn.vramel.Converter;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.util.IOHelper;
-import org.apache.camel.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

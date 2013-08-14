@@ -1,9 +1,6 @@
 package com.nxttxn.vramel.impl;
 
-import com.nxttxn.vramel.Component;
-import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.*;
 import org.vertx.java.core.json.JsonObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -62,10 +59,39 @@ public abstract class DefaultEndpoint implements Endpoint {
         return endpointUri;
     }
 
-    @Override
+
+
+    public Exchange createExchange(Exchange exchange) {
+        return exchange.copy();
+    }
+
     public Exchange createExchange() {
-        return new DefaultExchange(vramelContext);
+        return createExchange(ExchangePattern.InOut);
+    }
+
+    public Exchange createExchange(ExchangePattern pattern) {
+        return new DefaultExchange(this, pattern);
     }
 
 
+
+    /**
+     * Sets the endpointUri if it has not been specified yet via some kind of
+     * dependency injection mechanism. This allows dependency injection
+     * frameworks such as Spring or Guice to set the default endpoint URI in
+     * cases where it has not been explicitly configured using the name/context
+     * in which an Endpoint is created.
+     */
+    public void setEndpointUriIfNotSpecified(String value) {
+        if (endpointUri == null) {
+            setEndpointUri(value);
+        }
+    }
+
+    /**
+     * Sets the URI that created this endpoint.
+     */
+    protected void setEndpointUri(String endpointUri) {
+        this.endpointUri = endpointUri;
+    }
 }

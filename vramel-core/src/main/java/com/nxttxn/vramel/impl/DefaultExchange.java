@@ -18,15 +18,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * To change this template use File | Settings | File Templates.
  */
 public class DefaultExchange implements Exchange {
-    private final VramelContext vramelContext;
+    private ExchangePattern pattern;
+    private VramelContext vramelContext;
     private Map<String, Object> properties;
     private Message in;
     private Message out;
     private Exception exception;
+    private Endpoint fromEndpoint;
     private UnitOfWork unitOfWork;
     private String fromRouteId;
     private String exchangeId;
 
+
+    public DefaultExchange(VramelContext context, ExchangePattern pattern) {
+        this.vramelContext = context;
+        this.pattern = pattern;
+    }
+
+    public DefaultExchange(Endpoint fromEndpoint, ExchangePattern pattern) {
+        this(fromEndpoint.getVramelContext(), pattern);
+        this.fromEndpoint = fromEndpoint;
+    }
     public DefaultExchange(VramelContext vramelContext) {
 
         this.vramelContext = vramelContext;

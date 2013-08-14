@@ -14,26 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.impl.converter;
+package com.nxttxn.vramel.util;
 
-import java.io.IOException;
+
+import com.nxttxn.vramel.IsSingleton;
+import com.nxttxn.vramel.spi.Injector;
 
 /**
- * Will load all type converters from camel-core without classpath scanning, which makes
- * it much faster.
- * <p/>
- * The {@link CorePackageScanClassResolver} contains a hardcoded list of the type converter classes to load.
+ * A simple implementation of {@link Injector} which just uses reflection to
+ * instantiate new objects using their zero argument constructor. For more
+ * complex implementations try the Spring or Guice implementations.
+ *
+ * @version
  */
-public class CoreTypeConverterLoader extends AnnotationTypeConverterLoader {
+public class ReflectionInjector implements Injector {
 
-    public CoreTypeConverterLoader() {
-        super(new CorePackageScanClassResolver());
+    public <T> T newInstance(Class<T> type) {
+        return ObjectHelper.newInstance(type);
     }
 
-    @Override
-    protected String[] findPackageNames() throws IOException {
-        // this method doesn't change the behavior of the CorePackageScanClassResolver
-        return new String[]{"com.nxttxn.vramel.converter", "com.nxttxn.vramel.component.bean", "com.nxttxn.vramel.component.file"};
+    public <T> T newInstance(Class<T> type, Object instance) {
+        if (instance instanceof IsSingleton) {
+            boolean singleton = ((IsSingleton) instance).isSingleton();
+            if (singleton) {
+                return type.cast(instance);
+            }
+        }
+        return newInstance(type);
     }
-
 }

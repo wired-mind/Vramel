@@ -35,6 +35,8 @@ public interface Exchange {
     String FILE_NAME_ONLY       = "VramelFileNameOnly";
     String FILE_LAST_MODIFIED   = "VramelFileLastModified";
     String FILE_LENGTH          = "VramelFileLength";
+    String MAXIMUM_CACHE_POOL_SIZE     = "VramelMaximumCachePoolSize";
+    String MAXIMUM_ENDPOINT_CACHE_SIZE = "VramelMaximumEndpointCacheSize";
     String ROUTE_STOP              = "VramelRouteStop";
     String SLIP_ENDPOINT      = "VramelSlipEndpoint";
     String TO_ENDPOINT           = "VramelToEndpoint";

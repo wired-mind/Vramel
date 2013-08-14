@@ -14,26 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.impl.converter;
+package com.nxttxn.vramel.util;
 
-import java.io.IOException;
+import com.nxttxn.vramel.VramelException;
+
+import java.net.URL;
+
+
 
 /**
- * Will load all type converters from camel-core without classpath scanning, which makes
- * it much faster.
- * <p/>
- * The {@link CorePackageScanClassResolver} contains a hardcoded list of the type converter classes to load.
+ * Represents a failure to open a Properties file at a given URL
  */
-public class CoreTypeConverterLoader extends AnnotationTypeConverterLoader {
+public class LoadPropertiesException extends VramelException {
+    private static final long serialVersionUID = 3684303677685065529L;
+    private final URL url;
 
-    public CoreTypeConverterLoader() {
-        super(new CorePackageScanClassResolver());
+    public LoadPropertiesException(URL url, Exception cause) {
+        super("Failed to load URL: " + url + ". Reason: " + cause,  cause);
+        this.url = url;
     }
 
-    @Override
-    protected String[] findPackageNames() throws IOException {
-        // this method doesn't change the behavior of the CorePackageScanClassResolver
-        return new String[]{"com.nxttxn.vramel.converter", "com.nxttxn.vramel.component.bean", "com.nxttxn.vramel.component.file"};
+    public URL getUrl() {
+        return url;
     }
-
 }

@@ -50,7 +50,7 @@ public class MethodInfo {
     private final boolean hasCustomAnnotation;
     private final boolean hasHandlerAnnotation;
     private Expression parametersExpression;
-//    private ExchangePattern pattern = ExchangePattern.InOut;
+    private ExchangePattern pattern = ExchangePattern.InOut;
 //    private RecipientList recipientList;
     private RoutingSlip routingSlip;
     private DynamicRouter dynamicRouter;
@@ -225,6 +225,16 @@ public class MethodInfo {
         return method;
     }
 
+    /**
+     * Returns the {@link org.apache.camel.ExchangePattern} that should be used when invoking this method. This value
+     * defaults to {@link org.apache.camel.ExchangePattern#InOut} unless some {@link org.apache.camel.Pattern} annotation is used
+     * to override the message exchange pattern.
+     *
+     * @return the exchange pattern to use for invoking this method.
+     */
+    public ExchangePattern getPattern() {
+        return pattern;
+    }
 
     public Expression getParametersExpression() {
         return parametersExpression;

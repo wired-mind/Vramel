@@ -25,7 +25,6 @@ import com.nxttxn.vramel.spi.TypeConverterRegistry;
 import com.nxttxn.vramel.spi.UuidGenerator;
 import com.nxttxn.vramel.util.FlowDefinitionHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
-import org.apache.camel.spi.*;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,7 @@ import java.util.*;
  */
 public class DefaultVramelContext implements ModelVramelContext {
     private final Logger logger = LoggerFactory.getLogger(DefaultVramelContext.class);
+    private VramelContextNameStrategy nameStrategy = new DefaultVramelContextNameStrategy();
     private final BusModBase busModBase;
     private final String defaultEndpointConfig = "default_endpoint_config";
     private List<FlowDefinition> flowDefinitions = Lists.newArrayList();
@@ -59,6 +59,7 @@ public class DefaultVramelContext implements ModelVramelContext {
     private PackageScanClassResolver packageScanClassResolver;
     private FactoryFinderResolver factoryFinderResolver = new DefaultFactoryFinderResolver();
     private FactoryFinder defaultFactoryFinder;
+    private Injector injector;
     private TypeConverter typeConverter;
     private TypeConverterRegistry typeConverterRegistry;
     private JsonObject config;
@@ -73,6 +74,7 @@ public class DefaultVramelContext implements ModelVramelContext {
     private Map<String, String> properties = new HashMap<String, String>();
     private PropertiesComponent propertiesComponent;
     private final Set<Flow> flows = new LinkedHashSet<Flow>();
+    private final Set<StartupListener> startupListeners = new LinkedHashSet<StartupListener>();
 
     private UuidGenerator createDefaultUuidGenerator() {
         return new JavaUuidGenerator();
@@ -174,6 +176,23 @@ public class DefaultVramelContext implements ModelVramelContext {
             throw new ResolveEndpointFailedException("Error creating endpoint", e);
         }
 
+    }
+
+    public <T extends Endpoint> T getEndpoint(String name, Class<T> endpointType) {
+        Endpoint endpoint = getEndpoint(name);
+        if (endpoint == null) {
+            throw new NoSuchEndpointException(name);
+        }
+//Doesn't exist yet
+//        if (endpoint instanceof InterceptSendToEndpoint) {
+//            endpoint = ((InterceptSendToEndpoint) endpoint).getDelegate();
+//        }
+        if (endpointType.isInstance(endpoint)) {
+            return endpointType.cast(endpoint);
+        } else {
+            throw new IllegalArgumentException("The endpoint is not of type: " + endpointType
+                    + " but is: " + endpoint.getClass().getCanonicalName());
+        }
     }
 
     @Override
@@ -348,8 +367,7 @@ public class DefaultVramelContext implements ModelVramelContext {
                 // of the camel context (its the container)
                 typeConverter = createTypeConverter();
                 try {
-                    //for now we don't do services. Might need to soon
-//                    addService(typeConverter);
+                    addService(typeConverter);
                 } catch (Exception e) {
                     throw ObjectHelper.wrapRuntimeCamelException(e);
                 }
@@ -449,10 +467,142 @@ public class DefaultVramelContext implements ModelVramelContext {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
+    public void addService(Object object) throws Exception {
+        doAddService(object, true);
+    }
 
     @Override
+    public ExecutorServiceStrategy getExecutorServiceStrategy() {
+        throw new UnsupportedOperationException("Not implemented in vramel");
+    }
+
+    private void doAddService(Object object, boolean closeOnShutdown) throws Exception {
+        // inject CamelContext
+        if (object instanceof VramelContextAware) {
+            VramelContextAware aware = (VramelContextAware) object;
+            aware.setVramelContext(this);
+        }
+
+        if (object instanceof Service) {
+            Service service = (Service) object;
+
+            //Haven't implemented services fully. Just enough to startup DefaultTypeConverter for now.
+            service.start();
+
+            //Services is hardly implemented at all right now. Just enough to start DefaultTypeConverter
+//            for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                if (service instanceof Endpoint) {
+//                    // use specialized endpoint add
+//                    strategy.onEndpointAdd((Endpoint) service);
+//                } else {
+//                    strategy.onServiceAdd(this, service, null);
+//                }
+//            }
+
+            // only add to services to close if its a singleton
+            // otherwise we could for example end up with a lot of prototype scope endpoints
+//            boolean singleton = true; // assume singleton by default
+//            if (service instanceof IsSingleton) {
+//                singleton = ((IsSingleton) service).isSingleton();
+//            }
+//            // do not add endpoints as they have their own list
+//            if (singleton && !(service instanceof Endpoint)) {
+//                // only add to list of services to close if its not already there
+//                if (closeOnShutdown && !hasService(service)) {
+//                    servicesToClose.add(service);
+//                }
+//            }
+        }
+
+        // and then ensure service is started (as stated in the javadoc)
+        if (object instanceof Service) {
+            startService((Service)object);
+        } else if (object instanceof Collection<?>) {
+            startServices((Collection<?>)object);
+        }
+    }
+
+    private void startService(Service service) throws Exception {
+        // and register startup aware so they can be notified when
+        // camel context has been started
+        if (service instanceof StartupListener) {
+            StartupListener listener = (StartupListener) service;
+            addStartupListener(listener);
+        }
+
+        service.start();
+    }
+
+    private void startServices(Collection<?> services) throws Exception {
+        for (Object element : services) {
+            if (element instanceof Service) {
+                startService((Service)element);
+            }
+        }
+    }
+
+    public void addStartupListener(StartupListener listener) throws Exception {
+        // either add to listener so we can invoke then later when CamelContext has been started
+        // or invoke the callback right now
+        if (isStarted()) {
+            listener.onVramelContextStarted(this, true);
+        } else {
+            startupListeners.add(listener);
+        }
+    }
+
+    //until we fully implemente services. Always started=true
+    private boolean isStarted() {
+        return true;
+    }
+
     public Injector getInjector() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (injector == null) {
+            injector = createInjector();
+        }
+        return injector;
+    }
+
+    @Override
+    public void setInjector(Injector injector) {
+        this.injector = injector;
+    }
+
+
+    /**
+     * Lazily create a default implementation
+     */
+    protected Injector createInjector() {
+        FactoryFinder finder = getDefaultFactoryFinder();
+        try {
+            return (Injector) finder.newInstance("Injector");
+        } catch (NoFactoryAvailableException e) {
+            // lets use the default injector
+            return new DefaultInjector(this);
+        }
+    }
+
+    public String getName() {
+        return getNameStrategy().getName();
+    }
+
+    /**
+     * Sets the name of the this context.
+     *
+     * @param name the name
+     */
+    public void setName(String name) {
+        // use an explicit name strategy since an explicit name was provided to be used
+        this.nameStrategy = new ExplicitVramelContextNameStrategy(name);
+    }
+
+    public VramelContextNameStrategy getNameStrategy() {
+        return nameStrategy;
+    }
+
+    public void setNameStrategy(VramelContextNameStrategy nameStrategy) {
+        this.nameStrategy = nameStrategy;
     }
 
 }

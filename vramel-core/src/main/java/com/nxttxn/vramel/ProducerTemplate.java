@@ -240,7 +240,7 @@ public interface ProducerTemplate extends Service {
      * {@link Processor} to populate the exchange
      * @return the returned exchange
      */
-    Exchange send(String endpointUri, org.apache.camel.ExchangePattern pattern, Processor processor);
+    Exchange send(String endpointUri, ExchangePattern pattern, Processor processor);
 
     /**
      * Sends the exchange to the given endpoint
@@ -283,7 +283,7 @@ public interface ProducerTemplate extends Service {
      * {@link Processor} to populate the exchange
      * @return the returned exchange
      */
-    Exchange send(Endpoint endpoint, org.apache.camel.ExchangePattern pattern, Processor processor);
+    Exchange send(Endpoint endpoint, ExchangePattern pattern, Processor processor);
 
     /**
      * Send the body to an endpoint
@@ -312,7 +312,7 @@ public interface ProducerTemplate extends Service {
     void sendBody(String endpointUri, Object body) throws VramelExecutionException;
 
     /**
-     * Send the body to an endpoint with the given {@link org.apache.camel.ExchangePattern}
+     * Send the body to an endpoint with the given {@link ExchangePattern}
      * returning any result output body
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
@@ -321,12 +321,12 @@ public interface ProducerTemplate extends Service {
      *
      * @param endpoint      the endpoint to send the exchange to
      * @param body          the payload
-     * @param pattern       the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @param pattern       the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBody(Endpoint endpoint, org.apache.camel.ExchangePattern pattern, Object body) throws VramelExecutionException;
+    Object sendBody(Endpoint endpoint, ExchangePattern pattern, Object body) throws VramelExecutionException;
 
     /**
      * Send the body to an endpoint returning any result output body
@@ -336,13 +336,13 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpointUri   the endpoint URI to send the exchange to
-     * @param pattern       the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern       the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body          the payload
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBody(String endpointUri, org.apache.camel.ExchangePattern pattern, Object body) throws VramelExecutionException;
+    Object sendBody(String endpointUri, ExchangePattern pattern, Object body) throws VramelExecutionException;
 
     /**
      * Sends the body to an endpoint with a specified header and header value
@@ -382,15 +382,15 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpoint the Endpoint to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param header the header name
      * @param headerValue the header value
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndHeader(Endpoint endpoint, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndHeader(Endpoint endpoint, ExchangePattern pattern, Object body,
                              String header, Object headerValue) throws VramelExecutionException;
 
     /**
@@ -401,15 +401,15 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpoint the Endpoint URI to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param header the header name
      * @param headerValue the header value
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndHeader(String endpoint, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndHeader(String endpoint, ExchangePattern pattern, Object body,
                              String header, Object headerValue) throws VramelExecutionException;
 
     /**
@@ -450,15 +450,15 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpoint the Endpoint to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param property the property name
      * @param propertyValue the property value
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndProperty(Endpoint endpoint, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndProperty(Endpoint endpoint, ExchangePattern pattern, Object body,
                                String property, Object propertyValue) throws VramelExecutionException;
 
     /**
@@ -469,15 +469,15 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpoint the Endpoint URI to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param property the property name
      * @param propertyValue the property value
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndProperty(String endpoint, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndProperty(String endpoint, ExchangePattern pattern, Object body,
                                String property, Object propertyValue) throws VramelExecutionException;
 
     /**
@@ -516,14 +516,14 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpointUri the endpoint URI to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param headers headers
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndHeaders(String endpointUri, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndHeaders(String endpointUri, ExchangePattern pattern, Object body,
                               Map<String, Object> headers) throws VramelExecutionException;
 
     /**
@@ -534,27 +534,27 @@ public interface ProducerTemplate extends Service {
      * the caused exception wrapped.
      *
      * @param endpoint the endpoint URI to send to
-     * @param pattern the message {@link org.apache.camel.ExchangePattern} such as
-     *   {@link org.apache.camel.ExchangePattern#InOnly} or {@link org.apache.camel.ExchangePattern#InOut}
+     * @param pattern the message {@link ExchangePattern} such as
+     *   {@link ExchangePattern#InOnly} or {@link ExchangePattern#InOut}
      * @param body the payload to send
      * @param headers headers
-     * @return the result if {@link org.apache.camel.ExchangePattern} is OUT capable, otherwise <tt>null</tt>
+     * @return the result if {@link ExchangePattern} is OUT capable, otherwise <tt>null</tt>
      * @throws VramelExecutionException if the processing of the exchange failed
      */
-    Object sendBodyAndHeaders(Endpoint endpoint, org.apache.camel.ExchangePattern pattern, Object body,
+    Object sendBodyAndHeaders(Endpoint endpoint, ExchangePattern pattern, Object body,
                               Map<String, Object> headers) throws VramelExecutionException;
 
 
-    // Methods using an InOut org.apache.camel.ExchangePattern
+    // Methods using an InOut ExchangePattern
     // -----------------------------------------------------------------------
 
     /**
      * Sends an exchange to an endpoint using a supplied processor
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is <b>not</b> thrown from this method, but you can access it from the returned exchange using
-     * {@link org.apache.camel.Exchange#getException()}.
+     * {@link Exchange#getException()}.
      *
      * @param endpoint  the Endpoint to send to
      * @param processor the processor which will populate the exchange before sending
@@ -564,11 +564,11 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an exchange to an endpoint using a supplied processor
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is <b>not</b> thrown from this method, but you can access it from the returned exchange using
-     * {@link org.apache.camel.Exchange#getException()}.
+     * {@link Exchange#getException()}.
      *
      * @param endpointUri the endpoint URI to send to
      * @param processor the processor which will populate the exchange before sending
@@ -578,7 +578,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to the default endpoint and returns the result content
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -592,7 +592,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to the default endpoint and returns the result content
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -607,7 +607,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -622,7 +622,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -638,7 +638,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -653,7 +653,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -669,7 +669,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to the default endpoint and returns the result content
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -685,7 +685,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -702,7 +702,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -720,7 +720,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -737,7 +737,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Send the body to an endpoint returning any result output body.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -755,7 +755,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to an endpoint with the specified headers and header values.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -771,7 +771,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to an endpoint with the specified headers and header values.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -788,7 +788,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to an endpoint with the specified headers and header values.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -804,7 +804,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to the default endpoint and returns the result content
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -819,7 +819,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends the body to an endpoint with the specified headers and header values.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      * <br/><br/>
      * <p/><b>Notice:</b> that if the processing of the exchange failed with an Exception
      * it is thrown from this method as a {@link VramelExecutionException} with
@@ -865,7 +865,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOnly} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOnly} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -875,7 +875,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -885,7 +885,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -897,7 +897,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -908,7 +908,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -919,7 +919,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -932,7 +932,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri the endpoint URI to send the exchange to
      * @param body        the body to send
@@ -962,7 +962,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOnly} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOnly} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -972,7 +972,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -982,7 +982,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint the endpoint to send the exchange to
      * @param body        the body to send
@@ -994,7 +994,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -1005,7 +1005,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -1016,7 +1016,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -1029,7 +1029,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint    the endpoint to send the exchange to
      * @param body        the body to send
@@ -1115,7 +1115,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOnly} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOnly} message exchange pattern.
      *
      * @param endpointUri   the endpoint URI to send the exchange to
      * @param body          the body to send
@@ -1126,7 +1126,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOnly} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOnly} message exchange pattern.
      *
      * @param endpoint      the endpoint to send the exchange to
      * @param body          the body to send
@@ -1137,7 +1137,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpointUri   the endpoint URI to send the exchange to
      * @param body          the body to send
@@ -1148,7 +1148,7 @@ public interface ProducerTemplate extends Service {
 
     /**
      * Sends an asynchronous body to the given endpoint.
-     * Uses an {@link org.apache.camel.ExchangePattern#InOut} message exchange pattern.
+     * Uses an {@link ExchangePattern#InOut} message exchange pattern.
      *
      * @param endpoint      the endpoint to send the exchange to
      * @param body          the body to send

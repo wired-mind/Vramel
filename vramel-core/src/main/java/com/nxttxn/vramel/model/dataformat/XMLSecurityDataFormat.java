@@ -65,7 +65,7 @@ public class XMLSecurityDataFormat extends DataFormatDefinition implements Names
 
 
     public XMLSecurityDataFormat() {
-        super("secureXML");
+        super(new com.nxttxn.vramel.components.xmlsecurity.XMLSecurityDataFormat());
     }
 
     public XMLSecurityDataFormat(String secureTag, boolean secureTagContents) {

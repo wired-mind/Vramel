@@ -14,26 +14,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.impl.converter;
+package com.nxttxn.vramel.impl;
 
-import java.io.IOException;
+
+import com.nxttxn.vramel.spi.VramelContextNameStrategy;
+import com.nxttxn.vramel.util.ObjectHelper;
 
 /**
- * Will load all type converters from camel-core without classpath scanning, which makes
- * it much faster.
- * <p/>
- * The {@link CorePackageScanClassResolver} contains a hardcoded list of the type converter classes to load.
+ * Strategy to used an explicit (fixed) name for {@link org.apache.camel.CamelContext}.
+ *
+ * @version
  */
-public class CoreTypeConverterLoader extends AnnotationTypeConverterLoader {
+public class ExplicitVramelContextNameStrategy implements VramelContextNameStrategy {
 
-    public CoreTypeConverterLoader() {
-        super(new CorePackageScanClassResolver());
+    private final String name;
+
+    public ExplicitVramelContextNameStrategy(String name) {
+        ObjectHelper.notEmpty(name, "CamelContext name ");
+        this.name = name;
     }
 
     @Override
-    protected String[] findPackageNames() throws IOException {
-        // this method doesn't change the behavior of the CorePackageScanClassResolver
-        return new String[]{"com.nxttxn.vramel.converter", "com.nxttxn.vramel.component.bean", "com.nxttxn.vramel.component.file"};
+    public String getName() {
+        return name;
     }
 
+    @Override
+    public String getNextName() {
+        return name;
+    }
+
+    @Override
+    public boolean isFixedName() {
+        return true;
+    }
 }

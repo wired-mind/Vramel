@@ -50,6 +50,19 @@ public class ObjectHelper {
     }
 
     /**
+     * Returns the Java Bean property name of the given method, if it is a
+     * setter
+     */
+    public static String getPropertyName(Method method) {
+        String propertyName = method.getName();
+        if (propertyName.startsWith("set") && method.getParameterTypes().length == 1) {
+            propertyName = propertyName.substring(3, 4).toLowerCase(Locale.ENGLISH) + propertyName.substring(4);
+        }
+        return propertyName;
+    }
+
+
+    /**
      * A helper method to access a camel context properties with a prefix
      *
      * @param prefix       the prefix
