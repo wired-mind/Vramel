@@ -1,10 +1,8 @@
 package com.nxttxn.vramel.impl;
 
 import com.google.common.collect.Maps;
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.RuntimeVramelException;
-import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.spi.Synchronization;
 import com.nxttxn.vramel.spi.UnitOfWork;
 import com.nxttxn.vramel.util.ObjectHelper;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -269,6 +267,19 @@ public class DefaultExchange implements Exchange {
     @Override
     public void setExchangeId(String id) {
         this.exchangeId = id;
+    }
+
+    @Override
+    public ExchangePattern getPattern() {
+        //we started by not implementing ExchangePattern. We're adding it in partially for
+        //broader support. Still going to hardcode the pattern to INOUT for now.
+        //Once ExchangePattern is ported fully this won't be hardcoded.
+        return ExchangePattern.InOut;
+    }
+
+    @Override
+    public void addOnCompletion(Synchronization onCompletion) {
+        throw new UnsupportedOperationException("Interceptors are not yet ported");
     }
 
     @SuppressWarnings("deprecation")

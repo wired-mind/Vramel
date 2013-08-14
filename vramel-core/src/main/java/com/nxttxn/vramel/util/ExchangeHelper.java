@@ -1,9 +1,6 @@
 package com.nxttxn.vramel.util;
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.TypeConversionException;
-import com.nxttxn.vramel.TypeConverter;
-import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,4 +66,58 @@ public class ExchangeHelper {
         }
         return null;
     }
+
+    /**
+     * Extracts the body from the given exchange.
+     * <p/>
+     * If the exchange pattern is provided it will try to honor it and retrieve the body
+     * from either IN or OUT according to the pattern.
+     *
+     * @param exchange the exchange
+     * @param pattern  exchange pattern if given, can be <tt>null</tt>
+     * @return the result body, can be <tt>null</tt>.
+     * @throws VramelExecutionException is thrown if the processing of the exchange failed
+     */
+    public static Object extractResultBody(Exchange exchange, ExchangePattern pattern) {
+        Object answer = null;
+        if (exchange != null) {
+            // rethrow if there was an exception during execution
+            if (exchange.getException() != null) {
+                throw ObjectHelper.wrapVramelExecutionException(exchange, exchange.getException());
+            }
+
+            // result could have a fault message
+            if (hasFaultMessage(exchange)) {
+                return exchange.getOut().getBody();
+            }
+
+            // okay no fault then return the response according to the pattern
+            // try to honor pattern if provided
+            boolean notOut = pattern != null && !pattern.isOutCapable();
+            boolean hasOut = exchange.hasOut();
+            if (hasOut && !notOut) {
+                // we have a response in out and the pattern is out capable
+                answer = exchange.getOut().getBody();
+            } else if (!hasOut && exchange.getPattern() == ExchangePattern.InOptionalOut) {
+                // special case where the result is InOptionalOut and with no OUT response
+                // so we should return null to indicate this fact
+                answer = null;
+            } else {
+                // use IN as the response
+                answer = exchange.getIn().getBody();
+            }
+        }
+        return answer;
+    }
+
+    /**
+     * Tests whether the exchange has a fault message set and that its not null.
+     *
+     * @param exchange the exchange
+     * @return <tt>true</tt> if fault message exists
+     */
+    public static boolean hasFaultMessage(Exchange exchange) {
+        return exchange.hasOut() && exchange.getOut().isFault() && exchange.getOut().getBody() != null;
+    }
+
 }

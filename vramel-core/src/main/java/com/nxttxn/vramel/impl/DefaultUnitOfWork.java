@@ -133,6 +133,34 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     }
 
 
+    public void start() throws Exception {
+        id = null;
+    }
+
+    public void stop() throws Exception {
+        // need to clean up when we are stopping to not leak memory
+        //for now comment out features not ported yet from camel
+//        if (synchronizations != null) {
+//            synchronizations.clear();
+//        }
+//        if (tracedRouteNodes != null) {
+//            tracedRouteNodes.clear();
+//        }
+//        if (transactedBy != null) {
+//            transactedBy.clear();
+//        }
+        synchronized (routeContextStack) {
+            if (!routeContextStack.isEmpty()) {
+                routeContextStack.clear();
+            }
+        }
+//        if (subUnitOfWorks != null) {
+//            subUnitOfWorks.clear();
+//        }
+        originalInMessage = null;
+        parent = null;
+        id = null;
+    }
 
     @Override
     public String toString() {

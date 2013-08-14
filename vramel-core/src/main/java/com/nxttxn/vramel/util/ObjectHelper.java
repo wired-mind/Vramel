@@ -1,9 +1,6 @@
 package com.nxttxn.vramel.util;
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.RuntimeVramelException;
-import com.nxttxn.vramel.VramelExecutionException;
+import com.nxttxn.vramel.*;
 import org.apache.camel.WrappedFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +8,11 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
+import java.net.URL;
 import java.nio.channels.ReadableByteChannel;
 import java.util.*;
 
@@ -51,6 +47,28 @@ public class ObjectHelper {
             return col.size() > 0;
         }
         return value != null;
+    }
+
+    /**
+     * A helper method to access a camel context properties with a prefix
+     *
+     * @param prefix       the prefix
+     * @param camelContext the camel context
+     * @return the properties which holds the camel context properties with the prefix,
+     *         and the key omit the prefix part
+     */
+    public static Properties getCamelPropertiesWithPrefix(String prefix, VramelContext camelContext) {
+        Properties answer = new Properties();
+        Map<String, String> camelProperties = camelContext.getProperties();
+        if (camelProperties != null) {
+            for (Map.Entry<String, String> entry : camelProperties.entrySet()) {
+                String key = entry.getKey();
+                if (key != null && key.startsWith(prefix)) {
+                    answer.put(key.substring(prefix.length()), entry.getValue());
+                }
+            }
+        }
+        return answer;
     }
 
 
@@ -173,6 +191,167 @@ public class ObjectHelper {
     }
 
     /**
+     * Attempts to load the given class name using the thread context class
+     * loader or the class loader used to load this class
+     *
+     * @param name the name of the class to load
+     * @return the class or <tt>null</tt> if it could not be loaded
+     */
+    public static Class<?> loadClass(String name) {
+        return loadClass(name, ObjectHelper.class.getClassLoader());
+    }
+
+    /**
+     * Attempts to load the given class name using the thread context class
+     * loader or the given class loader
+     *
+     * @param name the name of the class to load
+     * @param loader the class loader to use after the thread context class loader
+     * @return the class or <tt>null</tt> if it could not be loaded
+     */
+    public static Class<?> loadClass(String name, ClassLoader loader) {
+        return loadClass(name, loader, true);
+    }
+
+    /**
+     * Attempts to load the given class name using the thread context class
+     * loader or the given class loader
+     *
+     * @param name the name of the class to load
+     * @param loader the class loader to use after the thread context class loader
+     * @param needToWarn when <tt>true</tt> logs a warning when a class with the given name could not be loaded
+     * @return the class or <tt>null</tt> if it could not be loaded
+     */
+    public static Class<?> loadClass(String name, ClassLoader loader, boolean needToWarn) {
+        // must clean the name so its pure java name, eg removing \n or whatever people can do in the Spring XML
+        name = normalizeClassName(name);
+        if (ObjectHelper.isEmpty(name)) {
+            return null;
+        }
+
+        // Try simple type first
+        Class<?> clazz = loadSimpleType(name);
+        if (clazz == null) {
+            // try context class loader
+            clazz = doLoadClass(name, Thread.currentThread().getContextClassLoader());
+        }
+        if (clazz == null) {
+            // then the provided loader
+            clazz = doLoadClass(name, loader);
+        }
+        if (clazz == null) {
+            // and fallback to the loader the loaded the ObjectHelper class
+            clazz = doLoadClass(name, ObjectHelper.class.getClassLoader());
+        }
+
+        if (clazz == null) {
+            if (needToWarn) {
+                LOG.warn("Cannot find class: " + name);
+            }
+        }
+
+        return clazz;
+    }
+
+    /**
+     * Cleans the string to a pure Java identifier so we can use it for loading class names.
+     * <p/>
+     * Especially from Spring DSL people can have \n \t or other characters that otherwise
+     * would result in ClassNotFoundException
+     *
+     * @param name the class name
+     * @return normalized classname that can be load by a class loader.
+     */
+    public static String normalizeClassName(String name) {
+        StringBuilder sb = new StringBuilder(name.length());
+        for (char ch : name.toCharArray()) {
+            if (ch == '.' || ch == '[' || ch == ']' || ch == '-' || Character.isJavaIdentifierPart(ch)) {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+
+    /**
+     * Load a simple type
+     *
+     * @param name the name of the class to load
+     * @return the class or <tt>null</tt> if it could not be loaded
+     */
+    public static Class<?> loadSimpleType(String name) {
+        // special for byte[] or Object[] as its common to use
+        if ("java.lang.byte[]".equals(name) || "byte[]".equals(name)) {
+            return byte[].class;
+        } else if ("java.lang.Byte[]".equals(name) || "Byte[]".equals(name)) {
+            return Byte[].class;
+        } else if ("java.lang.Object[]".equals(name) || "Object[]".equals(name)) {
+            return Object[].class;
+        } else if ("java.lang.String[]".equals(name) || "String[]".equals(name)) {
+            return String[].class;
+            // and these is common as well
+        } else if ("java.lang.String".equals(name) || "String".equals(name)) {
+            return String.class;
+        } else if ("java.lang.Boolean".equals(name) || "Boolean".equals(name)) {
+            return Boolean.class;
+        } else if ("boolean".equals(name)) {
+            return boolean.class;
+        } else if ("java.lang.Integer".equals(name) || "Integer".equals(name)) {
+            return Integer.class;
+        } else if ("int".equals(name)) {
+            return int.class;
+        } else if ("java.lang.Long".equals(name) || "Long".equals(name)) {
+            return Long.class;
+        } else if ("long".equals(name)) {
+            return long.class;
+        } else if ("java.lang.Short".equals(name) || "Short".equals(name)) {
+            return Short.class;
+        } else if ("short".equals(name)) {
+            return short.class;
+        } else if ("java.lang.Byte".equals(name) || "Byte".equals(name)) {
+            return Byte.class;
+        } else if ("byte".equals(name)) {
+            return byte.class;
+        } else if ("java.lang.Float".equals(name) || "Float".equals(name)) {
+            return Float.class;
+        } else if ("float".equals(name)) {
+            return float.class;
+        } else if ("java.lang.Double".equals(name) || "Double".equals(name)) {
+            return Double.class;
+        } else if ("double".equals(name)) {
+            return double.class;
+        }
+
+        return null;
+    }
+    /**
+     * Loads the given class with the provided classloader (may be null).
+     * Will ignore any class not found and return null.
+     *
+     * @param name    the name of the class to load
+     * @param loader  a provided loader (may be null)
+     * @return the class, or null if it could not be loaded
+     */
+    private static Class<?> doLoadClass(String name, ClassLoader loader) {
+        ObjectHelper.notEmpty(name, "name");
+        if (loader == null) {
+            return null;
+        }
+
+        try {
+            LOG.trace("Loading class: {} using classloader: {}", name, loader);
+            return loader.loadClass(name);
+        } catch (ClassNotFoundException e) {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Cannot load class: " + name + " using classloader: " + loader, e);
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
      * Creates an iterator over the value if the value is a collection, an
      * Object[], a String with values separated by comma,
      * or a primitive type array; otherwise to simplify the caller's code,
@@ -202,6 +381,64 @@ public class ObjectHelper {
      */
     public static Iterator<Object> createIterator(Object value, String delimiter) {
         return createIterator(value, delimiter, false);
+    }
+
+    public static Boolean toBoolean(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean)value;
+        }
+        if (value instanceof String) {
+            return "true".equalsIgnoreCase(value.toString()) ? Boolean.TRUE : Boolean.FALSE;
+        }
+        if (value instanceof Integer) {
+            return (Integer)value > 0 ? Boolean.TRUE : Boolean.FALSE;
+        }
+        return null;
+    }
+
+
+    /**
+     * Is the given value a numeric NaN type
+     *
+     * @param value the value
+     * @return <tt>true</tt> if its a {@link Float#NaN} or {@link Double#NaN}.
+     */
+    public static boolean isNaN(Object value) {
+        if (value == null || !(value instanceof Number)) {
+            return false;
+        }
+        // value must be a number
+        return value.equals(Float.NaN) || value.equals(Double.NaN);
+    }
+
+    private static final class ExceptionIterator implements Iterator<Throwable> {
+        private List<Throwable> tree = new ArrayList<Throwable>();
+        private Iterator<Throwable> it;
+
+        public ExceptionIterator(Throwable exception) {
+            Throwable current = exception;
+            // spool to the bottom of the caused by tree
+            while (current != null) {
+                tree.add(current);
+                current = current.getCause();
+            }
+
+            // reverse tree so we go from bottom to top
+            Collections.reverse(tree);
+            it = tree.iterator();
+        }
+
+        public boolean hasNext() {
+            return it.hasNext();
+        }
+
+        public Throwable next() {
+            return it.next();
+        }
+
+        public void remove() {
+            it.remove();
+        }
     }
 
     /**
@@ -345,6 +582,100 @@ public class ObjectHelper {
             return defaultValue;
         }
     }
+
+    /**
+     * Attempts to load the given resource as a stream using the thread context
+     * class loader or the class loader used to load this class
+     *
+     * @param name the name of the resource to load
+     * @return the stream or null if it could not be loaded
+     */
+    public static InputStream loadResourceAsStream(String name) {
+        InputStream in = null;
+
+        String resolvedName = resolveUriPath(name);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader != null) {
+            in = contextClassLoader.getResourceAsStream(resolvedName);
+        }
+        if (in == null) {
+            in = ObjectHelper.class.getClassLoader().getResourceAsStream(resolvedName);
+        }
+        if (in == null) {
+            in = ObjectHelper.class.getResourceAsStream(resolvedName);
+        }
+
+        return in;
+    }
+
+    /**
+     * Attempts to load the given resource as a stream using the thread context
+     * class loader or the class loader used to load this class
+     *
+     * @param name the name of the resource to load
+     * @return the stream or null if it could not be loaded
+     */
+    public static URL loadResourceAsURL(String name) {
+        URL url = null;
+
+        String resolvedName = resolveUriPath(name);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader != null) {
+            url = contextClassLoader.getResource(resolvedName);
+        }
+        if (url == null) {
+            url = ObjectHelper.class.getClassLoader().getResource(resolvedName);
+        }
+        if (url == null) {
+            url = ObjectHelper.class.getResource(resolvedName);
+        }
+
+        return url;
+    }
+
+    /**
+     * Helper operation used to remove relative path notation from
+     * resources.  Most critical for resources on the Classpath
+     * as resource loaders will not resolve the relative paths correctly.
+     *
+     * @param name the name of the resource to load
+     * @return the modified or unmodified string if there were no changes
+     */
+    private static String resolveUriPath(String name) {
+        // compact the path and use / as separator as that's used for loading resources on the classpath
+        return FileUtil.compactPath(name, '/');
+    }
+
+
+    /**
+     * Attempts to load the given resources from the given package name using the thread context
+     * class loader or the class loader used to load this class
+     *
+     * @param packageName the name of the package to load its resources
+     * @return the URLs for the resources or null if it could not be loaded
+     */
+    public static Enumeration<URL> loadResourcesAsURL(String packageName) {
+        Enumeration<URL> url = null;
+
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader != null) {
+            try {
+                url = contextClassLoader.getResources(packageName);
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        if (url == null) {
+            try {
+                url = ObjectHelper.class.getClassLoader().getResources(packageName);
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+
+        return url;
+    }
+
 
     /**
      * Returns if the given {@code clazz} type is a Java primitive array type.
@@ -610,6 +941,52 @@ public class ObjectHelper {
         return false;
     }
 
+    /**
+     * Checks if a Class or Method are annotated with the given annotation
+     *
+     * @param elem the Class or Method to reflect on
+     * @param annotationType the annotation type
+     * @param checkMetaAnnotations check for meta annotations
+     * @return true if annotations is present
+     */
+    public static boolean hasAnnotation(AnnotatedElement elem, Class<? extends Annotation> annotationType,
+                                        boolean checkMetaAnnotations) {
+        if (elem.isAnnotationPresent(annotationType)) {
+            return true;
+        }
+        if (checkMetaAnnotations) {
+            for (Annotation a : elem.getAnnotations()) {
+                for (Annotation meta : a.annotationType().getAnnotations()) {
+                    if (meta.annotationType().getName().equals(annotationType.getName())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * A helper method to invoke a method via reflection and wrap any exceptions
+     * as {@link RuntimeVramelException} instances
+     *
+     * @param method the method to invoke
+     * @param instance the object instance (or null for static methods)
+     * @param parameters the parameters to the method
+     * @return the result of the method invocation
+     */
+    public static Object invokeMethod(Method method, Object instance, Object... parameters) {
+        try {
+            return method.invoke(instance, parameters);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeVramelException(e);
+        } catch (InvocationTargetException e) {
+            throw ObjectHelper.wrapRuntimeCamelException(e.getCause());
+        }
+    }
+
+
 
     public static String between(String text, String after, String before) {
         text = after(text, after);
@@ -824,33 +1201,5 @@ public class ObjectHelper {
         return new ExceptionIterator(exception);
     }
 
-    private static final class ExceptionIterator implements Iterator<Throwable> {
-        private List<Throwable> tree = new ArrayList<Throwable>();
-        private Iterator<Throwable> it;
 
-        public ExceptionIterator(Throwable exception) {
-            Throwable current = exception;
-            // spool to the bottom of the caused by tree
-            while (current != null) {
-                tree.add(current);
-                current = current.getCause();
-            }
-
-            // reverse tree so we go from bottom to top
-            Collections.reverse(tree);
-            it = tree.iterator();
-        }
-
-        public boolean hasNext() {
-            return it.hasNext();
-        }
-
-        public Throwable next() {
-            return it.next();
-        }
-
-        public void remove() {
-            it.remove();
-        }
-    }
 }

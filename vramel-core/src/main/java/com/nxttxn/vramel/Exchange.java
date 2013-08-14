@@ -1,6 +1,7 @@
 package com.nxttxn.vramel;
 
 import com.nxttxn.vramel.processor.UnitOfWorkProcessor;
+import com.nxttxn.vramel.spi.Synchronization;
 import com.nxttxn.vramel.spi.UnitOfWork;
 
 import java.util.Map;
@@ -88,4 +89,15 @@ public interface Exchange {
 
 
     void setExchangeId(String id);
+
+    ExchangePattern getPattern();
+
+    /**
+     * Adds a {@link org.apache.camel.spi.Synchronization} to be invoked as callback when
+     * this exchange is completed.
+     *
+     * @param onCompletion  the callback to invoke on completion of this exchange
+     */
+    void addOnCompletion(Synchronization onCompletion);
+
 }

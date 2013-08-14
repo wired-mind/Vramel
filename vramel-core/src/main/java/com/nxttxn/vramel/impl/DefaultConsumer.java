@@ -4,6 +4,8 @@ import com.nxttxn.vramel.Consumer;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.components.rest.RestConsumer;
+import com.nxttxn.vramel.support.ServiceSupport;
+import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * Time: 1:27 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DefaultConsumer implements Consumer {
+public class DefaultConsumer extends ServiceSupport implements Consumer {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Endpoint endpoint;
     private final Processor processor;
@@ -40,6 +42,15 @@ public class DefaultConsumer implements Consumer {
 
     }
 
+    protected void doStop() throws Exception {
+        logger.debug("Stopping consumer: {}", this);
+        ServiceHelper.stopServices(processor);
+    }
+
+    protected void doStart() throws Exception {
+        logger.debug("Starting consumer: {}", this);
+        ServiceHelper.startServices(processor);
+    }
     public Processor getProcessor() {
         return processor;
     }

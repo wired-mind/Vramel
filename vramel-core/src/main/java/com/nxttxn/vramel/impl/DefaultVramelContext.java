@@ -5,13 +5,27 @@ import com.google.common.collect.Maps;
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.builder.ErrorHandlerBuilder;
 import com.nxttxn.vramel.components.properties.PropertiesComponent;
+import com.nxttxn.vramel.impl.converter.BaseTypeConverterRegistry;
+import com.nxttxn.vramel.impl.converter.DefaultTypeConverter;
+import com.nxttxn.vramel.impl.converter.LazyLoadingTypeConverter;
 import com.nxttxn.vramel.language.bean.BeanLanguage;
 import com.nxttxn.vramel.language.simple.SimpleLanguage;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.spi.*;
+import com.nxttxn.vramel.spi.ClassResolver;
+import com.nxttxn.vramel.spi.FactoryFinder;
+import com.nxttxn.vramel.spi.FactoryFinderResolver;
+import com.nxttxn.vramel.spi.Injector;
+import com.nxttxn.vramel.spi.Language;
+import com.nxttxn.vramel.spi.NodeIdFactory;
+import com.nxttxn.vramel.spi.PackageScanClassResolver;
+import com.nxttxn.vramel.spi.Registry;
+import com.nxttxn.vramel.spi.TypeConverterRegistry;
+import com.nxttxn.vramel.spi.UuidGenerator;
 import com.nxttxn.vramel.util.FlowDefinitionHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
+import org.apache.camel.spi.*;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +52,15 @@ public class DefaultVramelContext implements ModelVramelContext {
     private DefaultServerFactory defaultServerFactory;
     private ClientFactory defaultClientFactory;
     private List<Consumer> consumers = Lists.newArrayList();
+    private Boolean lazyLoadTypeConverters = Boolean.FALSE;
     private Map<String, Component> components = Maps.newHashMap();
+    private final Map<String, FactoryFinder> factories = new HashMap<String, FactoryFinder>();
+    private ClassResolver classResolver = new DefaultClassResolver();
+    private PackageScanClassResolver packageScanClassResolver;
+    private FactoryFinderResolver factoryFinderResolver = new DefaultFactoryFinderResolver();
+    private FactoryFinder defaultFactoryFinder;
+    private TypeConverter typeConverter;
+    private TypeConverterRegistry typeConverterRegistry;
     private JsonObject config;
     private final HashMap<String, Language> languages = new HashMap<String, Language>() {{
         put("bean", new BeanLanguage());
@@ -62,6 +84,10 @@ public class DefaultVramelContext implements ModelVramelContext {
         this.config = busModBase.getContainer().getConfig();
         this.defaultServerFactory = new DefaultServerFactory(busModBase.getVertx());
         this.defaultClientFactory = new DefaultClientFactory(busModBase.getVertx());
+
+
+        packageScanClassResolver = new DefaultPackageScanClassResolver();
+
     }
 
 
@@ -316,48 +342,113 @@ public class DefaultVramelContext implements ModelVramelContext {
 
     @Override
     public TypeConverter getTypeConverter() {
-        return new TypeConverter() {
-            @Override
-            public <T> T convertTo(Class<T> type, Object value) throws TypeConversionException {
-                return (T) value;
+        if (typeConverter == null) {
+            synchronized (this) {
+                // we can synchronize on this as there is only one instance
+                // of the camel context (its the container)
+                typeConverter = createTypeConverter();
+                try {
+                    //for now we don't do services. Might need to soon
+//                    addService(typeConverter);
+                } catch (Exception e) {
+                    throw ObjectHelper.wrapRuntimeCamelException(e);
+                }
             }
-
-            @Override
-            public <T> T convertTo(Class<T> type, Exchange exchange, Object value) throws TypeConversionException {
-                return (T) value;
-            }
-
-            @Override
-            public <T> T mandatoryConvertTo(Class<T> type, Object value) throws TypeConversionException, NoTypeConversionAvailableException {
-                return (T) value;
-            }
-
-            @Override
-            public <T> T mandatoryConvertTo(Class<T> type, Exchange exchange, Object value) throws TypeConversionException, NoTypeConversionAvailableException {
-                return (T) value;
-            }
-
-            @Override
-            public <T> T tryConvertTo(Class<T> type, Object value) {
-                return (T) value;
-            }
-
-            @Override
-            public <T> T tryConvertTo(Class<T> type, Exchange exchange, Object value) {
-                return (T) value;
-            }
-        };
+        }
+        return typeConverter;
     }
+
+    public TypeConverterRegistry getTypeConverterRegistry() {
+        if (typeConverterRegistry == null) {
+            // init type converter as its lazy
+            if (typeConverter == null) {
+                getTypeConverter();
+            }
+            if (typeConverter instanceof TypeConverterRegistry) {
+                typeConverterRegistry = (TypeConverterRegistry) typeConverter;
+            }
+        }
+        return typeConverterRegistry;
+    }
+
+    public void setTypeConverterRegistry(TypeConverterRegistry typeConverterRegistry) {
+        this.typeConverterRegistry = typeConverterRegistry;
+    }
+    /**
+     * Lazily create a default implementation
+     */
+    protected TypeConverter createTypeConverter() {
+        BaseTypeConverterRegistry answer;
+        if (isLazyLoadTypeConverters()) {
+            answer = new LazyLoadingTypeConverter(packageScanClassResolver, getInjector(), getDefaultFactoryFinder());
+        } else {
+            answer = new DefaultTypeConverter(packageScanClassResolver, getInjector(), getDefaultFactoryFinder());
+        }
+        setTypeConverterRegistry(answer);
+        return answer;
+    }
+
+
+    @Deprecated
+    public Boolean isLazyLoadTypeConverters() {
+        return lazyLoadTypeConverters != null && lazyLoadTypeConverters;
+    }
+
+    @Deprecated
+    public void setLazyLoadTypeConverters(Boolean lazyLoadTypeConverters) {
+        this.lazyLoadTypeConverters = lazyLoadTypeConverters;
+    }
+
+
+    public void setTypeConverter(TypeConverter typeConverter) {
+        this.typeConverter = typeConverter;
+    }
+
+    public PackageScanClassResolver getPackageScanClassResolver() {
+        return packageScanClassResolver;
+    }
+
+    public void setPackageScanClassResolver(PackageScanClassResolver packageScanClassResolver) {
+        this.packageScanClassResolver = packageScanClassResolver;
+    }
+
+
+    public FactoryFinder getDefaultFactoryFinder() {
+        if (defaultFactoryFinder == null) {
+            defaultFactoryFinder = factoryFinderResolver.resolveDefaultFactoryFinder(getClassResolver());
+        }
+        return defaultFactoryFinder;
+    }
+
+    public void setFactoryFinderResolver(FactoryFinderResolver resolver) {
+        this.factoryFinderResolver = resolver;
+    }
+
+    public FactoryFinder getFactoryFinder(String path) throws NoFactoryAvailableException {
+        synchronized (factories) {
+            FactoryFinder answer = factories.get(path);
+            if (answer == null) {
+                answer = factoryFinderResolver.resolveFactoryFinder(getClassResolver(), path);
+                factories.put(path, answer);
+            }
+            return answer;
+        }
+    }
+    @Override
+    public ClassResolver getClassResolver() {
+        return classResolver;
+    }
+
+    public void setClassResolver(ClassResolver classResolver) {
+        this.classResolver = classResolver;
+    }
+
 
     @Override
     public Registry getRegistry() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    @Override
-    public ClassResolver getClassResolver() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 
     @Override
     public Injector getInjector() {
