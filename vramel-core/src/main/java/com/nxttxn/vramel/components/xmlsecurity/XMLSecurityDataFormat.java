@@ -44,6 +44,8 @@ import com.nxttxn.vramel.builder.xml.XPathBuilder;
 import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.util.IOHelper;
 import org.apache.camel.util.jsse.KeyStoreParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -59,6 +61,7 @@ import org.apache.xml.security.keys.KeyInfo;
 
 
 public class XMLSecurityDataFormat implements DataFormat, VramelContextAware {
+    protected final Logger logger = LoggerFactory.getLogger(XMLSecurityDataFormat.class);
 
     /**
      * @deprecated  Use {@link #XMLSecurityDataFormat(String, Map, boolean, String, String, String, KeyStoreParameters)} instead.
