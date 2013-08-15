@@ -95,17 +95,28 @@ public class RestProducer extends DefaultAsyncProducer {
         });
         request.exceptionHandler(exceptionHandler);
 
-        final byte[] body = exchange.getIn().getBody();
+        final Message message = exchange.getIn();
+        final byte[] body = message.getMandatoryBody(byte[].class);
         final Buffer buffer = new Buffer(body == null ? new byte[0] : body);
         logger.info(String.format("[Rest Producer] [Request] [%s - %s]", method, uri));
         logger.debug(String.format("[Rest Producer] [Request] [%s - %s] - Request body: %s", method, uri, buffer.toString()));
 
-        request = request.putHeader("Authorization", "Basic " + credentials)
-                .putHeader("Accept", "*/*");
+        if (credentials.isPresent()) {
+            request = request.putHeader("Authorization", "Basic " + credentials.get())
+                    .putHeader("Accept", "*/*");
+        }
 
         if (buffer.length() == 0) {
             request.end();
         } else {
+            // set the content type in the response.
+            String contentType = message.getHeader(Exchange.CONTENT_TYPE, defaultContentType, String.class);
+            message.removeHeader(Exchange.CONTENT_TYPE);
+
+            for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
+                request = request.putHeader(header.getKey(), header.getValue());
+            }
+
             request.putHeader("Content-Type", contentType)
                     .putHeader("Content-Length", buffer.length())
                     .end(buffer);
