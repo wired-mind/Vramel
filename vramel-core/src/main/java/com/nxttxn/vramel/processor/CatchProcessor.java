@@ -18,6 +18,7 @@ package com.nxttxn.vramel.processor;
 
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Predicate;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.util.ObjectHelper;
 
@@ -30,7 +31,7 @@ import java.util.List;
  *
  * @version
  */
-public class CatchProcessor extends DelegateProcessor  {
+public class CatchProcessor extends DelegateAsyncProcessor {
     private final List<Class<? extends Throwable>> exceptions;
     private final Predicate onWhen;
     private final Predicate handled;

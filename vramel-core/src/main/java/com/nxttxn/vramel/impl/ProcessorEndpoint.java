@@ -22,19 +22,19 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
 
 public class ProcessorEndpoint extends DefaultEndpoint {
-    private SyncProcessor processor;
+    private Processor processor;
 
     protected ProcessorEndpoint() {
     }
 
     @SuppressWarnings("deprecation")
-    public ProcessorEndpoint(String endpointUri, VramelContext context, SyncProcessor processor) {
+    public ProcessorEndpoint(String endpointUri, VramelContext context, Processor processor) {
         super(endpointUri);
         this.setVramelContext(context);
         this.processor = processor;
     }
 
-    public ProcessorEndpoint(String endpointUri, Component component, SyncProcessor processor) {
+    public ProcessorEndpoint(String endpointUri, Component component, Processor processor) {
         super(endpointUri, component);
         this.processor = processor;
     }
@@ -44,13 +44,13 @@ public class ProcessorEndpoint extends DefaultEndpoint {
     }
 
     @Deprecated
-    public ProcessorEndpoint(String endpointUri, SyncProcessor processor) {
+    public ProcessorEndpoint(String endpointUri, Processor processor) {
         super(endpointUri);
         this.processor = processor;
     }
 
     @Override
-    public Consumer createConsumer(Processor processor) throws Exception {
+    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
         return new DefaultConsumer(this, processor);
     }
 
@@ -58,28 +58,27 @@ public class ProcessorEndpoint extends DefaultEndpoint {
         return new DefaultProducer(this) {
 
             @Override
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+            public void process(Exchange exchange) throws Exception {
                 onExchange(exchange);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
     }
 
 
 
-    public SyncProcessor getProcessor() throws Exception {
+    public Processor getProcessor() throws Exception {
         if (processor == null) {
             processor = createProcessor();
         }
         return processor;
     }
 
-    public void setProcessor(SyncProcessor processor) {
+    public void setProcessor(Processor processor) {
         this.processor = processor;
     }
 
-    protected SyncProcessor createProcessor() throws Exception {
-        return new SyncProcessor() {
+    protected Processor createProcessor() throws Exception {
+        return new Processor() {
             @Override
             public void process(Exchange exchange) throws Exception {
                 onExchange(exchange);

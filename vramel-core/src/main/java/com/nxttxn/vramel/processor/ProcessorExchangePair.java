@@ -1,5 +1,6 @@
 package com.nxttxn.vramel.processor;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.Producer;

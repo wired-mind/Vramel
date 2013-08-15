@@ -1,12 +1,12 @@
 package com.nxttxn.vramel.components.rest;
 
-import com.google.common.base.Optional;
 import com.nxttxn.vramel.ClientFactory;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Producer;
+import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
@@ -15,11 +15,8 @@ import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.impl.ws.Base64;
 import org.vertx.java.core.json.JsonObject;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,7 +25,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  * Time: 3:22 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RestProducer extends DefaultProducer {
+public class RestProducer extends DefaultAsyncProducer {
 
 
     private final RestChannelAdapter endpoint;
@@ -50,7 +47,7 @@ public class RestProducer extends DefaultProducer {
     }
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         final Handler<Exception> exceptionHandler = new Handler<Exception>() {
             @Override
             public void handle(Exception e) {
@@ -99,6 +96,12 @@ public class RestProducer extends DefaultProducer {
                     .end(buffer);
         }
 
+        return false;
+
+    }
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
     }
 
     private String getUri(Exchange exchange) {

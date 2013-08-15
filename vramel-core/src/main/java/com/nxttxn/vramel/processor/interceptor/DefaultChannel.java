@@ -19,15 +19,13 @@ package com.nxttxn.vramel.processor.interceptor;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.VramelContextAware;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.model.ModelChannel;
 import com.nxttxn.vramel.model.ProcessorDefinition;
 import com.nxttxn.vramel.processor.FlowContextProcessor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,17 +139,21 @@ public class DefaultChannel implements ModelChannel {
 
     }
 
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
 
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+
+    public boolean process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
 
         Processor processor = getOutput();
         if (processor == null || !continueProcessing(exchange)) {
             // we should not continue routing so we are done
             optionalAsyncResultHandler.done(exchange);
-            return;
+            return true;
         }
 
-        flowContextProcessor.process(exchange, optionalAsyncResultHandler);
+        return flowContextProcessor.process(exchange, optionalAsyncResultHandler);
     }
 
     private boolean continueProcessing(Exchange exchange) {

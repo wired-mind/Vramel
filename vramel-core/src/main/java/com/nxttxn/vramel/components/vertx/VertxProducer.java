@@ -1,10 +1,11 @@
 package com.nxttxn.vramel.components.vertx;
 
 import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.impl.DefaultExchange;
+import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultExchangeHolder;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
 
@@ -15,7 +16,7 @@ import org.vertx.java.core.eventbus.Message;
  * Time: 8:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class VertxProducer extends DefaultProducer {
+public class VertxProducer extends DefaultAsyncProducer {
 
     private final String address;
 
@@ -25,7 +26,7 @@ public class VertxProducer extends DefaultProducer {
     }
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         final VramelContext vramelContext = getEndpoint().getVramelContext();
 
         byte[] obj;
@@ -67,5 +68,10 @@ public class VertxProducer extends DefaultProducer {
                 }
             }
         });
+        return false;
+    }
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
     }
 }

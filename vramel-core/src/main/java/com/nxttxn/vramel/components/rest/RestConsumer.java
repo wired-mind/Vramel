@@ -14,7 +14,6 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.json.JsonObject;
 
-import java.io.Serializable;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,7 +30,7 @@ public class RestConsumer extends DefaultConsumer {
     private final RestChannelAdapter endpoint;
     private final int httpOk = 200;
 
-    public RestConsumer(Endpoint endpoint, final Processor processor) {
+    public RestConsumer(Endpoint endpoint, final AsyncProcessor processor) {
         super(endpoint, processor);
         this.endpoint = (RestChannelAdapter) endpoint;
 

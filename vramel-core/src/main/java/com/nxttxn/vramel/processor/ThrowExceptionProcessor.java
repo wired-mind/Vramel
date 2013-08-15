@@ -18,6 +18,7 @@ package com.nxttxn.vramel.processor;
 
 
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.ObjectHelper;
@@ -33,13 +34,6 @@ public class ThrowExceptionProcessor  implements Processor {
         this.exception = exception;
     }
 
-    /**
-     * Set the exception in the exchange
-     */
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        exchange.setException(exception);
-        optionalAsyncResultHandler.done(exchange);
-    }
 
 
     public String toString() {
@@ -47,4 +41,8 @@ public class ThrowExceptionProcessor  implements Processor {
     }
 
 
+    @Override
+    public void process(Exchange exchange) throws Exception {
+        exchange.setException(exception);
+    }
 }

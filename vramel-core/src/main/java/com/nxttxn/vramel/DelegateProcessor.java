@@ -14,14 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.processor;
-
-import com.nxttxn.vramel.AsyncProcessor;
+package com.nxttxn.vramel;
 
 /**
- * An interface used to represent an error handler
- *
- * @version
+ * Interface to be used for processors that delegate to the real processor
  */
-public interface ErrorHandler extends AsyncProcessor {
+public interface DelegateProcessor extends Processor {
+
+    /**
+     *
+     * @return the processor we delegate to
+     */
+    Processor getProcessor();
 }

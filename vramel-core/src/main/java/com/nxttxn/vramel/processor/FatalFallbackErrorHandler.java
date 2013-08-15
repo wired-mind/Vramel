@@ -17,14 +17,13 @@
 package com.nxttxn.vramel.processor;
 
 
-import com.google.common.base.Optional;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.AsyncResult;
 
 /**
  * An {@link org.apache.camel.processor.ErrorHandler} used as a safe fallback when
@@ -32,7 +31,7 @@ import org.vertx.java.core.AsyncResult;
  *
  * @version
  */
-public class FatalFallbackErrorHandler extends DelegateProcessor implements ErrorHandler {
+public class FatalFallbackErrorHandler extends DelegateAsyncProcessor implements ErrorHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FatalFallbackErrorHandler.class);
 
@@ -41,8 +40,8 @@ public class FatalFallbackErrorHandler extends DelegateProcessor implements Erro
     }
 
     @Override
-    protected void processNext(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        super.processNext(exchange, new OptionalAsyncResultHandler() {
+    protected boolean processNext(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+        return super.processNext(exchange, new OptionalAsyncResultHandler() {
             @Override
             public void handle(AsyncExchangeResult optionalAsyncResult) {
                 if (exchange.getException() != null) {

@@ -17,20 +17,19 @@
 package com.nxttxn.vramel.processor;
 
 
-import com.google.common.base.Optional;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.spi.UnitOfWork;
-import org.vertx.java.core.AsyncResult;
 
 /**
  * This processor tracks the current {@link FlowContext} while processing the {@link Exchange}.
  * This ensures that the {@link Exchange} have details under which route its being currently processed.
  */
-public class FlowContextProcessor extends DelegateProcessor {
+public class FlowContextProcessor extends DelegateAsyncProcessor {
 
     private final FlowContext flowContext;
 
@@ -40,14 +39,14 @@ public class FlowContextProcessor extends DelegateProcessor {
     }
 
     @Override
-    protected void processNext(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    protected boolean processNext(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         // push the current route context
         final UnitOfWork unitOfWork = exchange.getUnitOfWork();
         if (unitOfWork != null) {
             unitOfWork.pushFlowContext(flowContext);
         }
 
-        processor.process(exchange, new OptionalAsyncResultHandler() {
+        return processor.process(exchange, new OptionalAsyncResultHandler() {
             @Override
             public void handle(AsyncExchangeResult optionalAsyncResult) {
                 try {
@@ -62,8 +61,6 @@ public class FlowContextProcessor extends DelegateProcessor {
                 }
             }
         });
-
-
     }
 
     @Override

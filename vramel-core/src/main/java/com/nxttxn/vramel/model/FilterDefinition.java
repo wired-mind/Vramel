@@ -1,8 +1,7 @@
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Predicate;
-import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.spi.FlowContext;
 
 /**
@@ -24,7 +23,7 @@ public class FilterDefinition extends ExpressionNode {
 
 
     @Override
-    public Processor createProcessor(FlowContext flowContext) throws Exception {
+    public AsyncProcessor createProcessor(FlowContext flowContext) throws Exception {
         return createFilterProcessor(flowContext);
     }
 }

@@ -10,7 +10,7 @@ import org.vertx.java.core.json.JsonObject;
  * To change this template use File | Settings | File Templates.
  */
 public interface Endpoint extends VramelContextAware {
-    Consumer createConsumer(Processor processor) throws Exception;
+    Consumer createConsumer(AsyncProcessor processor) throws Exception;
     Producer createProducer() throws Exception;
 
     JsonObject getConfig();

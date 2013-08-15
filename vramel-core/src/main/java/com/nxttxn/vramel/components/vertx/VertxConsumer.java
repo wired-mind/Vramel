@@ -3,12 +3,10 @@ package com.nxttxn.vramel.components.vertx;
 import com.google.common.base.Optional;
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultConsumer;
-import com.nxttxn.vramel.impl.DefaultExchange;
 import com.nxttxn.vramel.impl.DefaultExchangeHolder;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import org.apache.commons.lang3.SerializationUtils;
-import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -24,7 +22,7 @@ public class VertxConsumer extends DefaultConsumer {
 
     private final VertxChannelAdapter endpoint;
 
-    public VertxConsumer(final Endpoint endpoint, final Processor processor) throws Exception {
+    public VertxConsumer(final Endpoint endpoint, final AsyncProcessor processor) throws Exception {
         super(endpoint, processor);
         this.endpoint = (VertxChannelAdapter) endpoint;
 

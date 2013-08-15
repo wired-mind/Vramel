@@ -4,11 +4,11 @@ import com.google.common.base.Optional;
 import com.nxttxn.axis2.transport.vertx.VertxServiceClient;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.OMFactory;
-import org.apache.axiom.om.OMOutputFormat;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.axiom.soap.SOAPBody;
@@ -17,11 +17,9 @@ import org.apache.axis2.client.Options;
 import org.apache.axis2.client.async.AxisCallback;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
 import org.apache.neethi.Policy;
 import org.apache.neethi.PolicyEngine;
 import org.apache.rampart.RampartMessageData;
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
 import javax.xml.namespace.QName;
@@ -35,7 +33,7 @@ import java.io.InputStream;
  * Time: 1:00 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Axis2Producer extends DefaultProducer {
+public class Axis2Producer extends DefaultAsyncProducer {
 
 
     private final Axis2ChannelAdapter endpoint;
@@ -91,7 +89,7 @@ public class Axis2Producer extends DefaultProducer {
 
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
 
         final byte[] body = exchange.getIn().getBody();
         final String xmlAsString = new String(body);
@@ -132,6 +130,10 @@ public class Axis2Producer extends DefaultProducer {
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         });
+        return false;
     }
 
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
 }

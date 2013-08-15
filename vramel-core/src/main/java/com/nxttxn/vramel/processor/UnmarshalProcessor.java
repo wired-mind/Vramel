@@ -1,9 +1,10 @@
 package com.nxttxn.vramel.processor;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.util.IOHelper;
 
@@ -27,12 +28,12 @@ public class UnmarshalProcessor implements Processor {
     }
 
     @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception{
+    public void process(Exchange exchange) throws Exception {
         checkNotNull(dataFormat);
 
         //Very simplistic right now. Assume that body is a byte[].
-        final byte[] body = exchange.getIn().getBody(byte[].class);
-        InputStream stream = new ByteArrayInputStream(body);
+        final InputStream stream = exchange.getIn().getMandatoryBody(InputStream.class);
+
         try {
             // lets setup the out message before we invoke the dataFormat so that it can mutate it if necessary
             Message out = exchange.getOut();
@@ -40,8 +41,6 @@ public class UnmarshalProcessor implements Processor {
 
             Object result = dataFormat.unmarshal(exchange, stream);
             out.setBody(result);
-            optionalAsyncResultHandler.done(exchange);
-
         } catch (Exception e) {
             // remove OUT message, as an exception occurred
             exchange.setOut(null);

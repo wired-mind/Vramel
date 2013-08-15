@@ -17,7 +17,7 @@
 package com.nxttxn.vramel.impl;
 
 import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.processor.DelegateProcessor;
+import com.nxttxn.vramel.processor.DelegateAsyncProcessor;
 import com.nxttxn.vramel.spi.FlowContext;
 
 import java.util.List;
@@ -34,10 +34,10 @@ import java.util.List;
  * @version
  */
 public class EventDrivenConsumerFlow extends DefaultFlow {
-    private final Processor processor;
+    private final AsyncProcessor processor;
     private Consumer consumer;
 
-    public EventDrivenConsumerFlow(FlowContext flowContext, Endpoint endpoint, Processor processor) {
+    public EventDrivenConsumerFlow(FlowContext flowContext, Endpoint endpoint, AsyncProcessor processor) {
         super(flowContext, endpoint);
         this.processor = processor;
     }
@@ -47,7 +47,7 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
         return "EventDrivenConsumerRoute[" + getEndpoint() + " -> " + processor + "]";
     }
 
-    public Processor getProcessor() {
+    public AsyncProcessor getProcessor() {
         return processor;
     }
 
@@ -62,28 +62,28 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
         if (consumer != null) {
             services.add(consumer);
         }
-        Processor processor = getProcessor();
+        AsyncProcessor processor = getProcessor();
         if (processor instanceof Service) {
             services.add((Service)processor);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public Navigate<Processor> navigate() {
-        Processor answer = getProcessor();
+    public Navigate<AsyncProcessor> navigate() {
+        AsyncProcessor answer = getProcessor();
 
         // we do not want to navigate the instrument and inflight processors
         // which is the first 2 delegate async processors, so skip them
         // skip the instrumentation processor if this route was wrapped by one
-        if (answer instanceof DelegateProcessor) {
-            answer = ((DelegateProcessor) answer).getProcessor();
-            if (answer instanceof DelegateProcessor) {
-                answer = ((DelegateProcessor) answer).getProcessor();
+        if (answer instanceof DelegateAsyncProcessor) {
+            answer = ((DelegateAsyncProcessor) answer).getProcessor();
+            if (answer instanceof DelegateAsyncProcessor) {
+                answer = ((DelegateAsyncProcessor) answer).getProcessor();
             }
         }
 
         if (answer instanceof Navigate) {
-            return (Navigate<Processor>) answer;
+            return (Navigate<AsyncProcessor>) answer;
         }
         return null;
     }

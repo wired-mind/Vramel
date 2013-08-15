@@ -16,6 +16,7 @@
  */
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.ThrowExceptionProcessor;
 import com.nxttxn.vramel.spi.FlowContext;

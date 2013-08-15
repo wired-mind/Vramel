@@ -133,7 +133,7 @@ public class DefaultFlowContext implements FlowContext {
     public void commit() {
         // now lets turn all of the event driven consumer processors into a single route
         if (!eventDrivenProcessors.isEmpty()) {
-            Processor target = new PipelineProcessor(eventDrivenProcessors);
+            AsyncProcessor target = new PipelineProcessor(eventDrivenProcessors);
 
 
             // and wrap it in a unit of work so the UoW is on the top, so the entire route will be in the same UoW

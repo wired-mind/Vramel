@@ -19,14 +19,13 @@ package com.nxttxn.vramel.builder;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Expression;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
 import java.io.Serializable;
 
 
 
 /**
- * A builder of a number of different {@link Processor} implementations
+ * A builder of a number of different {@link com.nxttxn.vramel.AsyncProcessor} implementations
  *
  * @version
  */
@@ -43,10 +42,9 @@ public final class ProcessorBuilder {
      */
     public static Processor setBody(final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Object newBody = expression.evaluate(exchange, Object.class);
                 exchange.getIn().setBody(newBody);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -61,10 +59,9 @@ public final class ProcessorBuilder {
      */
     public static Processor setOutBody(final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Object newBody = expression.evaluate(exchange, Object.class);
                 exchange.getOut().setBody(newBody);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -79,11 +76,10 @@ public final class ProcessorBuilder {
      */
     public static Processor setFaultBody(final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Object newBody = expression.evaluate(exchange, Object.class);
                 exchange.getOut().setFault(true);
                 exchange.getOut().setBody(newBody);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -98,10 +94,9 @@ public final class ProcessorBuilder {
      */
     public static Processor setHeader(final String name, final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Serializable value = expression.evaluate(exchange, Serializable.class);
                 exchange.getIn().setHeader(name, value);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -116,10 +111,9 @@ public final class ProcessorBuilder {
      */
     public static Processor setOutHeader(final String name, final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Serializable value = expression.evaluate(exchange, Serializable.class);
                 exchange.getOut().setHeader(name, value);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -134,11 +128,10 @@ public final class ProcessorBuilder {
      */
     public static Processor setFaultHeader(final String name, final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Serializable value = expression.evaluate(exchange, Serializable.class);
                 exchange.getOut().setFault(true);
                 exchange.getOut().setHeader(name, value);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -153,10 +146,9 @@ public final class ProcessorBuilder {
      */
     public static Processor setProperty(final String name, final Expression expression) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Object value = expression.evaluate(exchange, Object.class);
                 exchange.setProperty(name, value);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -171,9 +163,8 @@ public final class ProcessorBuilder {
      */
     public static Processor removeHeader(final String name) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 exchange.getIn().removeHeader(name);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -186,8 +177,8 @@ public final class ProcessorBuilder {
 //    /**
 //     * Removes the headers on the IN message
 //     */
-//    public static Processor removeHeaders(final String pattern) {
-//        return new Processor() {
+//    public static AsyncProcessor removeHeaders(final String pattern) {
+//        return new AsyncProcessor() {
 //            public void process(Exchange exchange, OptionalAsyncResultHandler<Exchange> optionalAsyncResultHandler) {
 //                exchange.getIn().removeHeaders(pattern);
 //                optionalAsyncResultHandler.done(exchange);
@@ -203,8 +194,8 @@ public final class ProcessorBuilder {
 //    /**
 //     * Removes all headers on the IN message, except for the ones provided in the <tt>names</tt> parameter
 //     */
-//    public static Processor removeHeaders(final String pattern, final String... exceptionPatterns) {
-//        return new Processor() {
+//    public static AsyncProcessor removeHeaders(final String pattern, final String... exceptionPatterns) {
+//        return new AsyncProcessor() {
 //            public void process(Exchange exchange, OptionalAsyncResultHandler<Exchange> optionalAsyncResultHandler) {
 //                exchange.getIn().removeHeaders(pattern, exceptionPatterns);
 //                optionalAsyncResultHandler.done(exchange);
@@ -224,10 +215,9 @@ public final class ProcessorBuilder {
     @Deprecated
     public static Processor removeFaultHeader(final String name) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 exchange.getOut().setFault(true);
                 exchange.getOut().removeHeader(name);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -242,9 +232,8 @@ public final class ProcessorBuilder {
      */
     public static Processor removeProperty(final String name) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 exchange.removeProperty(name);
-                optionalAsyncResultHandler.done(exchange);
             }
 
             @Override
@@ -259,7 +248,7 @@ public final class ProcessorBuilder {
      */
     public static Processor throwException(final Exception ex) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+            public void process(Exchange exchange) throws Exception {
                 throw ex;
             }
 

@@ -22,7 +22,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
 /**
  * Some useful converters for Camel APIs such as to convert a {@link Predicate} or {@link Expression}
- * to a {@link Processor}
+ * to a {@link com.nxttxn.vramel.AsyncProcessor}
  *
  * @version
  */
@@ -38,12 +38,11 @@ public final class CamelConverter {
     @Converter
     public static Processor toProcessor(final Predicate predicate) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+            public void process(Exchange exchange) throws Exception {
                 boolean answer = predicate.matches(exchange);
                 Message out = exchange.getOut();
                 out.copyFrom(exchange.getIn());
                 out.setBody(answer);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
 
@@ -52,12 +51,11 @@ public final class CamelConverter {
     @Converter
     public static Processor toProcessor(final Expression expresion) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+            public void process(Exchange exchange) throws Exception {
                 Object answer = expresion.evaluate(exchange, Object.class);
                 Message out = exchange.getOut();
                 out.copyFrom(exchange.getIn());
                 out.setBody(answer);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
     }

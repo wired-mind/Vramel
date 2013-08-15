@@ -1,11 +1,14 @@
 package com.nxttxn.vramel.processor;
 
 import com.google.common.base.Optional;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.processor.async.*;
 import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.processor.async.*;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.support.AggregationSupport;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Time: 10:36 AM
  * To change this template use File | Settings | File Templates.
  */
-public class MulticastProcessor extends AggregationSupport implements Processor {
+public class MulticastProcessor extends AggregationSupport implements AsyncProcessor {
     public List<Processor> getProcessors() {
         return processors;
     }
@@ -39,12 +42,18 @@ public class MulticastProcessor extends AggregationSupport implements Processor 
         this(processors, false, null);
     }
 
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
+
     @Override
-    public void process(Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         final AtomicExchange result = new AtomicExchange();
 
         if (isEmpty()) {
             optionalAsyncResultHandler.done(exchange);
+            return false;
         }
 
         final Iterable<ProcessorExchangePair<Processor>> pairs = createProcessorExchangePairs(exchange);
@@ -55,6 +64,8 @@ public class MulticastProcessor extends AggregationSupport implements Processor 
             final Iterator<ProcessorExchangePair<Processor>> iterator = pairs.iterator();
             doSequential(exchange, result, optionalAsyncResultHandler, iterator, iterator.next());
         }
+
+        return false;
     }
 
     private boolean isEmpty() {
@@ -72,7 +83,8 @@ public class MulticastProcessor extends AggregationSupport implements Processor 
         for (ProcessorExchangePair pair : pairs) {
             Exchange newExchange = pair.getExchange();
             final Processor processor = pair.getProcessor();
-            processor.process(newExchange, new ParallelResultHandler(optionalAsyncResultHandler, counter, result, original, aggregationStrategy));
+            AsyncProcessor ap = AsyncProcessorConverterHelper.convert(processor);
+            ap.process(newExchange, new ParallelResultHandler(optionalAsyncResultHandler, counter, result, original, aggregationStrategy));
         }
     }
 
@@ -84,7 +96,8 @@ public class MulticastProcessor extends AggregationSupport implements Processor 
         final Exchange exchange = pair.getExchange();
         final Processor processor = pair.getProcessor();
 
-        processor.process(exchange, new SequentialResultHandler(optionalAsyncResultHandler, result, pairs, original, aggregationStrategy));
+        AsyncProcessor ap = AsyncProcessorConverterHelper.convert(processor);
+        ap.process(exchange, new SequentialResultHandler(optionalAsyncResultHandler, result, pairs, original, aggregationStrategy));
 
     }
 

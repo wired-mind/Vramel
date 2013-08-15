@@ -17,7 +17,7 @@
 package com.nxttxn.vramel;
 
 /**
- * Base class for all Camel checked exceptions typically thrown by a {@link Processor}
+ * Base class for all Camel checked exceptions typically thrown by a {@link AsyncProcessor}
  *
  * @version
  */

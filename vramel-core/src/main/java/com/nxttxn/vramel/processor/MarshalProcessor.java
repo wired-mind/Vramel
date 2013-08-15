@@ -1,10 +1,12 @@
 package com.nxttxn.vramel.processor;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.DataFormat;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 
 import java.io.ByteArrayOutputStream;
 
@@ -24,8 +26,7 @@ public class MarshalProcessor implements Processor {
         this.dataFormat = dataFormat;
     }
 
-    @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public void process(Exchange exchange) throws Exception {
         checkNotNull(dataFormat);
 
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -41,11 +42,12 @@ public class MarshalProcessor implements Processor {
             dataFormat.marshal(exchange, body, buffer);
             byte[] data = buffer.toByteArray();
             out.setBody(data);
-            optionalAsyncResultHandler.done(exchange);
         } catch (Exception e) {
             // remove OUT message, as an exception occurred
             exchange.setOut(null);
             throw e;
         }
     }
+
+
 }

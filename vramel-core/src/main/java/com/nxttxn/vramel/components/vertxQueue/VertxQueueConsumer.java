@@ -4,7 +4,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IQueue;
 import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.components.vertx.VertxChannelAdapter;
 import com.nxttxn.vramel.components.vertx.VertxConsumer;
 import com.nxttxn.vramel.impl.DefaultConsumer;
@@ -27,7 +27,7 @@ public class VertxQueueConsumer extends DefaultConsumer {
     private final VertxQueueChannelAdapter endpoint;
     private final VertxConsumer queueDrivenConsumer;
 
-    public VertxQueueConsumer(Endpoint endpoint, Processor processor) throws Exception {
+    public VertxQueueConsumer(Endpoint endpoint, AsyncProcessor processor) throws Exception {
         super(endpoint, processor);
         this.endpoint = (VertxQueueChannelAdapter) endpoint;
 

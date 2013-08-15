@@ -213,13 +213,12 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
 
     public void sendBodyAndHeaders(Endpoint endpoint, final Object body, final Map<String, Object> headers) throws VramelExecutionException {
         Exchange result = send(endpoint, new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Message in = exchange.getIn();
                 for (Map.Entry<String, Object> header : headers.entrySet()) {
                     in.setHeader(header.getKey(), header.getValue());
                 }
                 in.setBody(body);
-                optionalAsyncResultHandler.done(exchange);
             }
         });
         // must invoke extract result body in case of exception to be rethrown
@@ -232,13 +231,12 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
 
     public Object sendBodyAndHeaders(Endpoint endpoint, ExchangePattern pattern, final Object body, final Map<String, Object> headers) throws VramelExecutionException {
         Exchange exchange = send(endpoint, pattern, new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+            public void process(Exchange exchange) throws Exception {
                 Message in = exchange.getIn();
                 for (Map.Entry<String, Object> header : headers.entrySet()) {
                     in.setHeader(header.getKey(), header.getValue());
                 }
                 in.setBody(body);
-                optionalAsyncResultHandler.done(exchange);
             }
         });
         Object result = extractResultBody(exchange, pattern);
@@ -402,32 +400,29 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
 
     protected Processor createBodyAndHeaderProcessor(final Object body, final String header, final Object headerValue) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Message in = exchange.getIn();
                 in.setHeader(header, headerValue);
                 in.setBody(body);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
     }
 
     protected Processor createBodyAndPropertyProcessor(final Object body, final String property, final Object propertyValue) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 exchange.setProperty(property, propertyValue);
                 Message in = exchange.getIn();
                 in.setBody(body);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
     }
 
     protected Processor createSetBodyProcessor(final Object body) {
         return new Processor() {
-            public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
+            public void process(Exchange exchange) {
                 Message in = exchange.getIn();
                 in.setBody(body);
-                optionalAsyncResultHandler.done(exchange);
             }
         };
     }

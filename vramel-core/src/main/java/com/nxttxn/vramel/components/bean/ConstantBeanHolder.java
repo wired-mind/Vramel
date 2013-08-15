@@ -17,7 +17,7 @@
 package com.nxttxn.vramel.components.bean;
 
 
-import com.nxttxn.vramel.SyncProcessor;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.VramelContextHelper;
@@ -30,7 +30,7 @@ import com.nxttxn.vramel.util.VramelContextHelper;
 public class ConstantBeanHolder implements BeanHolder {
     private final Object bean;
     private final BeanInfo beanInfo;
-    private final SyncProcessor processor;
+    private final Processor processor;
 
     public ConstantBeanHolder(Object bean, BeanInfo beanInfo) {
         ObjectHelper.notNull(bean, "bean");
@@ -38,7 +38,7 @@ public class ConstantBeanHolder implements BeanHolder {
 
         this.bean = bean;
         this.beanInfo = beanInfo;
-        this.processor = VramelContextHelper.convertTo(beanInfo.getVramelContext(), SyncProcessor.class, bean);
+        this.processor = VramelContextHelper.convertTo(beanInfo.getVramelContext(), Processor.class, bean);
     }
 
     public ConstantBeanHolder(Object bean, VramelContext context) {
@@ -59,7 +59,7 @@ public class ConstantBeanHolder implements BeanHolder {
         return bean;
     }
 
-    public SyncProcessor getProcessor() {
+    public Processor getProcessor() {
         return processor;
     }
 

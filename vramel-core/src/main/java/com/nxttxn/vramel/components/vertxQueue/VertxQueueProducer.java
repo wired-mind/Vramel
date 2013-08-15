@@ -1,12 +1,13 @@
 package com.nxttxn.vramel.components.vertxQueue;
 
 import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.apache.commons.lang3.SerializationUtils;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import java.io.Serializable;
@@ -19,7 +20,7 @@ import java.util.Map;
  * Time: 5:43 PM
  * To change this template use File | Settings | File Templates.
  */
-public class VertxQueueProducer extends DefaultProducer {
+public class VertxQueueProducer extends DefaultAsyncProducer {
     private final String address;
 
     public VertxQueueProducer(Endpoint endpoint, String address) {
@@ -28,7 +29,7 @@ public class VertxQueueProducer extends DefaultProducer {
     }
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         final VramelContext vramelContext = getEndpoint().getVramelContext();
 
 
@@ -62,5 +63,11 @@ public class VertxQueueProducer extends DefaultProducer {
                 optionalAsyncResultHandler.done(exchange);
             }
         });
+
+        return false;
+    }
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
     }
 }

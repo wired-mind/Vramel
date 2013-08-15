@@ -1,8 +1,10 @@
 package com.nxttxn.vramel.processor;
 
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.slf4j.Logger;
 
 /**
@@ -21,9 +23,8 @@ public class LogProcessor implements Processor {
         this.logger = logger;
     }
 
-    @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public void process(Exchange exchange) throws Exception {
         logger.info(String.format("%s: %s", message, exchange.toString()));
-        optionalAsyncResultHandler.done(exchange);
     }
+
 }

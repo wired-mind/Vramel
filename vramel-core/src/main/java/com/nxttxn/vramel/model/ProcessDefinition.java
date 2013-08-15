@@ -1,9 +1,9 @@
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.impl.DefaultVramelContext;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,6 +22,6 @@ public class ProcessDefinition extends NoOutputDefinition<ProcessDefinition> {
 
     @Override
     public Processor createProcessor(FlowContext flowContext) throws Exception {
-        return processor;
+        return AsyncProcessorConverterHelper.convert(processor);
     }
 }

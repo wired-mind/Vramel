@@ -1,10 +1,10 @@
 package com.nxttxn.vramel.model;
 
 import com.google.common.collect.Lists;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Expression;
 import com.nxttxn.vramel.Predicate;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.model.language.ExpressionDefinition;
 import com.nxttxn.vramel.processor.FilterProcessor;
 import com.nxttxn.vramel.spi.FlowContext;

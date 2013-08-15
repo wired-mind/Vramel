@@ -18,7 +18,6 @@ package com.nxttxn.vramel.language.bean;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.components.bean.*;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.StringHelper;
 import org.apache.camel.util.KeyValueHolder;
@@ -152,7 +151,7 @@ public class BeanExpression implements Expression, Predicate {
     /**
      * Invokes a given bean holder. The method name is optional.
      */
-    private final class InvokeProcessor implements SyncProcessor {
+    private final class InvokeProcessor implements Processor {
 
         private BeanHolder beanHolder;
         private String methodName;
@@ -208,7 +207,7 @@ public class BeanExpression implements Expression, Predicate {
      * For more advanced OGNL you may have to look for a real framework such as OGNL, Mvel or dynamic
      * programming language such as Groovy, JuEL, JavaScript.
      */
-    private final class OgnlInvokeProcessor implements SyncProcessor {
+    private final class OgnlInvokeProcessor implements Processor {
 
         private final String ognl;
         private final BeanHolder beanHolder;

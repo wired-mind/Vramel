@@ -14,42 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nxttxn.vramel.processor;
+package com.nxttxn.vramel.impl;
 
 
-import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.impl.DefaultMessage;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.AsyncProcessor;
+import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 
 /**
- * A processor which sets the body on the IN message with an {@link Expression}
+ * A default implementation of {@link org.apache.camel.Producer} for implementation inheritance,
+ * which can process {@link Exchange}s asynchronously.
+ *
+ * @version
  */
-public class SetBodyProcessor implements Processor {
-    private final Expression expression;
+public abstract class DefaultAsyncProducer extends DefaultProducer implements AsyncProcessor {
 
-    public SetBodyProcessor(Expression expression) {
-        this.expression = expression;
+    public DefaultAsyncProducer(Endpoint endpoint) {
+        super(endpoint);
     }
-
 
     public void process(Exchange exchange) throws Exception {
-        Object newBody = expression.evaluate(exchange, Object.class);
-
-        Message old = exchange.getIn();
-
-        // create a new message container so we do not drag specialized message objects along
-        Message msg = new DefaultMessage();
-        msg.copyFrom(old);
-        msg.setBody(newBody);
-        exchange.setIn(msg);
+        AsyncProcessorHelper.process(this, exchange);
     }
-
-
-    @Override
-    public String toString() {
-        return "SetBody(" + expression + ")";
-    }
-
-
 }

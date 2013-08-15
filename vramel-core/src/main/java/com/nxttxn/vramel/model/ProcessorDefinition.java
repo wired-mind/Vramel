@@ -391,7 +391,7 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
             // processor as we use the producer to trigger the interceptor
 //            if (processor instanceof Channel) {
 //                Channel channel = (Channel) processor;
-//                org.apache.camel.Processor next = channel.getNextProcessor();
+//                org.apache.camel.AsyncProcessor next = channel.getNextProcessor();
 //                if (next instanceof InterceptEndpointProcessor) {
 //                    endpointInterceptor = true;
 //                }

@@ -17,6 +17,7 @@
 package com.nxttxn.vramel.builder;
 
 import com.nxttxn.vramel.ErrorHandlerFactory;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.model.OnExceptionDefinition;

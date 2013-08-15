@@ -1,8 +1,7 @@
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.impl.DefaultVramelContext;
 import com.nxttxn.vramel.processor.UnmarshalProcessor;
 import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.spi.FlowContext;

@@ -16,15 +16,14 @@
  */
 package com.nxttxn.vramel.processor;
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.model.OnExceptionDefinition;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.processor.exceptionpolicy.ExceptionPolicyStrategy;
 import com.nxttxn.vramel.spi.UnitOfWork;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ExchangeHelper;
 import com.nxttxn.vramel.util.VramelLogger;
 
@@ -37,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DefaultErrorHandler extends ErrorHandlerSupport {
 
     private final VramelContext vramelContext;
-    private final Processor output;
+    private final AsyncProcessor output;
     private final VramelLogger logger;
     private final ExceptionPolicyStrategy exceptionPolicyStrategy;
 
@@ -52,7 +51,7 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
     public DefaultErrorHandler(VramelContext vramelContext, Processor output, VramelLogger logger,
                                ExceptionPolicyStrategy exceptionPolicyStrategy) {
         this.vramelContext = vramelContext;
-        this.output = output;
+        this.output = AsyncProcessorConverterHelper.convert(output);
         this.logger = logger;
         this.exceptionPolicyStrategy = exceptionPolicyStrategy;
 
@@ -71,15 +70,20 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
     }
 
     @Override
-    public Processor getOutput() {
+    public AsyncProcessor getOutput() {
         return output;
     }
 
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
+
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         checkNotNull(output);
         try {
-            output.process(exchange, new OptionalAsyncResultHandler() {
+            return output.process(exchange, new OptionalAsyncResultHandler() {
                 @Override
                 public void handle(AsyncExchangeResult optionalAsyncResult) {
 
@@ -96,6 +100,7 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
         } catch (Exception e) {
             handleProcessorException(e, exchange, optionalAsyncResultHandler);
         }
+        return false;
     }
 
     private void handleProcessorException(Exception exception, Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) {
@@ -175,7 +180,8 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
                 exchange.setProperty(Exchange.FAILURE_ROUTE_ID, exchange.getUnitOfWork().getFlowContext().getFlow().getId());
             }
 
-            processor.process(exchange, new OptionalAsyncResultHandler() {
+            AsyncProcessor afp = AsyncProcessorConverterHelper.convert(processor);
+            afp.process(exchange, new OptionalAsyncResultHandler() {
                 @Override
                 public void handle(AsyncExchangeResult optionalAsyncResult) {
                     log.trace("Failure processor done: {} processing Exchange: {}", processor, exchange);

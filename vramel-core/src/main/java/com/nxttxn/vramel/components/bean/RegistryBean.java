@@ -18,7 +18,7 @@ package com.nxttxn.vramel.components.bean;
 
 
 import com.nxttxn.vramel.NoSuchBeanException;
-import com.nxttxn.vramel.SyncProcessor;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.spi.Registry;
 import com.nxttxn.vramel.util.ObjectHelper;
@@ -33,7 +33,7 @@ public class RegistryBean implements BeanHolder {
     private final VramelContext context;
     private final String name;
     private final Registry registry;
-    private SyncProcessor processor;
+    private Processor processor;
     private BeanInfo beanInfo;
     private Object bean;
     private ParameterMappingStrategy parameterMappingStrategy;
@@ -86,9 +86,9 @@ public class RegistryBean implements BeanHolder {
         return value;
     }
 
-    public SyncProcessor getProcessor() {
+    public Processor getProcessor() {
         if (processor == null && bean != null) {
-            processor = VramelContextHelper.convertTo(context, SyncProcessor.class, bean);
+            processor = VramelContextHelper.convertTo(context, Processor.class, bean);
         }
         return processor;
     }

@@ -19,6 +19,7 @@ package com.nxttxn.vramel.processor;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 
 /**
@@ -57,9 +58,12 @@ public final class UnitOfWorkProducer implements Producer {
         return producer.createExchange(exchange);
     }
 
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        processor.process(exchange, optionalAsyncResultHandler);
+
+    public void process(Exchange exchange) throws Exception {
+        processor.process(exchange);
     }
+
+
 
     public void start() throws Exception {
         ServiceHelper.startService(processor);

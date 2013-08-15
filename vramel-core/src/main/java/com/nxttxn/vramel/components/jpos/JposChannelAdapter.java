@@ -31,7 +31,7 @@ public class JposChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(final Processor processor) {
+    public Consumer createConsumer(final AsyncProcessor processor) {
         return new JposConsumer(this, processor);
     }
 

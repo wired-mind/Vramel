@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.predicates;
 
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
@@ -19,15 +20,13 @@ public abstract class AbstractSignatureBaseStringValidator extends SignatureBase
 
 
     @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public void process(Exchange exchange) throws Exception {
 
         final boolean isValid = isValid(getSignature(exchange), getSignatureBaseString(exchange));
 
         if (!isValid) {
             exchange.setException(getException());
         }
-
-        optionalAsyncResultHandler.done(exchange);
     }
 
     protected abstract Throwable getException();

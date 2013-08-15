@@ -227,7 +227,7 @@ public class ProducerCache  {
 
     /**
      * Sends an exchange to an endpoint using a supplied
-     * {@link Processor} to populate the exchange
+     * {@link com.nxttxn.vramel.AsyncProcessor} to populate the exchange
      * <p>
      * This method will <b>not</b> throw an exception. If processing of the given
      * Exchange failed then the exception is stored on the return Exchange
@@ -243,7 +243,7 @@ public class ProducerCache  {
 
     /**
      * Sends an exchange to an endpoint using a supplied
-     * {@link Processor} to populate the exchange
+     * {@link com.nxttxn.vramel.AsyncProcessor} to populate the exchange
      * <p>
      * This method will <b>not</b> throw an exception. If processing of the given
      * Exchange failed then the exception is stored on the return Exchange

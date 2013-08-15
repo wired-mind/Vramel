@@ -1,9 +1,7 @@
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.impl.DefaultVramelContext;
 import com.nxttxn.vramel.processor.SendProcessor;
 import com.nxttxn.vramel.spi.FlowContext;
 import org.vertx.java.core.json.JsonObject;
@@ -25,7 +23,7 @@ public class ToDefinition extends NoOutputDefinition<UnmarshalDefinition> {
     }
 
     @Override
-    public Processor createProcessor(FlowContext flowContext) throws Exception {
+    public AsyncProcessor createProcessor(FlowContext flowContext) throws Exception {
         final Endpoint endpoint;
         if (config != null) {
             endpoint = flowContext.getVramelContext().getEndpoint(uri, config);

@@ -21,13 +21,13 @@ import com.nxttxn.vramel.spi.FlowContext;
 
 
 /**
- * Channel acts as a channel between {@link Processor}s in the route graph.
+ * Channel acts as a channel between {@link AsyncProcessor}s in the route graph.
  * <p/>
- * The channel is responsible for routing the {@link Exchange} to the next {@link Processor} in the route graph.
+ * The channel is responsible for routing the {@link Exchange} to the next {@link AsyncProcessor} in the route graph.
  *
  * @version
  */
-public interface Channel extends Processor, Navigate<Processor> {
+public interface Channel extends AsyncProcessor, Navigate<Processor> {
 
     /**
      * Sets the processor that the channel should route the {@link Exchange} to.
@@ -66,7 +66,7 @@ public interface Channel extends Processor, Navigate<Processor> {
     void setOutput(Processor output);
 
     /**
-     * Gets the next {@link Processor} to route to (not wrapped)
+     * Gets the next {@link AsyncProcessor} to route to (not wrapped)
      *
      * @return  the next processor
      */

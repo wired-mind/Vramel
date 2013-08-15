@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.support;
 
 import com.google.common.base.Optional;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.Producer;
@@ -8,6 +9,7 @@ import com.nxttxn.vramel.processor.ProcessorExchangePair;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.IteratorDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +31,9 @@ public class PipelineSupport {
 
 
     //basic recursive pipeline
-    protected void process(final Exchange original, final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler, final Iterator<Processor> processors, Processor processor) throws Exception {
-        processor.process(exchange, new PipelineResultsHandler(optionalAsyncResultHandler, processors, exchange, original));
+    protected boolean process(final Exchange original, final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler, final Iterator<Processor> processors, Processor processor) throws Exception {
+        AsyncProcessor ap = AsyncProcessorConverterHelper.convert(processor);
+        return ap.process(exchange, new PipelineResultsHandler(optionalAsyncResultHandler, processors, exchange, original));
     }
 
     protected <T extends Processor> Iterable<ProcessorExchangePair<T>> createProcessorExchangePairs(Exchange original, List<T> processorList) {

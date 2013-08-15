@@ -1,24 +1,17 @@
 package com.nxttxn.vramel.components.axis2;
 
 import com.nxttxn.axis2.transport.vertx.Axis2CallbackResult;
-import com.nxttxn.axis2.transport.vertx.HttpAxis2ServerHandler;
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultConsumer;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
-import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
-import org.apache.axiom.soap.SOAP12Constants;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPFactory;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.*;
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.buffer.Buffer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,10 +26,10 @@ public class Axis2Consumer extends DefaultConsumer {
     private static final Logger logger = LoggerFactory.getLogger(Axis2Consumer.class);
     private final Axis2ChannelAdapter endpoint;
     private final VramelAxisServer axisServer;
-    private final Processor processor;
+    private final AsyncProcessor processor;
 
 
-    public Axis2Consumer(Endpoint endpoint, final Processor processor, VramelAxisServer vramelAxisServer) throws AxisFault {
+    public Axis2Consumer(Endpoint endpoint, final AsyncProcessor processor, VramelAxisServer vramelAxisServer) throws AxisFault {
         super(endpoint, processor);
         this.processor = processor;
         this.endpoint = (Axis2ChannelAdapter) endpoint;

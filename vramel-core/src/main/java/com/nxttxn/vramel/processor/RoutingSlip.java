@@ -9,6 +9,8 @@ import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.DoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.PipelineSupport;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
 
 import java.util.Iterator;
@@ -22,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Time: 4:43 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RoutingSlip extends PipelineSupport implements Processor {
+public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
     protected final VramelContext vramelContext;
     protected String uriDelimiter;
     protected Expression expression;
@@ -66,9 +68,15 @@ public class RoutingSlip extends PipelineSupport implements Processor {
         producerCache = new ProducerCache(this, this.vramelContext);
     }
 
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
+
     @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         doRoutingSlip(exchange, optionalAsyncResultHandler);
+        return false;
     }
 
     public void doRoutingSlip(Exchange exchange, Object routingSlip, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
@@ -127,7 +135,8 @@ public class RoutingSlip extends PipelineSupport implements Processor {
         // set property which endpoint we send to
         current.setProperty(Exchange.TO_ENDPOINT, endpoint.getEndpointUri());
         current.setProperty(Exchange.SLIP_ENDPOINT, endpoint.getEndpointUri());
-        producer.process(current, new RoutingSlipResultsHandler(optionalAsyncResultHandler, routingSlips, current, original));
+        AsyncProcessor ap = AsyncProcessorConverterHelper.convert(producer);
+        ap.process(current, new RoutingSlipResultsHandler(optionalAsyncResultHandler, routingSlips, current, original));
 
 
     }

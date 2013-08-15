@@ -17,10 +17,7 @@
 package com.nxttxn.vramel.processor;
 
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Expression;
-import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultMessage;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.ObjectHelper;
@@ -36,7 +33,16 @@ public class TransformProcessor  implements Processor {
         this.expression = expression;
     }
 
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+
+
+    @Override
+    public String toString() {
+        return "Transform(" + expression + ")";
+    }
+
+
+    @Override
+    public void process(Exchange exchange) throws Exception {
         Object newBody = expression.evaluate(exchange, Object.class);
 
         Message old = exchange.getIn();
@@ -46,13 +52,5 @@ public class TransformProcessor  implements Processor {
         msg.copyFrom(old);
         msg.setBody(newBody);
         exchange.setOut(msg);
-        optionalAsyncResultHandler.done(exchange);
     }
-
-    @Override
-    public String toString() {
-        return "Transform(" + expression + ")";
-    }
-
-
 }

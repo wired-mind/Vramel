@@ -2,6 +2,7 @@ package com.nxttxn.vramel.processor;
 
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Predicate;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
@@ -12,7 +13,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
  * Time: 2:09 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FilterProcessor extends DelegateProcessor {
+public class FilterProcessor extends DelegateAsyncProcessor {
 
     private final com.nxttxn.vramel.Predicate predicate;
 
@@ -22,7 +23,7 @@ public class FilterProcessor extends DelegateProcessor {
     }
 
     @Override
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         boolean isMatched = false;
         try {
             isMatched = getPredicate().matches(exchange);
@@ -34,9 +35,10 @@ public class FilterProcessor extends DelegateProcessor {
         logger.debug("Filter matches: {} for exchange: {}", isMatched, exchange.toString());
 
         if (isMatched) {
-            super.process(exchange, optionalAsyncResultHandler);
+            return super.process(exchange, optionalAsyncResultHandler);
         } else {
             optionalAsyncResultHandler.done(exchange);
+            return true;
         }
     }
 

@@ -60,7 +60,7 @@ public class BeanComponent extends UriEndpointComponent {
         endpoint.setBeanName(remaining);
 //        Boolean cache = getAndRemoveParameter(parameters, "cache", Boolean.class, Boolean.FALSE);
 //        endpoint.setCache(cache);
-//        Processor processor = endpoint.getProcessor();
+//        AsyncProcessor processor = endpoint.getProcessor();
 //        setProperties(processor, parameters);
         return endpoint;
     }

@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.OnExceptionDefinition;
 import com.nxttxn.vramel.model.ProcessorDefinitionHelper;
@@ -48,7 +48,7 @@ public abstract class ErrorHandlerSupport implements ErrorHandler {
     public void addExceptionPolicy(FlowContext flowContext, OnExceptionDefinition exceptionType) {
 //        if (flowContext != null) {
 //            // add error handler as child service so they get lifecycle handled
-//            Processor errorHandler = exceptionType.getErrorHandler(flowContext.getFlow().getId());
+//            AsyncProcessor errorHandler = exceptionType.getErrorHandler(flowContext.getFlow().getId());
 //            if (errorHandler != null) {
 //                addChildService(errorHandler);
 //            }
@@ -105,6 +105,6 @@ public abstract class ErrorHandlerSupport implements ErrorHandler {
     /**
      * Gets the output
      */
-    public abstract Processor getOutput();
+    public abstract AsyncProcessor getOutput();
 
 }

@@ -16,9 +16,9 @@
  */
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Predicate;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.builder.ExpressionClause;
 import com.nxttxn.vramel.processor.ChoiceProcessor;
 import com.nxttxn.vramel.processor.FilterProcessor;

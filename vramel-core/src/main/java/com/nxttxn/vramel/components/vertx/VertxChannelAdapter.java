@@ -20,7 +20,7 @@ public class VertxChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(Processor processor) throws Exception {
+    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
         return new VertxConsumer(this, processor);
     }
 

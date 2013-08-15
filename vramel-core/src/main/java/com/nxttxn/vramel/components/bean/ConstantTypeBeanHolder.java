@@ -17,7 +17,7 @@
 package com.nxttxn.vramel.components.bean;
 
 
-import com.nxttxn.vramel.SyncProcessor;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.VramelContext;
 import org.apache.camel.util.ObjectHelper;
 
@@ -55,7 +55,7 @@ public class ConstantTypeBeanHolder implements BeanTypeHolder {
         return null;
     }
 
-    public SyncProcessor getProcessor() {
+    public Processor getProcessor() {
         return null;
     }
 

@@ -29,7 +29,7 @@ public class RestChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(final Processor processor) {
+    public Consumer createConsumer(final AsyncProcessor processor) {
         return new RestConsumer(this, processor);
     }
 

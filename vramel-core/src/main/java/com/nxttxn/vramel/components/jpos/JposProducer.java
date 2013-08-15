@@ -1,9 +1,15 @@
 package com.nxttxn.vramel.components.jpos;
 
 import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.Message;
+import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.impl.jpos.JPOSClient;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;
 import org.vertx.java.core.AsyncResult;
@@ -19,7 +25,7 @@ import java.net.URI;
  * Time: 6:03 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JposProducer extends DefaultProducer {
+public class JposProducer extends DefaultAsyncProducer {
     private final JposChannelAdapter endpoint;
     private final JPOSClient jposClient;
 
@@ -45,7 +51,7 @@ public class JposProducer extends DefaultProducer {
 
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         jposClient.whenActive(30 * 1000, new AsyncResultHandler<Void>(){
             @Override
             public void handle(AsyncResult<Void> event) {
@@ -81,6 +87,11 @@ public class JposProducer extends DefaultProducer {
             }
         });
 
+        return false;
+    }
+
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
     }
 
 

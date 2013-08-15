@@ -1,8 +1,8 @@
 package com.nxttxn.vramel.model;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.processor.Enricher;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.spi.FlowContext;

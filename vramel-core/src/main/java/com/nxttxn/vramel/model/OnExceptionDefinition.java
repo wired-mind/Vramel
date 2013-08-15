@@ -16,10 +16,7 @@
  */
 package com.nxttxn.vramel.model;
 
-import com.nxttxn.vramel.Expression;
-import com.nxttxn.vramel.Flow;
-import com.nxttxn.vramel.Predicate;
-import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.builder.ErrorHandlerBuilder;
 import com.nxttxn.vramel.builder.ExpressionBuilder;
 import com.nxttxn.vramel.processor.CatchProcessor;
@@ -138,6 +135,7 @@ public class OnExceptionDefinition extends ProcessorDefinition<OnExceptionDefini
         validateConfiguration();
 
         // lets attach this on exception to the route error handler
+
         Processor child = createOutputsProcessor(flowContext);
         if (child != null) {
             // wrap in our special safe fallback error handler if OnException have child output

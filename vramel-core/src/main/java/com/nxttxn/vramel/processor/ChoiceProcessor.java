@@ -22,14 +22,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 import com.google.common.collect.Lists;
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Navigate;
-import com.nxttxn.vramel.Predicate;
-import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.FixedSizeDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.PipelineSupport;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,18 +37,20 @@ import org.slf4j.LoggerFactory;
  * they are true their processors are used, with a default otherwise clause used
  * if none match.
  */
-public class ChoiceProcessor extends PipelineSupport implements Processor, Navigate<Processor> {
+public class ChoiceProcessor extends PipelineSupport implements AsyncProcessor, Navigate<Processor> {
     private static final transient Logger LOG = LoggerFactory.getLogger(ChoiceProcessor.class);
     private final List<FilterProcessor> filters;
-    private final Processor otherwise;
+    private final AsyncProcessor otherwise;
 
     public ChoiceProcessor(List<FilterProcessor> filters, Processor otherwise) {
         this.filters = filters;
-        this.otherwise = otherwise;
+        this.otherwise = AsyncProcessorConverterHelper.convert(otherwise);
     }
 
-
-    public void process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
+    public boolean process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
 
         List<FilterProcessor> matchedFilters = computeMatchedFilters(exchange);
         final boolean noMatches = matchedFilters.isEmpty();
@@ -60,7 +61,7 @@ public class ChoiceProcessor extends PipelineSupport implements Processor, Navig
                 optionalAsyncResultHandler.done(exchange);
             }
 
-            return;
+            return false;
         }
 
         final Iterable<ProcessorExchangePair<FilterProcessor>> processorExchangePairs = createProcessorExchangePairs(exchange, matchedFilters);
@@ -73,7 +74,7 @@ public class ChoiceProcessor extends PipelineSupport implements Processor, Navig
             matchedFilter.processNext(exchange, defaultExchangeHandler);
         }
 
-
+        return false;
     }
 
     private List<FilterProcessor> computeMatchedFilters(Exchange exchange) throws Exception {
@@ -132,7 +133,7 @@ public class ChoiceProcessor extends PipelineSupport implements Processor, Navig
         return filters;
     }
 
-    public Processor getOtherwise() {
+    public AsyncProcessor getOtherwise() {
         return otherwise;
     }
 

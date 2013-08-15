@@ -2,8 +2,8 @@ package com.nxttxn.vramel.components.axis2;
 
 
 import com.google.common.base.Optional;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Consumer;
-import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.Producer;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.impl.DefaultEndpoint;
@@ -41,7 +41,7 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(final Processor processor) throws AxisFault {
+    public Consumer createConsumer(final AsyncProcessor processor) throws AxisFault {
         return new Axis2Consumer(this, processor, vramelAxisServer);
     }
 

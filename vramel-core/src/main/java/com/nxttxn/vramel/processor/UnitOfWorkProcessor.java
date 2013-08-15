@@ -16,8 +16,8 @@
  */
 package com.nxttxn.vramel.processor;
 
-import com.google.common.base.Optional;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.impl.DefaultUnitOfWork;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
@@ -26,7 +26,6 @@ import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.spi.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.AsyncResult;
 
 /**
  * Ensures the {@link Exchange} is routed under the boundaries of an {@link org.apache.camel.spi.UnitOfWork}.
@@ -34,17 +33,20 @@ import org.vertx.java.core.AsyncResult;
  * Handles calling the {@link org.apache.camel.spi.UnitOfWork#done(org.apache.camel.Exchange)} method
  * when processing of an {@link Exchange} is complete.
  */
-public class UnitOfWorkProcessor extends DelegateProcessor {
+public class UnitOfWorkProcessor extends DelegateAsyncProcessor {
 
     private static final transient Logger LOG = LoggerFactory.getLogger(UnitOfWorkProcessor.class);
     private final FlowContext flowContext;
     private final String flowId;
 
+
     public UnitOfWorkProcessor(Processor processor) {
         this(null, processor);
     }
 
-
+    public UnitOfWorkProcessor(AsyncProcessor processor) {
+        this(null, processor);
+    }
 
     public UnitOfWorkProcessor(FlowContext flowContext, Processor processor) {
         super(processor);
@@ -56,6 +58,15 @@ public class UnitOfWorkProcessor extends DelegateProcessor {
         }
     }
 
+    public UnitOfWorkProcessor(FlowContext flowContext, AsyncProcessor processor) {
+        super(processor);
+        this.flowContext = flowContext;
+        if (flowContext != null) {
+            this.flowId = flowContext.getFlow().idOrCreate(flowContext.getVramelContext().getNodeIdFactory());
+        } else {
+            this.flowId = null;
+        }
+    }
 
     @Override
     public String toString() {
@@ -67,7 +78,7 @@ public class UnitOfWorkProcessor extends DelegateProcessor {
     }
 
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         // if the exchange doesn't have from route id set, then set it if it originated
         // from this unit of work
         if (flowId != null && exchange.getFromRouteId() == null) {
@@ -80,7 +91,7 @@ public class UnitOfWorkProcessor extends DelegateProcessor {
             final UnitOfWork uow = createUnitOfWork(exchange);
             exchange.setUnitOfWork(uow);
 
-            getProcessor().process(exchange, new OptionalAsyncResultHandler() {
+            return getProcessor().process(exchange, new OptionalAsyncResultHandler() {
                 @Override
                 public void handle(AsyncExchangeResult optionalAsyncResult) {
                     final Exchange result = optionalAsyncResult.result.get();
@@ -93,7 +104,7 @@ public class UnitOfWorkProcessor extends DelegateProcessor {
             // There was an existing UoW, so we should just pass through..
             // so that the guy the initiated the UoW can terminate it.
             super.process(exchange, optionalAsyncResultHandler);
-            return;
+            return false;
         }
     }
 

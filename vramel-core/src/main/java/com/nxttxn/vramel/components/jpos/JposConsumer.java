@@ -29,7 +29,7 @@ public class JposConsumer extends DefaultConsumer {
     private final JsonObject jposConfig;
     private final Vertx vertx;
     private final JPOSServer jposServer;
-    public JposConsumer(final Endpoint endpoint, Processor processor) {
+    public JposConsumer(final Endpoint endpoint, AsyncProcessor processor) {
         super(endpoint, processor);
         this.endpoint = (JposChannelAdapter) endpoint;
 

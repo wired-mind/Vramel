@@ -1,10 +1,9 @@
 package com.nxttxn.vramel.spi;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.ErrorHandlerFactory;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.builder.ErrorHandlerBuilder;
 import com.nxttxn.vramel.model.FlowDefinition;
 
 /**

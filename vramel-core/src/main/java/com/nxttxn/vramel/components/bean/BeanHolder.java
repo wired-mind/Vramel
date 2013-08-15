@@ -19,7 +19,6 @@ package com.nxttxn.vramel.components.bean;
 
 import com.nxttxn.vramel.NoSuchBeanException;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.SyncProcessor;
 
 /**
  * Object holder for a bean.
@@ -30,7 +29,7 @@ public interface BeanHolder {
 
     Object getBean() throws NoSuchBeanException;
 
-    SyncProcessor getProcessor();
+    Processor getProcessor();
 
     BeanInfo getBeanInfo();
 }

@@ -24,7 +24,7 @@ public class VertxQueueChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(Processor processor) throws Exception {
+    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
         return new VertxQueueConsumer(this, processor);
     }
 

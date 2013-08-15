@@ -1,12 +1,14 @@
 package com.nxttxn.vramel.processor;
 
 import com.google.common.base.Optional;
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.Producer;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.processor.async.*;
 import com.nxttxn.vramel.support.AggregationSupport;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.AsyncProcessorHelper;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Time: 1:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Enricher extends AggregationSupport implements Processor {
+public class Enricher extends AggregationSupport implements AsyncProcessor {
     private final Producer producer;
 
     public Enricher(AggregationStrategy aggregationStrategy, Producer producer) {
@@ -26,9 +28,16 @@ public class Enricher extends AggregationSupport implements Processor {
         this.producer = producer;
     }
 
+    public void process(Exchange exchange) throws Exception {
+        AsyncProcessorHelper.process(this, exchange);
+    }
+
     @Override
-    public void process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        producer.process(exchange.copy(), new EnricherHandler(optionalAsyncResultHandler, exchange, aggregationStrategy));
+    public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
+        AsyncProcessor ap = AsyncProcessorConverterHelper.convert(producer);
+        final boolean sync = ap.process(exchange.copy(), new EnricherHandler(optionalAsyncResultHandler, exchange, aggregationStrategy));
+
+        return sync;
     }
 
     private class EnricherHandler extends AggregatingExchangeHandlerBase {

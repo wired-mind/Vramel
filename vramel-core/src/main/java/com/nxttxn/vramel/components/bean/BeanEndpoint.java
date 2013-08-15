@@ -19,7 +19,6 @@ package com.nxttxn.vramel.components.bean;
 
 import com.nxttxn.vramel.Component;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.SyncProcessor;
 import com.nxttxn.vramel.impl.ProcessorEndpoint;
 import com.nxttxn.vramel.spi.UriEndpoint;
 import com.nxttxn.vramel.spi.UriParam;
@@ -110,7 +109,7 @@ public class BeanEndpoint extends ProcessorEndpoint {
 
 
     @Override
-    protected SyncProcessor createProcessor() throws Exception {
+    protected Processor createProcessor() throws Exception {
         BeanHolder holder = getBeanHolder();
         if (holder == null) {
             RegistryBean registryBean = new RegistryBean(getVramelContext(), beanName);

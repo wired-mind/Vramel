@@ -18,17 +18,16 @@ package com.nxttxn.vramel.components.bean;
 
 
 import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link Processor} which converts the inbound exchange to a method
+ * A {@link com.nxttxn.vramel.AsyncProcessor} which converts the inbound exchange to a method
  * invocation on a POJO
  *
  * @version
  */
-public class BeanProcessor implements SyncProcessor {
+public class BeanProcessor implements Processor {
     private static final transient Logger LOG = LoggerFactory.getLogger(BeanProcessor.class);
 
     private boolean multiParameterArray;
@@ -73,10 +72,10 @@ public class BeanProcessor implements SyncProcessor {
             return;
         }
 
-        // do we have a custom adapter for this POJO to a Processor
+        // do we have a custom adapter for this POJO to a AsyncProcessor
         // but only do this if allowed
         if (allowProcessor(explicitMethodName, beanInfo)) {
-            SyncProcessor processor = getProcessor();
+            Processor processor = getProcessor();
             if (processor != null) {
                 LOG.trace("Using a custom adapter as bean invocation: {}", processor);
                 try {
@@ -148,7 +147,7 @@ public class BeanProcessor implements SyncProcessor {
         invocation.proceed();
     }
 
-    protected SyncProcessor getProcessor() {
+    protected Processor getProcessor() {
         return beanHolder.getProcessor();
     }
 

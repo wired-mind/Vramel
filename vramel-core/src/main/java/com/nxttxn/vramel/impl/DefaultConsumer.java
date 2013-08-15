@@ -1,9 +1,8 @@
 package com.nxttxn.vramel.impl;
 
+import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Consumer;
 import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.components.rest.RestConsumer;
 import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
@@ -19,9 +18,9 @@ import org.slf4j.LoggerFactory;
 public class DefaultConsumer extends ServiceSupport implements Consumer {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Endpoint endpoint;
-    private final Processor processor;
+    private final AsyncProcessor processor;
 
-    public DefaultConsumer(Endpoint endpoint, Processor processor) {
+    public DefaultConsumer(Endpoint endpoint, AsyncProcessor processor) {
 
         this.endpoint = endpoint;
         this.processor = processor;
@@ -51,7 +50,7 @@ public class DefaultConsumer extends ServiceSupport implements Consumer {
         logger.debug("Starting consumer: {}", this);
         ServiceHelper.startServices(processor);
     }
-    public Processor getProcessor() {
+    public AsyncProcessor getProcessor() {
         return processor;
     }
 }
