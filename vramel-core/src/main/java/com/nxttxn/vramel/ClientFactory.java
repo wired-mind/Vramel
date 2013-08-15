@@ -1,5 +1,6 @@
 package com.nxttxn.vramel;
 
+import com.google.common.base.Optional;
 import com.nxttxn.vramel.impl.jpos.JPOSClient;
 import org.vertx.java.core.*;
 import org.vertx.java.core.http.HttpClient;
@@ -17,7 +18,7 @@ import java.net.URI;
  * To change this template use File | Settings | File Templates.
  */
 public interface ClientFactory {
-    HttpClient createOrFindHttpClient(JsonObject config);
+    HttpClient createOrFindHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword);
 
     JPOSClient createOrFindJPOSClient(URI uri, String keyFields);
 }

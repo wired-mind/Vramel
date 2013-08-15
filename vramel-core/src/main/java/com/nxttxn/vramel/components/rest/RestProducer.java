@@ -1,8 +1,10 @@
 package com.nxttxn.vramel.components.rest;
 
+import com.google.common.base.Optional;
 import com.nxttxn.vramel.ClientFactory;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.Message;
 import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
@@ -16,6 +18,7 @@ import org.vertx.java.core.http.impl.ws.Base64;
 import org.vertx.java.core.json.JsonObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -30,9 +33,9 @@ public class RestProducer extends DefaultAsyncProducer {
 
     private final RestChannelAdapter endpoint;
     private final HttpClient httpClient;
-    private final String credentials;
+    private Optional<String> credentials = Optional.absent();
     //for now json is hard coded... might need to make configurable
-    private final String contentType = "application/json";
+    private final String defaultContentType = "application/json";
 
     public RestProducer(Endpoint endpoint) {
         super(endpoint);
@@ -40,10 +43,22 @@ public class RestProducer extends DefaultAsyncProducer {
 
         ClientFactory clientFactory = endpoint.getVramelContext().getClientFactory();
         final JsonObject config = endpoint.getConfig();
-        httpClient = clientFactory.createOrFindHttpClient(config);
-        final String username = config.getString("username");
-        final String password = config.getString("password");
-        credentials = encodeCredentials(username, password);
+        final String host = config.getString("host");
+        final boolean ssl = config.getBoolean("ssl", true);
+        final Number port = config.getNumber("port", 443);
+        Optional<String> keystorePath = Optional.fromNullable(config.getString("keystorePath", null));
+        Optional<String> keystorePassword = Optional.fromNullable(config.getString("keystorePassword", null));
+
+        final String httpFormat = "http://%s:%s";
+        final String httpsFormat = "https://%s:%s";
+        final URI uri = URI.create(String.format(ssl ? httpsFormat : httpFormat, host, port));
+
+        httpClient = clientFactory.createOrFindHttpClient(uri, keystorePath, keystorePassword);
+        final Optional<String> username = Optional.fromNullable(config.getString("username", null));
+        final String password = config.getString("password", null);
+        if (username.isPresent()) {
+            credentials = Optional.of(encodeCredentials(username.get(), password));
+        }
     }
 
     @Override

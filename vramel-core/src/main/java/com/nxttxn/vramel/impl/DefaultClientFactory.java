@@ -1,11 +1,11 @@
 package com.nxttxn.vramel.impl;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.nxttxn.vramel.ClientFactory;
 import com.nxttxn.vramel.impl.jpos.JPOSClient;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.json.JsonObject;
 
 
 import java.net.URI;
@@ -31,21 +31,14 @@ public class DefaultClientFactory implements ClientFactory {
     }
 
     @Override
-    public HttpClient createOrFindHttpClient(JsonObject config) {
-        checkNotNull(config);
-        final String host = config.getString("host");
-        final boolean ssl = config.getBoolean("ssl", true);
-        final Number port = config.getNumber("port", 443);
-        final String httpFormat = "http://%s:%s";
-        final String httpsFormat = "https://%s:%s";
-        final URI uri = URI.create(String.format(ssl ? httpsFormat : httpFormat, host, port));
-
+    public HttpClient createOrFindHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword) {
+        checkNotNull(uri);
 
         if (httpClients.containsKey(uri)) {
             return httpClients.get(uri);
         }
 
-        return createNewHttpClient(uri);
+        return createNewHttpClient(uri, keystorePath, keystorePassword);
     }
 
     @Override
@@ -64,13 +57,17 @@ public class DefaultClientFactory implements ClientFactory {
         return new JPOSClient(vertx, uri, keyFields);
     }
 
-    private HttpClient createNewHttpClient(URI uri) {
+    private HttpClient createNewHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword) {
         boolean ssl = false;
         if (uri.getScheme().equals("https")) {
             ssl = true;
         }
 
-        return vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort());
+        HttpClient httpClient = vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort());
+        if (keystorePath.isPresent()) {
+            httpClient = httpClient.setKeyStorePath(keystorePath.get()).setKeyStorePassword(keystorePassword.get());
+        }
+        return httpClient;
     }
 
 
