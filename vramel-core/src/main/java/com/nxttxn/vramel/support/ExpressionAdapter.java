@@ -35,7 +35,7 @@ public abstract class ExpressionAdapter extends ExpressionSupport {
 
     public <T> T evaluate(Exchange exchange, Class<T> type) {
         Object value = evaluate(exchange);
-        return (T) value;
+        return exchange.getContext().getTypeConverter().convertTo(type, exchange, value);
     }
 
 }

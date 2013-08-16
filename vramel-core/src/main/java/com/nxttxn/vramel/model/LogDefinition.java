@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.model;
 
 import com.nxttxn.vramel.AsyncProcessor;
+import com.nxttxn.vramel.Expression;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.LogProcessor;
 import com.nxttxn.vramel.spi.FlowContext;
@@ -25,6 +26,7 @@ public class LogDefinition extends NoOutputDefinition<LogDefinition> {
     public Processor createProcessor(FlowContext flowContext) throws Exception {
         final Logger logger = LoggerFactory.getLogger("VramelLogger");
 
-        return new LogProcessor(message, logger);
+        final Expression exp = flowContext.getVramelContext().resolveLanguage("simple").createExpression(message);
+        return new LogProcessor(exp, logger);
     }
 }
