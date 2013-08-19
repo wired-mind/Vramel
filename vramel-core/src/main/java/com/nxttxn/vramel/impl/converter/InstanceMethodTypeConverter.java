@@ -22,7 +22,8 @@ import com.nxttxn.vramel.TypeConverter;
 import com.nxttxn.vramel.spi.TypeConverterAware;
 import com.nxttxn.vramel.spi.TypeConverterRegistry;
 import com.nxttxn.vramel.support.TypeConverterSupport;
-import org.apache.camel.util.ObjectHelper;
+import com.nxttxn.vramel.util.ObjectHelper;
+
 
 import java.lang.reflect.Method;
 
@@ -65,7 +66,7 @@ public class InstanceMethodTypeConverter extends TypeConverterSupport {
             }
         }
         return useExchange
-                ? (T) ObjectHelper.invokeMethod(method, instance, value, exchange) : (T)ObjectHelper
+                ? (T) ObjectHelper.invokeMethod(method, instance, value, exchange) : (T) ObjectHelper
                 .invokeMethod(method, instance, value);
     }
 
