@@ -1,0 +1,1 @@
+XmlSignatureValidator is a good candidate for being refactored into first class component. For now they can be simple processors/predicates

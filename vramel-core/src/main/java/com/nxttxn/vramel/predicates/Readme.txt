@@ -1,0 +1,1 @@
+These are good candidates for being refactored into first class components. For now they can be simple processors/predicates
