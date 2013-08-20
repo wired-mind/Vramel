@@ -34,6 +34,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 
 import com.nxttxn.vramel.Exchange;
@@ -41,9 +43,11 @@ import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.VramelContextAware;
 import com.nxttxn.vramel.builder.xml.DefaultNamespaceContext;
 import com.nxttxn.vramel.builder.xml.XPathBuilder;
+import com.nxttxn.vramel.converter.jaxp.XmlConverter;
 import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.util.IOHelper;
 import org.apache.camel.util.jsse.KeyStoreParameters;
+import org.apache.xml.security.encryption.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -52,11 +56,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 
-
-import org.apache.xml.security.encryption.EncryptedData;
-import org.apache.xml.security.encryption.EncryptedKey;
-import org.apache.xml.security.encryption.XMLCipher;
-import org.apache.xml.security.encryption.XMLEncryptionException;
 import org.apache.xml.security.keys.KeyInfo;
 
 
@@ -543,6 +542,10 @@ public class XMLSecurityDataFormat implements DataFormat, VramelContextAware {
 
     private Object decode(Exchange exchange, Document encodedDocument, Key keyEncryptionKey) throws Exception {
         XMLCipher xmlCipher = XMLCipher.getInstance();
+
+        final WhitespaceIgnoringDocumentSerializer serializer = new WhitespaceIgnoringDocumentSerializer();
+
+        xmlCipher.setSerializer(serializer);
         xmlCipher.init(XMLCipher.DECRYPT_MODE, null);
         xmlCipher.setKEK(keyEncryptionKey);
 
@@ -836,5 +839,32 @@ public class XMLSecurityDataFormat implements DataFormat, VramelContextAware {
 
     public void setKeyPassword(String keyPassword) {
         this.keyPassword = keyPassword;
+    }
+
+    private class WhitespaceIgnoringDocumentSerializer extends DocumentSerializer {
+
+        @Override
+        public Node deserialize(byte[] source, Node ctx) throws XMLEncryptionException {
+            //supplying our own DocumentBuilderFactory in the constructor should have been enough. Not sure why not. We'll
+            //just use a perhaps overly simplistic solution that at least solves our current problem
+            String choppedSource = new String(source);
+            if (choppedSource.startsWith("\n")) {
+                choppedSource = choppedSource.replaceFirst("\n", "");
+            }
+
+            if (choppedSource.endsWith("\n")) {
+                choppedSource = choppedSource.substring(0, choppedSource.length() - 1);
+            }
+
+            return super.deserialize(choppedSource, ctx);
+
+        }
+
+        private WhitespaceIgnoringDocumentSerializer() {
+            //Use the documentbuilderFactory from our XmlConverter class as this correctly initiailzes for whitespace
+            final XmlConverter xmlConverter = new XmlConverter();
+            dbf = xmlConverter.getDocumentBuilderFactory();
+
+        }
     }
 }
