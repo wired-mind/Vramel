@@ -101,7 +101,10 @@ public class RestConsumer extends DefaultConsumer {
     private void doWriteResponse(Message message, HttpServerResponse response, String defaultContentType) {
         int statusCode = httpOk;
         final boolean noResponseBody = message.getBody() == null || message.getBody() == Void.TYPE;
-        final boolean validResponseBody = message.getBody(byte[].class) != null || message.getBody(String.class) != null || noResponseBody;
+        final byte[] body = message.getBody(byte[].class);
+
+
+        final boolean validResponseBody = body != null || noResponseBody;
 
         if (!validResponseBody) {
             throw new RuntimeVramelException("[Rest Consumer] The message contains a body but it is not a String or byte[]. Currently Rest Consumer is only smart enough to handle these types. If your intention is to provide a response, please set the message body using one of these types.");
@@ -129,11 +132,8 @@ public class RestConsumer extends DefaultConsumer {
 
 
         Buffer buffer;
-        final Class<?> bodyType = message.getBody().getClass();
-        if (bodyType.isAssignableFrom(String.class)) {
-            buffer = new Buffer(message.getBody(String.class));
-        } else if (bodyType.isAssignableFrom(byte[].class)) {
-            buffer = new Buffer(message.getBody(byte[].class));
+        if (body != null) {
+            buffer = new Buffer(body);
         } else {
             buffer = new Buffer();
         }
