@@ -39,12 +39,37 @@ public class DefaultMessage implements Message {
         return getBody(type, getBody());
     }
 
-    private <T> T getBody(Class<T> type, Object body) {
-        if (!type.isInstance(body)) {
-            return null; //no type converter
+    protected <T> T getBody(Class<T> type, Object body) {
+        // eager same instance type test to avoid the overhead of invoking the type converter
+        // if already same type
+        if (type.isInstance(body)) {
+            return type.cast(body);
         }
-        return type.cast(body);
+
+        Exchange e = getExchange();
+        if (e != null) {
+            TypeConverter converter = e.getContext().getTypeConverter();
+
+            // lets first try converting the body itself first
+            // as for some types like InputStream v Reader its more efficient to do the transformation
+            // from the body itself as its got efficient implementations of them, before trying the message
+            T answer = converter.convertTo(type, e, body);
+            if (answer != null) {
+                return answer;
+            }
+
+            // fallback and try the message itself (e.g. used in camel-http)
+            answer = converter.tryConvertTo(type, e, this);
+            if (answer != null) {
+                return answer;
+            }
+        }
+
+        // not possible to convert
+        return null;
     }
+
+
 
     public Object getMandatoryBody() throws InvalidPayloadException {
         Object answer = getBody();
