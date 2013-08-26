@@ -37,7 +37,7 @@ public class VertxConsumer extends DefaultConsumer {
                     DefaultExchangeHolder.unmarshal(exchange, message.body);
                     logger.debug("[Vertx Consumer] Unmarshalled exchange. Exchange transferred.");
                 } catch (Exception e) {
-                    logger.error("[Vertx Consumer] Not valid for exchange transfer", e);
+                    logger.trace("[Vertx Consumer] Not valid for exchange transfer. Trying VertxMessage.", e);
                     try {
                         final VertxMessage vertxMessage = (VertxMessage) SerializationUtils.deserialize(message.body);
                         exchange.getIn().setBody(vertxMessage.getBody());
@@ -45,7 +45,7 @@ public class VertxConsumer extends DefaultConsumer {
                         logger.debug("[Vertx Consumer] VertxMessage processed and new exchange created.");
                     } catch (Exception e1) {
                         exchange.getIn().setBody(message.body);
-                        logger.debug("[Vertx Consumer] New exchange created with message body.");
+                        logger.trace("[Vertx Consumer] New exchange created with message body.");
                     }
                 }
 
