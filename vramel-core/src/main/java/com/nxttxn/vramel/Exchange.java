@@ -40,6 +40,13 @@ public interface Exchange {
     String ROUTE_STOP              = "VramelRouteStop";
     String SLIP_ENDPOINT      = "VramelSlipEndpoint";
     String TO_ENDPOINT           = "VramelToEndpoint";
+
+    String TIMER_COUNTER         = "VramelTimerCounter";
+    String TIMER_FIRED_TIME      = "VramelTimerFiredTime";
+    String TIMER_NAME            = "VramelTimerName";
+    String TIMER_PERIOD          = "VramelTimerPeriod";
+    String TIMER_TIME            = "VramelTimerTime";
+
     String AGGREGATION_RESULTS = "VramelAggregationResults";
 
     Message getIn();
