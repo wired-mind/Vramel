@@ -5,6 +5,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IQueue;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.AsyncProcessor;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.components.vertx.VertxChannelAdapter;
 import com.nxttxn.vramel.components.vertx.VertxConsumer;
 import com.nxttxn.vramel.impl.DefaultConsumer;
@@ -27,7 +28,7 @@ public class VertxQueueConsumer extends DefaultConsumer {
     private final VertxQueueChannelAdapter endpoint;
     private final VertxConsumer queueDrivenConsumer;
 
-    public VertxQueueConsumer(Endpoint endpoint, AsyncProcessor processor) throws Exception {
+    public VertxQueueConsumer(Endpoint endpoint, Processor processor) throws Exception {
         super(endpoint, processor);
         this.endpoint = (VertxQueueChannelAdapter) endpoint;
 
@@ -35,7 +36,7 @@ public class VertxQueueConsumer extends DefaultConsumer {
         final String queueName = this.endpoint.getQueueName();
         final String handlerAddress = String.format("vertxQueueHandler://%s", queueAddress);
         //The queue driven consumer is the actual handler that processes the flow. The queue itself just enqueues with a hazelcast queue
-        queueDrivenConsumer = new VertxConsumer(new VertxChannelAdapter(endpoint.getVramelContext(), handlerAddress, endpoint.getConfig()), processor);
+        queueDrivenConsumer = new VertxConsumer(new VertxChannelAdapter(endpoint.getVramelContext(), handlerAddress, this.endpoint.getConfig()), processor);
 
 
         Set<HazelcastInstance> instances = Hazelcast.getAllHazelcastInstances();

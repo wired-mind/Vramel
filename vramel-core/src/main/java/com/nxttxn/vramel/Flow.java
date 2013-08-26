@@ -28,4 +28,14 @@ public interface Flow {
 
 
     Map<String, Object> getProperties();
+
+
+
+    /**
+     * Gets the route id
+     *
+     * @return the route id
+     */
+    String getId();
+
 }

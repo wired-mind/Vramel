@@ -5,6 +5,8 @@ import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.impl.DefaultComponent;
 import org.vertx.java.core.json.JsonObject;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
@@ -18,7 +20,7 @@ public class VertxQueueComponent extends DefaultComponent {
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         String queueName = "default";
         String address = remaining;
         final String[] splitRemaining = remaining.split(":");
@@ -27,6 +29,8 @@ public class VertxQueueComponent extends DefaultComponent {
             address = splitRemaining[1];
         }
 
-        return new VertxQueueChannelAdapter(getVramelContext(), queueName, address, config);
+        final VertxQueueChannelAdapter vertxQueueChannelAdapter = new VertxQueueChannelAdapter(getVramelContext(), queueName, address, new JsonObject(parameters).copy());
+        parameters.clear();
+        return vertxQueueChannelAdapter;
     }
 }

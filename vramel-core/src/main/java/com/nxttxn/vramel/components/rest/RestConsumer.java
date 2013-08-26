@@ -30,7 +30,7 @@ public class RestConsumer extends DefaultConsumer {
     private final RestChannelAdapter endpoint;
     private final int httpOk = 200;
 
-    public RestConsumer(Endpoint endpoint, final AsyncProcessor processor) {
+    public RestConsumer(Endpoint endpoint, final Processor processor) {
         super(endpoint, processor);
         this.endpoint = (RestChannelAdapter) endpoint;
 
@@ -72,7 +72,7 @@ public class RestConsumer extends DefaultConsumer {
 
                         try {
                             logger.debug("[Rest Consumer] Ready to process exchange: {}.", processor.toString(), exchange);
-                            processor.process(exchange, createResponseHandler(request.response, defaultContentType));
+                            getAsyncProcessor().process(exchange, createResponseHandler(request.response, defaultContentType));
                         } catch (Exception e) {
                             handleInternalError(exchange, e, request.response, defaultContentType);
                         }

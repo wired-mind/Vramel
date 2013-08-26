@@ -5,6 +5,8 @@ import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.impl.DefaultComponent;
 import org.vertx.java.core.json.JsonObject;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
@@ -18,9 +20,10 @@ public class JposComponent extends DefaultComponent {
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
 
-        final JposChannelAdapter jposChannelAdapter = new JposChannelAdapter(getVramelContext(), config, remaining);
+        final JposChannelAdapter jposChannelAdapter = new JposChannelAdapter(getVramelContext(), new JsonObject(parameters).copy(), remaining);
+        parameters.clear();
         return jposChannelAdapter;
     }
 }

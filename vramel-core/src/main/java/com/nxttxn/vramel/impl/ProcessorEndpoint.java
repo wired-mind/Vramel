@@ -18,7 +18,6 @@ package com.nxttxn.vramel.impl;
 
 
 import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
 
 public class ProcessorEndpoint extends DefaultEndpoint {
@@ -50,7 +49,7 @@ public class ProcessorEndpoint extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
+    public Consumer createConsumer(Processor processor) throws Exception {
         return new DefaultConsumer(this, processor);
     }
 

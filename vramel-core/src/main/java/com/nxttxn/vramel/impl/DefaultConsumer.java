@@ -3,7 +3,10 @@ package com.nxttxn.vramel.impl;
 import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Consumer;
 import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.spi.ExceptionHandler;
 import com.nxttxn.vramel.support.ServiceSupport;
+import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +21,12 @@ import org.slf4j.LoggerFactory;
 public class DefaultConsumer extends ServiceSupport implements Consumer {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Endpoint endpoint;
-    private final AsyncProcessor processor;
+    private volatile AsyncProcessor asyncProcessor;
+    private final Processor processor;
+    private ExceptionHandler exceptionHandler;
 
-    public DefaultConsumer(Endpoint endpoint, AsyncProcessor processor) {
+
+    public DefaultConsumer(Endpoint endpoint, Processor processor) {
 
         this.endpoint = endpoint;
         this.processor = processor;
@@ -50,7 +56,31 @@ public class DefaultConsumer extends ServiceSupport implements Consumer {
         logger.debug("Starting consumer: {}", this);
         ServiceHelper.startServices(processor);
     }
-    public AsyncProcessor getProcessor() {
+    public Processor getProcessor() {
         return processor;
     }
+
+    /**
+     * Provides an {@link org.apache.camel.AsyncProcessor} interface to the configured
+     * processor on the consumer. If the processor does not implement the interface,
+     * it will be adapted so that it does.
+     */
+    public synchronized AsyncProcessor getAsyncProcessor() {
+        if (asyncProcessor == null) {
+            asyncProcessor = AsyncProcessorConverterHelper.convert(processor);
+        }
+        return asyncProcessor;
+    }
+
+    public ExceptionHandler getExceptionHandler() {
+        if (exceptionHandler == null) {
+            exceptionHandler = new LoggingExceptionHandler(getClass());
+        }
+        return exceptionHandler;
+    }
+
+    public void setExceptionHandler(ExceptionHandler exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
+    }
+
 }

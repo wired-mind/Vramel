@@ -24,14 +24,14 @@ public class JposChannelAdapter extends DefaultEndpoint {
     private final String remaining;
 
     public JposChannelAdapter(VramelContext vramelContext, JsonObject config, String remaining) {
-        super(String.format("jpos"), vramelContext, config);
+        super(String.format("jpos"), vramelContext);
 
         this.config = config;
         this.remaining = remaining;
     }
 
     @Override
-    public Consumer createConsumer(final AsyncProcessor processor) {
+    public Consumer createConsumer(final Processor processor) {
         return new JposConsumer(this, processor);
     }
 
@@ -51,5 +51,10 @@ public class JposChannelAdapter extends DefaultEndpoint {
 
     public String getRemaining() {
         return remaining;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
     }
 }

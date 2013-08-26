@@ -29,7 +29,7 @@ public class JposConsumer extends DefaultConsumer {
     private final JsonObject jposConfig;
     private final Vertx vertx;
     private final JPOSServer jposServer;
-    public JposConsumer(final Endpoint endpoint, AsyncProcessor processor) {
+    public JposConsumer(final Endpoint endpoint, Processor processor) {
         super(endpoint, processor);
         this.endpoint = (JposChannelAdapter) endpoint;
 
@@ -72,7 +72,7 @@ public class JposConsumer extends DefaultConsumer {
                 logger.info(String.format("[JposConsumer] Incoming request - %s", jposServerRequest.getMTI()));
 
                 logger.debug("[JposConsumer] Ready to process exchange: {}.", getProcessor().toString(), exchange);
-                getProcessor().process(exchange, new OptionalAsyncResultHandler() {
+                getAsyncProcessor().process(exchange, new OptionalAsyncResultHandler() {
                     @Override
                     public void handle(AsyncExchangeResult asyncExchangeResult) {
                         if (asyncExchangeResult.failed()) {

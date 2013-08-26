@@ -42,7 +42,7 @@ public class RestProducer extends DefaultAsyncProducer {
         this.endpoint = (RestChannelAdapter) endpoint;
 
         ClientFactory clientFactory = endpoint.getVramelContext().getClientFactory();
-        final JsonObject config = endpoint.getConfig();
+        final JsonObject config = this.endpoint.getConfig();
         final String host = config.getString("host");
         final boolean ssl = config.getBoolean("ssl", true);
         final Number port = config.getNumber("port", 443);

@@ -22,6 +22,7 @@ import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.URISupport;
 import com.nxttxn.vramel.util.UnsafeUriCharactersEncoder;
+import org.vertx.java.core.json.JsonObject;
 
 import java.net.URISyntaxException;
 import java.util.*;
@@ -83,7 +84,7 @@ public abstract class ComponentConfigurationSupport implements ComponentConfigur
     @Override
     public Endpoint createEndpoint() throws Exception {
         String uri = getUriString();
-        return component.createEndpoint(uri);
+        return component.createEndpoint(uri, new JsonObject());
     }
 
     /**

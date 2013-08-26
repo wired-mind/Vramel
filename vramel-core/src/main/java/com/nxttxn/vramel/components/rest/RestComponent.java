@@ -8,6 +8,7 @@ import com.nxttxn.vramel.impl.DefaultComponent;
 import org.vertx.java.core.json.JsonObject;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,7 +23,7 @@ public class RestComponent extends DefaultComponent {
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         final String separator = ":";
         final String[] splitRemaining = remaining.split(separator);
         if (splitRemaining.length < 2) {
@@ -34,7 +35,9 @@ public class RestComponent extends DefaultComponent {
         String route = Joiner.on(separator).join(routeParts);
 
 
+        final JsonObject config = new JsonObject(parameters).copy();
         final RestChannelAdapter restChannelAdapter = new RestChannelAdapter(getVramelContext(), route, method, config);
+        parameters.clear();
         return restChannelAdapter;
     }
 }

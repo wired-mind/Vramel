@@ -2,6 +2,8 @@ package com.nxttxn.vramel.components.vertx;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultEndpoint;
+import org.apache.velocity.runtime.*;
+import org.apache.velocity.runtime.Runtime;
 import org.vertx.java.core.json.JsonObject;
 
 /**
@@ -13,14 +15,16 @@ import org.vertx.java.core.json.JsonObject;
  */
 public class VertxChannelAdapter extends DefaultEndpoint {
     private final String address;
+    private JsonObject config;
 
     public VertxChannelAdapter(VramelContext vramelContext, String address, JsonObject config) {
-        super(String.format("vertx:%s", address), vramelContext, config);
+        super(String.format("vertx:%s", address), vramelContext);
         this.address = address;
+        this.config = config;
     }
 
     @Override
-    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
+    public Consumer createConsumer(Processor processor) throws Exception {
         return new VertxConsumer(this, processor);
     }
 
@@ -31,5 +35,14 @@ public class VertxChannelAdapter extends DefaultEndpoint {
 
     public String getAddress() {
         return address;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+    public JsonObject getConfig() {
+        return config;
     }
 }

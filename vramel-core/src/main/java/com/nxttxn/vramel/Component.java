@@ -12,5 +12,15 @@ import org.vertx.java.core.json.JsonObject;
 public interface Component extends VramelContextAware {
     Endpoint createEndpoint(String uri, JsonObject config) throws Exception;
 
-    Endpoint createEndpoint(String uri) throws Exception;
+
+    /**
+     * Whether to use raw or encoded uri, when creating endpoints.
+     * <p/>
+     * <b>Notice:</b> When using raw uris, then the parameter values is raw as well.
+     *
+     * @return <tt>true</tt> to use raw uris, <tt>false</tt> to use encoded uris (default).
+     *
+     * @since Camel 2.11.0
+     */
+    boolean useRawUri();
 }

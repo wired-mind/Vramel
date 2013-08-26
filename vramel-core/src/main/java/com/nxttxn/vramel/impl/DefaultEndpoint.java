@@ -1,7 +1,13 @@
 package com.nxttxn.vramel.impl;
 
 import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.support.ServiceSupport;
+import com.nxttxn.vramel.util.IntrospectionSupport;
+import com.nxttxn.vramel.util.ObjectHelper;
+import com.nxttxn.vramel.util.URISupport;
 import org.vertx.java.core.json.JsonObject;
+
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -12,17 +18,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Time: 1:34 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class DefaultEndpoint implements Endpoint {
+public abstract class DefaultEndpoint extends ServiceSupport implements Endpoint {
     private String endpointUri;
     private Component component;
     private VramelContext vramelContext;
-    private JsonObject config;
+    private Map<String, Object> consumerProperties;
 
-    public DefaultEndpoint(String endpointUri, VramelContext vramelContext, JsonObject config) {
-        checkNotNull(config);
+    public DefaultEndpoint(String endpointUri, VramelContext vramelContext) {
         this.endpointUri = endpointUri;
         this.vramelContext = vramelContext;
-        this.config = config;
     }
 
     protected DefaultEndpoint() {
@@ -38,6 +42,23 @@ public abstract class DefaultEndpoint implements Endpoint {
         this.component = component;
     }
 
+    public int hashCode() {
+        return getEndpointUri().hashCode() * 37 + 1;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof DefaultEndpoint) {
+            DefaultEndpoint that = (DefaultEndpoint)object;
+            return ObjectHelper.equal(this.getEndpointUri(), that.getEndpointUri());
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Endpoint[%s]", URISupport.sanitizeUri(getEndpointUri()));
+    }
 
     @Override
     public VramelContext getVramelContext() {
@@ -49,10 +70,6 @@ public abstract class DefaultEndpoint implements Endpoint {
         this.vramelContext = vramelContext;
     }
 
-    @Override
-    public JsonObject getConfig() {
-        return config;
-    }
 
     @Override
     public String getEndpointUri() {
@@ -93,5 +110,52 @@ public abstract class DefaultEndpoint implements Endpoint {
      */
     protected void setEndpointUri(String endpointUri) {
         this.endpointUri = endpointUri;
+    }
+
+    public String getEndpointKey() {
+        if (isLenientProperties()) {
+            // only use the endpoint uri without parameters as the properties is
+            // lenient
+            String uri = getEndpointUri();
+            if (uri.indexOf('?') != -1) {
+                return ObjectHelper.before(uri, "?");
+            } else {
+                return uri;
+            }
+        } else {
+            // use the full endpoint uri
+            return getEndpointUri();
+        }
+    }
+
+    public boolean isLenientProperties() {
+        // default should be false for most components
+        return true; //temporarily return true until we sort out uri params vs. jsonobject params
+    }
+
+    public void configureProperties(Map<String, Object> options) {
+        Map<String, Object> consumerProperties = IntrospectionSupport.extractProperties(options, "consumer.");
+        if (consumerProperties != null) {
+            setConsumerProperties(consumerProperties);
+        }
+    }
+
+    public void setConsumerProperties(Map<String, Object> consumerProperties) {
+        this.consumerProperties = consumerProperties;
+    }
+
+    public Map<String, Object> getConsumerProperties() {
+        return consumerProperties;
+    }
+
+
+    @Override
+    protected void doStart() throws Exception {
+        // noop
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        // noop
     }
 }

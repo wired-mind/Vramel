@@ -88,7 +88,7 @@ public class CamelPostProcessorHelper implements VramelContextAware {
         Endpoint endpoint = getEndpointInjection(bean, endpointUri, endpointName, endpointProperty, injectionPointName, true);
         if (endpoint != null) {
             try {
-                AsyncProcessor processor = createConsumerProcessor(bean, method, endpoint);
+                Processor processor = createConsumerProcessor(bean, method, endpoint);
                 Consumer consumer = endpoint.createConsumer(processor);
                 LOG.debug("Created processor: {} for consumer: {}", processor, consumer);
                 startService(consumer, bean, beanName);
@@ -114,7 +114,7 @@ public class CamelPostProcessorHelper implements VramelContextAware {
      * Create a processor which invokes the given method when an incoming
      * message exchange is received
      */
-    protected AsyncProcessor createConsumerProcessor(final Object pojo, final Method method, final Endpoint endpoint) {
+    protected Processor createConsumerProcessor(final Object pojo, final Method method, final Endpoint endpoint) {
         BeanInfo info = new BeanInfo(getVramelContext(), method);
         BeanProcessor answer = new BeanProcessor(pojo, info);
         // must ensure the consumer is being executed in an unit of work so synchronization callbacks etc is invoked

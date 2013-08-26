@@ -5,6 +5,8 @@ import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.impl.DefaultComponent;
 import org.vertx.java.core.json.JsonObject;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
@@ -18,7 +20,9 @@ public class VertxComponent extends DefaultComponent {
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
-        return new VertxChannelAdapter(getVramelContext(), remaining, config);
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
+        final VertxChannelAdapter vertxChannelAdapter = new VertxChannelAdapter(getVramelContext(), remaining, new JsonObject(parameters).copy());
+        parameters.clear();
+        return vertxChannelAdapter;
     }
 }

@@ -2,10 +2,7 @@ package com.nxttxn.vramel.components.axis2;
 
 
 import com.google.common.base.Optional;
-import com.nxttxn.vramel.AsyncProcessor;
-import com.nxttxn.vramel.Consumer;
-import com.nxttxn.vramel.Producer;
-import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultEndpoint;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
@@ -15,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
 
 import java.net.URL;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,9 +29,8 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
     private final VramelAxisServer vramelAxisServer;
 
     public Axis2ChannelAdapter(VramelContext vramelContext, String path, JsonObject config) throws AxisFault {
-        super(String.format("axis2:%s", path), vramelContext, config);
+        super(String.format("axis2:%s", path), vramelContext);
         this.path = path;
-
         this.config = config;
 
 
@@ -41,7 +38,7 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(final AsyncProcessor processor) throws AxisFault {
+    public Consumer createConsumer(final Processor processor) throws AxisFault {
         return new Axis2Consumer(this, processor, vramelAxisServer);
     }
 
@@ -69,11 +66,17 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
     }
 
 
-    public JsonObject getConfig() {
-        return config;
-    }
 
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+    public JsonObject getConfig() {
+        return config;
     }
 }

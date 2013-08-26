@@ -26,12 +26,10 @@ public class Axis2Consumer extends DefaultConsumer {
     private static final Logger logger = LoggerFactory.getLogger(Axis2Consumer.class);
     private final Axis2ChannelAdapter endpoint;
     private final VramelAxisServer axisServer;
-    private final AsyncProcessor processor;
 
 
-    public Axis2Consumer(Endpoint endpoint, final AsyncProcessor processor, VramelAxisServer vramelAxisServer) throws AxisFault {
+    public Axis2Consumer(Endpoint endpoint, final Processor processor, VramelAxisServer vramelAxisServer) throws AxisFault {
         super(endpoint, processor);
-        this.processor = processor;
         this.endpoint = (Axis2ChannelAdapter) endpoint;
 
         axisServer = vramelAxisServer;
@@ -53,8 +51,8 @@ public class Axis2Consumer extends DefaultConsumer {
         in.setBody(body);
         // TODO: set headers
         try {
-            logger.debug("[Axis2 Consumer] Ready to process exchange: {}.", processor.toString(), exchange);
-            processor.process(exchange, new OptionalAsyncResultHandler() {
+            logger.debug("[Axis2 Consumer] Ready to process exchange: {}.", getAsyncProcessor().toString(), exchange);
+            getAsyncProcessor().process(exchange, new OptionalAsyncResultHandler() {
                 @Override
                 public void handle(AsyncExchangeResult asyncExchangeResult) {
                     try {

@@ -16,15 +16,17 @@ public class VertxQueueChannelAdapter extends DefaultEndpoint {
 
     private final String queueName;
     private final String address;
+    private JsonObject config;
 
     public VertxQueueChannelAdapter(VramelContext vramelContext, String queueName, String address, JsonObject config) {
-        super(String.format("vertxQueue:%s:%s", queueName, address), vramelContext, config);
+        super(String.format("vertxQueue:%s:%s", queueName, address), vramelContext);
         this.queueName = queueName;
         this.address = address;
+        this.config = config;
     }
 
     @Override
-    public Consumer createConsumer(AsyncProcessor processor) throws Exception {
+    public Consumer createConsumer(Processor processor) throws Exception {
         return new VertxQueueConsumer(this, processor);
     }
 
@@ -40,4 +42,14 @@ public class VertxQueueChannelAdapter extends DefaultEndpoint {
     public String getQueueName() {
         return queueName;
     }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+    public JsonObject getConfig() {
+        return config;
+    }
+
 }

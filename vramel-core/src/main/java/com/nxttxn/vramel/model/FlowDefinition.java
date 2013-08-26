@@ -34,6 +34,16 @@ public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
     }
 
     @Override
+    public String toString() {
+        if (getId() != null) {
+            return "Flow(" + getId() + ")[" + inputs + " -> " + outputs + "]";
+        } else {
+            return "Flow[" + inputs + " -> " + outputs + "]";
+        }
+    }
+
+
+    @Override
     public List<ProcessorDefinition<?>> getOutputs() {
         return outputs;
     }

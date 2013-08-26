@@ -28,6 +28,12 @@ public abstract class FlowBuilder extends BuilderSupport implements FlowsBuilder
 
     public abstract void configure() throws Exception;
 
+    @Override
+    public String toString() {
+        return getFlowCollection().toString();
+    }
+
+
     protected FlowDefinition from(Endpoint endpoint) {
         FlowDefinition flow = getFlowCollection().from(endpoint);
         return flow;

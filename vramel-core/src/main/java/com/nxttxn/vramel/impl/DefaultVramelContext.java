@@ -23,8 +23,7 @@ import com.nxttxn.vramel.spi.PackageScanClassResolver;
 import com.nxttxn.vramel.spi.Registry;
 import com.nxttxn.vramel.spi.TypeConverterRegistry;
 import com.nxttxn.vramel.spi.UuidGenerator;
-import com.nxttxn.vramel.util.FlowDefinitionHelper;
-import com.nxttxn.vramel.util.ObjectHelper;
+import com.nxttxn.vramel.util.*;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +34,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -48,6 +48,9 @@ public class DefaultVramelContext implements ModelVramelContext {
     private VramelContextNameStrategy nameStrategy = new DefaultVramelContextNameStrategy();
     private final BusModBase busModBase;
     private final String defaultEndpointConfig = "default_endpoint_config";
+    private Map<EndpointKey, Endpoint> endpoints;
+    private final AtomicInteger endpointKeyCounter = new AtomicInteger();
+
     private List<FlowDefinition> flowDefinitions = Lists.newArrayList();
     private DefaultServerFactory defaultServerFactory;
     private ClientFactory defaultClientFactory;
@@ -87,6 +90,7 @@ public class DefaultVramelContext implements ModelVramelContext {
         this.defaultServerFactory = new DefaultServerFactory(busModBase.getVertx());
         this.defaultClientFactory = new DefaultClientFactory(busModBase.getVertx());
 
+        this.endpoints = new EndpointRegistry(this);
 
         packageScanClassResolver = new DefaultPackageScanClassResolver();
 
@@ -160,24 +164,152 @@ public class DefaultVramelContext implements ModelVramelContext {
         return defaultClientFactory;
     }
 
-    @Override
-    public Endpoint getEndpoint(String uri, JsonObject configOverride) {
-
-        final String[] splitUri = uri.split(":");
-        if (splitUri.length < 2) {
-            throw new ResolveEndpointFailedException("Invalid uri");
-        }
-
-        final String scheme = splitUri[0];
-        Component component = getComponent(scheme);
+    /**
+     * Normalize uri so we can do endpoint hits with minor mistakes and parameters is not in the same order.
+     *
+     * @param uri the uri
+     * @return normalized uri
+     * @throws ResolveEndpointFailedException if uri cannot be normalized
+     */
+    protected static String normalizeEndpointUri(String uri) {
         try {
-            return component.createEndpoint(uri, configOverride);
+            uri = URISupport.normalizeUri(uri);
         } catch (Exception e) {
-            throw new ResolveEndpointFailedException("Error creating endpoint", e);
+            throw new ResolveEndpointFailedException(uri, e);
         }
-
+        return uri;
     }
 
+
+    /**
+     * Gets the endpoint key to use for lookup or whe adding endpoints to the {@link EndpointRegistry}
+     *
+     * @param uri the endpoint uri
+     * @return the key
+     */
+    protected EndpointKey getEndpointKey(String uri) {
+        return new EndpointKey(uri);
+    }
+
+    /**
+     * Gets the endpoint key to use for lookup or whe adding endpoints to the {@link EndpointRegistry}
+     *
+     * @param uri      the endpoint uri
+     * @param endpoint the endpoint
+     * @return the key
+     */
+    protected EndpointKey getEndpointKey(String uri, Endpoint endpoint) {
+        if (endpoint != null && !endpoint.isSingleton()) {
+            int counter = endpointKeyCounter.incrementAndGet();
+            return new EndpointKey(uri + ":" + counter);
+        } else {
+            return new EndpointKey(uri);
+        }
+    }
+
+    // Endpoint Management Methods
+    // -----------------------------------------------------------------------
+
+    public Collection<Endpoint> getEndpoints() {
+        return new ArrayList<Endpoint>(endpoints.values());
+    }
+
+    public Map<String, Endpoint> getEndpointMap() {
+        TreeMap<String, Endpoint> answer = new TreeMap<String, Endpoint>();
+        for (Map.Entry<EndpointKey, Endpoint> entry : endpoints.entrySet()) {
+            answer.put(entry.getKey().get(), entry.getValue());
+        }
+        return answer;
+    }
+
+    public Endpoint hasEndpoint(String uri) {
+        return endpoints.get(getEndpointKey(uri));
+    }
+
+    public Endpoint addEndpoint(String uri, Endpoint endpoint) throws Exception {
+        Endpoint oldEndpoint;
+
+        startService(endpoint);
+        oldEndpoint = endpoints.remove(getEndpointKey(uri));
+//        for (LifecycleStrategy strategy : lifecycleStrategies) {
+//            strategy.onEndpointAdd(endpoint);
+//        }
+        addEndpointToRegistry(uri, endpoint);
+        if (oldEndpoint != null) {
+            stopServices(oldEndpoint);
+        }
+
+        return oldEndpoint;
+    }
+
+    private void stopServices(Object service) throws Exception {
+        // allow us to do custom work before delegating to service helper
+        try {
+            ServiceHelper.stopService(service);
+        } catch (Exception e) {
+            // fire event
+//            EventHelper.notifyServiceStopFailure(this, service, e);
+            // rethrow to signal error with stopping
+            throw e;
+        }
+    }
+
+    /**
+     * Strategy to add the given endpoint to the internal endpoint registry
+     *
+     * @param uri      uri of the endpoint
+     * @param endpoint the endpoint to add
+     * @return the added endpoint
+     */
+    protected Endpoint addEndpointToRegistry(String uri, Endpoint endpoint) {
+        ObjectHelper.notEmpty(uri, "uri");
+        ObjectHelper.notNull(endpoint, "endpoint");
+
+        // if there is endpoint strategies, then use the endpoints they return
+        // as this allows to intercept endpoints etc.
+//        for (EndpointStrategy strategy : endpointStrategies) {
+//            endpoint = strategy.registerEndpoint(uri, endpoint);
+//        }
+        endpoints.put(getEndpointKey(uri, endpoint), endpoint);
+        return endpoint;
+    }
+
+    public Collection<Endpoint> removeEndpoints(String uri) throws Exception {
+        Collection<Endpoint> answer = new ArrayList<Endpoint>();
+        Endpoint oldEndpoint = endpoints.remove(getEndpointKey(uri));
+        if (oldEndpoint != null) {
+            answer.add(oldEndpoint);
+            stopServices(oldEndpoint);
+        } else {
+            for (Map.Entry<EndpointKey, Endpoint> entry : endpoints.entrySet()) {
+                oldEndpoint = entry.getValue();
+                if (EndpointHelper.matchEndpoint(this, oldEndpoint.getEndpointUri(), uri)) {
+                    try {
+                        stopServices(oldEndpoint);
+                    } catch (Exception e) {
+                        logger.warn("Error stopping endpoint " + oldEndpoint + ". This exception will be ignored.", e);
+                    }
+                    answer.add(oldEndpoint);
+                    endpoints.remove(entry.getKey());
+                }
+            }
+        }
+
+//        // notify lifecycle its being removed
+//        for (Endpoint endpoint : answer) {
+//            for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                strategy.onEndpointRemove(endpoint);
+//            }
+//        }
+
+        return answer;
+    }
+
+
+    @Override
+    public Endpoint getEndpoint(String uri) {
+        return getEndpoint(uri, getConfig().getObject(defaultEndpointConfig, new JsonObject()));
+    }
     public <T extends Endpoint> T getEndpoint(String name, Class<T> endpointType) {
         Endpoint endpoint = getEndpoint(name);
         if (endpoint == null) {
@@ -193,6 +325,114 @@ public class DefaultVramelContext implements ModelVramelContext {
             throw new IllegalArgumentException("The endpoint is not of type: " + endpointType
                     + " but is: " + endpoint.getClass().getCanonicalName());
         }
+    }
+
+
+
+    public Endpoint getEndpoint(String uri, JsonObject configOverride) {
+        ObjectHelper.notEmpty(uri, "uri");
+        ObjectHelper.notNull(configOverride, "configOverride");
+
+        logger.trace("Getting endpoint with uri: {}", uri);
+
+        // in case path has property placeholders then try to let property component resolve those
+        try {
+            uri = resolvePropertyPlaceholders(uri);
+        } catch (Exception e) {
+            throw new ResolveEndpointFailedException(uri, e);
+        }
+
+        final String rawUri = uri;
+
+        // normalize uri so we can do endpoint hits with minor mistakes and parameters is not in the same order
+        uri = normalizeEndpointUri(uri);
+
+        logger.trace("Getting endpoint with raw uri: {}, normalized uri: {}", rawUri, uri);
+
+        Endpoint answer;
+        String scheme = null;
+        EndpointKey key = getEndpointKey(uri);
+        answer = endpoints.get(key);
+        if (answer == null) {
+            try {
+                // Use the URI prefix to find the component.
+                String splitURI[] = ObjectHelper.splitOnCharacter(uri, ":", 2);
+                if (splitURI[1] != null) {
+                    scheme = splitURI[0];
+                    logger.trace("Endpoint uri: {} is from component with name: {}", uri, scheme);
+                    Component component = getComponent(scheme);
+
+                    // Ask the component to resolve the endpoint.
+                    if (component != null) {
+                        logger.trace("Creating endpoint from uri: {} using component: {}", uri, component);
+
+                        // Have the component create the endpoint if it can.
+                        if (component.useRawUri()) {
+                            answer = component.createEndpoint(rawUri, configOverride);
+                        } else {
+                            answer = component.createEndpoint(uri, configOverride);
+                        }
+
+                        if (answer != null && logger.isDebugEnabled()) {
+                            logger.debug("{} converted to endpoint: {} by component: {}", new Object[]{URISupport.sanitizeUri(uri), answer, component});
+                        }
+                    }
+                }
+
+                if (answer == null) {
+                    // no component then try in registry and elsewhere
+                    answer = createEndpoint(uri);
+                    logger.trace("No component to create endpoint from uri: {} fallback lookup in registry -> {}", uri, answer);
+                }
+
+                if (answer != null) {
+                    addService(answer);
+                    answer = addEndpointToRegistry(uri, answer);
+                }
+            } catch (Exception e) {
+                throw new ResolveEndpointFailedException(uri, e);
+            }
+        }
+
+        // unknown scheme
+        if (answer == null && scheme != null) {
+            throw new ResolveEndpointFailedException(uri, "No component found with scheme: " + scheme);
+        }
+
+        return answer;
+    }
+
+    /**
+     * A pluggable strategy to allow an endpoint to be created without requiring
+     * a component to be its factory, such as for looking up the URI inside some
+     * {@link Registry}
+     *
+     * @param uri the uri for the endpoint to be created
+     * @return the newly created endpoint or null if it could not be resolved
+     */
+    protected Endpoint createEndpoint(String uri) {
+        Object value = getRegistry().lookupByName(uri);
+        if (value instanceof Endpoint) {
+            return (Endpoint) value;
+        } else if (value instanceof Processor) {
+            return new ProcessorEndpoint(uri, this, (Processor) value);
+        } else if (value != null) {
+            return convertBeanToEndpoint(uri, value);
+        }
+        return null;
+    }
+
+    /**
+     * Strategy method for attempting to convert the bean from a {@link Registry} to an endpoint using
+     * some kind of transformation or wrapper
+     *
+     * @param uri  the uri for the endpoint (and name in the registry)
+     * @param bean the bean to be converted to an endpoint, which will be not null
+     * @return a new endpoint
+     */
+    protected Endpoint convertBeanToEndpoint(String uri, Object bean) {
+        throw new IllegalArgumentException("uri: " + uri + " bean: " + bean
+                + " could not be converted to an Endpoint");
     }
 
     @Override
@@ -252,12 +492,6 @@ public class DefaultVramelContext implements ModelVramelContext {
     @Override
     public List<Flow> getFlows() {
         return new ArrayList<>(flows);
-    }
-
-    @Override
-    public Endpoint getEndpoint(String uri) {
-        //eventually we'll need a nicer way to allow the dynamic router to specify a config
-        return getEndpoint(uri, getDefaultEndpointConfig());
     }
 
     @Override

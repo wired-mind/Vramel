@@ -21,7 +21,7 @@ public class RestChannelAdapter extends DefaultEndpoint {
     private final JsonObject config;
 
     public RestChannelAdapter(VramelContext vramelContext, String route, String method, JsonObject config) {
-        super(String.format("rest:%s:%s", method, route), vramelContext, config);
+        super(String.format("rest:%s:%s", method, route), vramelContext);
 
         this.route = route;
         this.method = method;
@@ -29,7 +29,7 @@ public class RestChannelAdapter extends DefaultEndpoint {
     }
 
     @Override
-    public Consumer createConsumer(final AsyncProcessor processor) {
+    public Consumer createConsumer(final Processor processor) {
         return new RestConsumer(this, processor);
     }
 
@@ -49,5 +49,10 @@ public class RestChannelAdapter extends DefaultEndpoint {
 
     public JsonObject getConfig() {
         return config;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
     }
 }

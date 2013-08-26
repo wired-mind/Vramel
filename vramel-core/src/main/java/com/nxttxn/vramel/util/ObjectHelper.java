@@ -1214,5 +1214,20 @@ public class ObjectHelper {
         return new ExceptionIterator(exception);
     }
 
+    public static String[] splitOnCharacter(String value, String needle, int count) {
+        String rc[] = new String[count];
+        rc[0] = value;
+        for (int i = 1; i < count; i++) {
+            String v = rc[i - 1];
+            int p = v.indexOf(needle);
+            if (p < 0) {
+                return rc;
+            }
+            rc[i - 1] = v.substring(0, p);
+            rc[i] = v.substring(p + 1);
+        }
+        return rc;
+    }
+
 
 }

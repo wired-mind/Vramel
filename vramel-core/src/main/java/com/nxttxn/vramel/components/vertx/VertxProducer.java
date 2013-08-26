@@ -19,10 +19,12 @@ import org.vertx.java.core.eventbus.Message;
 public class VertxProducer extends DefaultAsyncProducer {
 
     private final String address;
+    private final VertxChannelAdapter endpoint;
 
     public VertxProducer(Endpoint endpoint, String address) throws Exception {
         super(endpoint);
         this.address = address;
+        this.endpoint = (VertxChannelAdapter)endpoint;
     }
 
     @Override
@@ -31,7 +33,7 @@ public class VertxProducer extends DefaultAsyncProducer {
 
         byte[] obj;
 
-        final boolean isTransferExchange = getEndpoint().getConfig().getBoolean("isTransferExchange", true);
+        final boolean isTransferExchange = this.endpoint.getConfig().getBoolean("isTransferExchange", true);
         if (isTransferExchange) {
             final DefaultExchangeHolder holder = DefaultExchangeHolder.marshal(exchange);
             obj = holder.getBytes();

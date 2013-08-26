@@ -65,7 +65,7 @@ public class Axis2Producer extends DefaultAsyncProducer {
         super(endpoint);
         this.endpoint = (Axis2ChannelAdapter) endpoint;
 
-        final JsonObject config = endpoint.getConfig();
+        final JsonObject config = this.endpoint.getConfig();
         wsdl = Optional.of(config.getString("wsdl"));
         namespaceURI = Optional.of(config.getString("namespaceURI"));
         service = Optional.of(config.getString("service"));

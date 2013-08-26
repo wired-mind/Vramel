@@ -17,6 +17,7 @@
 package com.nxttxn.vramel.components.bean;
 
 import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.impl.ProcessorEndpoint;
 import com.nxttxn.vramel.impl.UriEndpointComponent;
@@ -24,6 +25,8 @@ import org.apache.camel.util.LRUSoftCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
+
+import java.util.Map;
 
 /**
  * The <a href="http://camel.apache.org/bean.html">Bean Component</a>
@@ -54,17 +57,6 @@ public class BeanComponent extends UriEndpointComponent {
         return createEndpoint(bean, uri);
     }
 
-    @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
-        BeanEndpoint endpoint = new BeanEndpoint(uri, this);
-        endpoint.setBeanName(remaining);
-//        Boolean cache = getAndRemoveParameter(parameters, "cache", Boolean.class, Boolean.FALSE);
-//        endpoint.setCache(cache);
-//        AsyncProcessor processor = endpoint.getProcessor();
-//        setProperties(processor, parameters);
-        return endpoint;
-    }
-
     /**
      * A helper method to create a new endpoint from a bean with a given URI
      */
@@ -74,12 +66,21 @@ public class BeanComponent extends UriEndpointComponent {
         return createEndpoint(uri, processor);
     }
 
-
+    // Implementation methods
+    //-----------------------------------------------------------------------
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
+        BeanEndpoint endpoint = new BeanEndpoint(uri, this);
+        endpoint.setBeanName(remaining);
+        Boolean cache = getAndRemoveParameter(parameters, "cache", Boolean.class, Boolean.FALSE);
+        endpoint.setCache(cache);
+        Processor processor = endpoint.getProcessor();
+        setProperties(processor, parameters);
+        return endpoint;
+    }
 
     protected BeanEndpoint createEndpoint(String uri, BeanProcessor processor) {
         return new BeanEndpoint(uri, this, processor);
     }
-
     BeanInfo getBeanInfoFromCache(BeanInfoCacheKey key) {
         return cache.get(key);
     }

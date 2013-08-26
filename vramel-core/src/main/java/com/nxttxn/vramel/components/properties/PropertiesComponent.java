@@ -99,12 +99,8 @@ public class PropertiesComponent extends DefaultComponent {
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, JsonObject config) throws Exception {
+    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         String[] paths = locations;
-
-        //I think we should rework the createEndpoint api to remove JSONconfig... perhaps make it more compatible
-        //with camel
-        final Map<String, Object> parameters = config.toMap();
 
         // override default locations
         String locations = getAndRemoveParameter(parameters, "locations", String.class);

@@ -22,7 +22,7 @@ public class VertxConsumer extends DefaultConsumer {
 
     private final VertxChannelAdapter endpoint;
 
-    public VertxConsumer(final Endpoint endpoint, final AsyncProcessor processor) throws Exception {
+    public VertxConsumer(final Endpoint endpoint, final Processor processor) throws Exception {
         super(endpoint, processor);
         this.endpoint = (VertxChannelAdapter) endpoint;
 
@@ -53,7 +53,7 @@ public class VertxConsumer extends DefaultConsumer {
                     final Exchange request = exchange;
 
                     logger.debug("[Vertx Consumer] received message: " + exchange.toString());
-                    processor.process(request, new OptionalAsyncResultHandler() {
+                    getAsyncProcessor().process(request, new OptionalAsyncResultHandler() {
                         @Override
                         public void handle(AsyncExchangeResult optionalAsyncResult) {
                             if (optionalAsyncResult.failed()) {

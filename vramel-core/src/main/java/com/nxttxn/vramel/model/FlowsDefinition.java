@@ -32,6 +32,11 @@ public class FlowsDefinition {
         return onExceptions;
     }
 
+    @Override
+    public String toString() {
+        return "Flows: " + flows;
+    }
+
     public void setOnExceptions(List<OnExceptionDefinition> onExceptions) {
         this.onExceptions = onExceptions;
     }

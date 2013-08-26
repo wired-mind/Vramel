@@ -34,10 +34,10 @@ import java.util.List;
  * @version
  */
 public class EventDrivenConsumerFlow extends DefaultFlow {
-    private final AsyncProcessor processor;
+    private final Processor processor;
     private Consumer consumer;
 
-    public EventDrivenConsumerFlow(FlowContext flowContext, Endpoint endpoint, AsyncProcessor processor) {
+    public EventDrivenConsumerFlow(FlowContext flowContext, Endpoint endpoint, Processor processor) {
         super(flowContext, endpoint);
         this.processor = processor;
     }
@@ -47,7 +47,7 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
         return "EventDrivenConsumerRoute[" + getEndpoint() + " -> " + processor + "]";
     }
 
-    public AsyncProcessor getProcessor() {
+    public Processor getProcessor() {
         return processor;
     }
 
@@ -62,15 +62,15 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
         if (consumer != null) {
             services.add(consumer);
         }
-        AsyncProcessor processor = getProcessor();
+        Processor processor = getProcessor();
         if (processor instanceof Service) {
             services.add((Service)processor);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public Navigate<AsyncProcessor> navigate() {
-        AsyncProcessor answer = getProcessor();
+    public Navigate<Processor> navigate() {
+        Processor answer = getProcessor();
 
         // we do not want to navigate the instrument and inflight processors
         // which is the first 2 delegate async processors, so skip them
@@ -83,7 +83,7 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
         }
 
         if (answer instanceof Navigate) {
-            return (Navigate<AsyncProcessor>) answer;
+            return (Navigate<Processor>) answer;
         }
         return null;
     }
