@@ -9,6 +9,7 @@ import com.nxttxn.vramel.impl.converter.BaseTypeConverterRegistry;
 import com.nxttxn.vramel.impl.converter.DefaultTypeConverter;
 import com.nxttxn.vramel.impl.converter.LazyLoadingTypeConverter;
 import com.nxttxn.vramel.language.bean.BeanLanguage;
+import com.nxttxn.vramel.language.property.PropertyLanguage;
 import com.nxttxn.vramel.language.simple.SimpleLanguage;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.ModelVramelContext;
@@ -69,6 +70,7 @@ public class DefaultVramelContext implements ModelVramelContext {
     private final HashMap<String, Language> languages = new HashMap<String, Language>() {{
         put("bean", new BeanLanguage());
         put("simple", new SimpleLanguage());
+        put("property", new PropertyLanguage());
     }};
     private ErrorHandlerFactory errorHandlerBuilder;
     private List<FlowContext> flowContexts = Lists.newArrayList();
