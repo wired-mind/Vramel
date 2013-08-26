@@ -54,7 +54,7 @@ public class VramelBusMod extends BusModBase {
                     try {
                         vramelContext.addFlowBuilder(flow);
                     } catch (Exception e) {
-                        logger.error("Error adding Flowbuilder to context", e);
+                        logger.error(String.format("Error adding Flowbuilder to context %s", flow), e);
                     }
                 }
             }
