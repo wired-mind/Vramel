@@ -36,7 +36,7 @@ public class VramelBusMod extends BusModBase {
         pc.setLocation("classpath:vramel.properties");
         vramelContext = new DefaultVramelContext(this);
         vramelContext.addComponent("properties", pc);
-        try {
+
             final Optional<String> packageName = Optional.fromNullable(getOptionalStringConfig("packageName", null));
             if (packageName.isPresent()) {
                 List<Class<? extends FlowsBuilder>> nonConcreteSubtypesOf = Lists.newArrayList();
@@ -51,15 +51,19 @@ public class VramelBusMod extends BusModBase {
                 }
 
                 for (FlowsBuilder flow : flowsBuilders) {
-                    vramelContext.addFlowBuilder(flow);
+                    try {
+                        vramelContext.addFlowBuilder(flow);
+                    } catch (Exception e) {
+                        logger.error("Error adding Flowbuilder to context", e);
+                    }
                 }
             }
             doWithVramelContext(vramelContext);
 
+        try {
             vramelContext.run();
-
         } catch (Exception e) {
-            logger.error("Cannot configure flows.", e);
+            logger.error("Cannot start vramel context.", e);
         }
 
 
