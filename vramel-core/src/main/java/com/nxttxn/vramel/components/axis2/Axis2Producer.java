@@ -12,6 +12,7 @@ import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.axiom.soap.SOAPBody;
+import org.apache.axis2.addressing.AddressingConstants;
 import org.apache.axis2.addressing.EndpointReference;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.async.AxisCallback;
@@ -84,7 +85,11 @@ public class Axis2Producer extends DefaultAsyncProducer {
         Options opts = new Options();
         //setting target EPR
         opts.setTo(new EndpointReference(this.endpoint.getPath()));
-        opts.setReplyTo(new EndpointReference("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"));
+        opts.setProperty(AddressingConstants.WS_ADDRESSING_VERSION, AddressingConstants.Submission.WSA_NAMESPACE);
+        opts.setReplyTo(new EndpointReference(AddressingConstants.Submission.WSA_ANONYMOUS_URL));
+
+        opts.setProperty(AddressingConstants.INCLUDE_OPTIONAL_HEADERS, Boolean.TRUE);
+
         if (policyPath.isPresent()) {
             final Policy policy = loadPolicy(policyPath.get());
 
