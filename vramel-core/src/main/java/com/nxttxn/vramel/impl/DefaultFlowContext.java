@@ -47,6 +47,7 @@ public class DefaultFlowContext implements FlowContext {
     private VramelContext vramelContext;
     private final List<Processor> eventDrivenProcessors = new ArrayList<Processor>();
     private boolean flowAdded;
+    private Boolean autoStartup = Boolean.TRUE;
 
     private Boolean handleFault;
 
@@ -95,6 +96,18 @@ public class DefaultFlowContext implements FlowContext {
         eventDrivenProcessors.add(processor);
     }
 
+
+    public void setAutoStartup(Boolean autoStartup) {
+        this.autoStartup = autoStartup;
+    }
+
+    public Boolean isAutoStartup() {
+        if (autoStartup != null) {
+            return autoStartup;
+        }
+        // default to true
+        return true;
+    }
 
     public void setHandleFault(Boolean handleFault) {
         this.handleFault = handleFault;

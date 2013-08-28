@@ -3,13 +3,16 @@ package com.nxttxn.vramel.processor;
 import com.google.common.base.Optional;
 import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.Navigate;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.async.*;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.support.AggregationSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
+import com.nxttxn.vramel.util.ServiceHelper;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,25 +26,48 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Time: 10:36 AM
  * To change this template use File | Settings | File Templates.
  */
-public class MulticastProcessor extends AggregationSupport implements AsyncProcessor {
+public class MulticastProcessor extends AggregationSupport implements AsyncProcessor, Navigate<Processor> {
     public List<Processor> getProcessors() {
         return processors;
     }
 
 
     private final List<Processor> processors;
-    private final Boolean parallelProcessing;
+    private final boolean parallelProcessing;
+    private final boolean streaming;
+    private final boolean stopOnException;
+    private final long timeout;
+    protected final Processor onPrepare;
+    private final boolean shareUnitOfWork;
 
-    public MulticastProcessor(List<Processor> processors, Boolean parallelProcessing, AggregationStrategy aggregationStrategy) {
+    public MulticastProcessor(List<Processor> processors, Boolean parallelProcessing, AggregationStrategy aggregationStrategy, boolean streaming, boolean stopOnException, long timeout, Processor onPrepare, boolean shareUnitOfWork) {
         super(aggregationStrategy);
         this.processors = processors;
         this.parallelProcessing = parallelProcessing;
+        this.streaming = streaming;
+        this.stopOnException = stopOnException;
+        this.timeout = timeout;
+        this.onPrepare = onPrepare;
+        this.shareUnitOfWork = shareUnitOfWork;
     }
 
     public MulticastProcessor(List<Processor> processors) {
-        this(processors, false, null);
+        this(processors, false, null, false, false, 0, null, false);
     }
 
+    /**
+     * Is the multicast processor working in streaming mode?
+     * <p/>
+     * In streaming mode:
+     * <ul>
+     * <li>we use {@link Iterable} to ensure we can send messages as soon as the data becomes available</li>
+     * <li>for parallel processing, we start aggregating responses as they get send back to the processor;
+     * this means the {@link org.apache.camel.processor.aggregate.AggregationStrategy} has to take care of handling out-of-order arrival of exchanges</li>
+     * </ul>
+     */
+    public boolean isStreaming() {
+        return streaming;
+    }
 
     public void process(Exchange exchange) throws Exception {
         AsyncProcessorHelper.process(this, exchange);
@@ -101,6 +127,10 @@ public class MulticastProcessor extends AggregationSupport implements AsyncProce
 
     }
 
+    public boolean isParallelProcessing() {
+        return parallelProcessing;
+    }
+
 
     private class ParallelResultHandler extends AggregatingExchangeHandler {
 
@@ -136,7 +166,33 @@ public class MulticastProcessor extends AggregationSupport implements AsyncProce
             final ProcessorExchangePair next = pairs.next();
             doSequential(original, result, optionalAsyncResultHandler, pairs, next);
         }
+    }
+
+    protected void doStart() throws Exception {
+        ServiceHelper.startServices(aggregationStrategy, processors);
+    }
 
 
+
+    @Override
+    protected void doStop() throws Exception {
+        ServiceHelper.stopServices(processors, aggregationStrategy);
+    }
+
+    @Override
+    protected void doShutdown() throws Exception {
+        ServiceHelper.stopAndShutdownServices(processors, aggregationStrategy);
+
+    }
+
+    public List<Processor> next() {
+        if (!hasNext()) {
+            return null;
+        }
+        return new ArrayList<Processor>(processors);
+    }
+
+    public boolean hasNext() {
+        return processors != null && !processors.isEmpty();
     }
 }

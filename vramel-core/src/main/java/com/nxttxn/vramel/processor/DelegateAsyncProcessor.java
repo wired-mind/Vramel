@@ -3,6 +3,7 @@ package com.nxttxn.vramel.processor;
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.List;
  * Time: 2:10 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DelegateAsyncProcessor implements DelegateProcessor, AsyncProcessor, Navigate<Processor> {
+public class DelegateAsyncProcessor extends ServiceSupport implements DelegateProcessor, AsyncProcessor, Navigate<Processor> {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected AsyncProcessor processor;
 

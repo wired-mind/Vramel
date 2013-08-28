@@ -36,4 +36,19 @@ public interface FlowContext {
     void commit();
 
     <T> T mandatoryLookup(String name, Class<T> type);
+
+    /**
+     * Sets whether the object should automatically start when Camel starts.
+     * <p/>
+     * <b>Important:</b> Currently only routes can be disabled, as {@link VramelContext}s are always started.
+     * <br/>
+     * <b>Note:</b> When setting auto startup <tt>false</tt> on {@link VramelContext} then that takes precedence
+     * and <i>no</i> routes is started. You would need to start {@link VramelContext} explicit using
+     * the {@link org.apache.camel.CamelContext#start()} method, to start the context and the routes.
+     * <p/>
+     * Default is <tt>true</tt> to always start up.
+     *
+     * @param autoStartup whether to start up automatically.
+     */
+    void setAutoStartup(Boolean autoStartup);
 }

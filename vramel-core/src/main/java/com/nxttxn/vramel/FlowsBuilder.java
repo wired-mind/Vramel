@@ -2,6 +2,7 @@ package com.nxttxn.vramel;
 
 import com.nxttxn.vramel.impl.DefaultVramelContext;
 import com.nxttxn.vramel.model.FlowDefinition;
+import com.nxttxn.vramel.model.ModelVramelContext;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,7 +12,7 @@ import com.nxttxn.vramel.model.FlowDefinition;
  * To change this template use File | Settings | File Templates.
  */
 public interface FlowsBuilder {
-    void addFlowsToVramelContext(VramelContext vramelContext) throws Exception;
+    void addFlowsToVramelContext(ModelVramelContext vramelContext) throws Exception;
 
     FlowDefinition fromF(String uri, Object... args);
 }

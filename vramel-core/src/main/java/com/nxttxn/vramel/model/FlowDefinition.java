@@ -3,11 +3,15 @@ package com.nxttxn.vramel.model;
 import com.google.common.collect.Lists;
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.builder.ErrorHandlerBuilderRef;import com.nxttxn.vramel.impl.DefaultFlowContext;import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.util.FlowDefinitionHelper;
+import com.nxttxn.vramel.util.VramelContextHelper;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,9 +22,16 @@ import java.util.List;
  */
 public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
 
+    private final AtomicBoolean prepared = new AtomicBoolean(false);
     private List<ProcessorDefinition<?>> outputs = Lists.newArrayList();
     private List<FromDefinition> inputs = new ArrayList<FromDefinition>();
+    private String group;
+    private String autoStartup;
+    private Integer startupOrder;
     private ErrorHandlerFactory errorHandlerBuilder;
+    // keep state whether the error handler is context scoped or not
+    // (will by default be context scoped of no explicit error handler configured)
+    private boolean contextScopedErrorHandler = true;
 
     public FlowDefinition(String uri) {
         from(uri);
@@ -42,6 +53,9 @@ public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
         }
     }
 
+    public String getAutoStartup() {
+        return autoStartup;
+    }
 
     @Override
     public List<ProcessorDefinition<?>> getOutputs() {
@@ -59,6 +73,89 @@ public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
         return this;
     }
 
+
+    /**
+     * Disables this route from being auto started when Camel starts.
+     *
+     * @return the builder
+     */
+    public FlowDefinition noAutoStartup() {
+        setAutoStartup("false");
+        return this;
+    }
+
+    /**
+     * Sets the auto startup property on this route.
+     *
+     * @param autoStartup - String indicator ("true" or "false")
+     * @return the builder
+     */
+    public FlowDefinition autoStartup(String autoStartup) {
+        setAutoStartup(autoStartup);
+        return this;
+    }
+
+    /**
+     * Sets the auto startup property on this route.
+     *
+     * @param autoStartup - boolean indicator
+     * @return the builder
+     */
+    public FlowDefinition autoStartup(boolean autoStartup) {
+        setAutoStartup(Boolean.toString(autoStartup));
+        return this;
+    }
+
+    /**
+     * Set the group name for this route
+     *
+     * @param name the group name
+     * @return the builder
+     */
+    public FlowDefinition group(String name) {
+        setGroup(name);
+        return this;
+    }
+
+    /**
+     * Set the route id for this route
+     *
+     * @param id the route id
+     * @return the builder
+     */
+    public FlowDefinition routeId(String id) {
+        setId(id);
+        return this;
+    }
+
+    /**
+     * Configures the startup order for this route
+     * <p/>
+     * Camel will reorder routes and star them ordered by 0..N where 0 is the lowest number and N the highest number.
+     * Camel will stop routes in reverse order when its stopping.
+     *
+     * @param order the order represented as a number
+     * @return the builder
+     */
+    public FlowDefinition startupOrder(int order) {
+        setStartupOrder(order);
+        return this;
+    }
+
+    /**
+     * The group that this route belongs to; could be the name of the RouteBuilder class
+     * or be explicitly configured in the XML.
+     * <p/>
+     * May be null.
+     */
+    public String getGroup() {
+        return group;
+    }
+
+    @XmlAttribute
+    public void setGroup(String group) {
+        this.group = group;
+    }
     /**
      * Creates an input to the route
      *
@@ -107,9 +204,16 @@ public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
         this.errorHandlerBuilder = errorHandlerBuilder;
     }
 
-    private FlowContext addFlows(VramelContext vramelContext, Collection<Flow> flows, FromDefinition fromType) throws FailedToCreateRouteException {
+    private FlowContext addFlows(VramelContext vramelContext, Collection<Flow> flows, FromDefinition fromType) throws Exception {
         FlowContext flowContext = new DefaultFlowContext(vramelContext, this, fromType, flows);
 
+
+        // configure auto startup
+        Boolean isAutoStartup = VramelContextHelper.parseBoolean(vramelContext, getAutoStartup());
+        if (isAutoStartup != null) {
+            log.debug("Using AutoStartup {} on route: {}", isAutoStartup, getId());
+            flowContext.setAutoStartup(isAutoStartup);
+        }
 
 
         // validate route has output processors
@@ -156,6 +260,57 @@ public class FlowDefinition extends ProcessorDefinition<FlowDefinition> {
 
         // return a reference to the default error handler
         return new ErrorHandlerBuilderRef(ErrorHandlerBuilderRef.DEFAULT_ERROR_HANDLER_BUILDER);
+    }
+
+    @SuppressWarnings("deprecation")
+    public boolean isContextScopedErrorHandler(VramelContext context) {
+        if (!contextScopedErrorHandler) {
+            return false;
+        }
+//        // if error handler ref is configured it may refer to a context scoped, so we need to check this first
+//        // the XML DSL will configure error handlers using refs, so we need this additional test
+//        if (errorHandlerRef != null) {
+//            ErrorHandlerFactory routeScoped = getErrorHandlerBuilder();
+//            ErrorHandlerFactory contextScoped = context.getErrorHandlerBuilder();
+//            return routeScoped != null && contextScoped != null && routeScoped == contextScoped;
+//        }
+
+        return contextScopedErrorHandler;
+    }
+
+    /**
+     * Prepares the route definition to be ready to be added to {@link VramelContext}
+     *
+     * @param context the camel context
+     */
+    public void prepare(ModelVramelContext context) {
+        if (prepared.compareAndSet(false, true)) {
+            FlowDefinitionHelper.prepareRoute(context, this);
+        }
+    }
+
+    public boolean isAutoStartup(VramelContext camelContext) throws Exception {
+        if (getAutoStartup() == null) {
+            // should auto startup by default
+            return true;
+        }
+        Boolean isAutoStartup = VramelContextHelper.parseBoolean(camelContext, getAutoStartup());
+        return isAutoStartup != null && isAutoStartup;
+    }
+
+
+    @XmlAttribute
+    public void setAutoStartup(String autoStartup) {
+        this.autoStartup = autoStartup;
+    }
+
+    public Integer getStartupOrder() {
+        return startupOrder;
+    }
+
+    @XmlAttribute
+    public void setStartupOrder(Integer startupOrder) {
+        this.startupOrder = startupOrder;
     }
 
 }

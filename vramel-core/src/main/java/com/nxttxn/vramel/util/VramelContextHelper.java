@@ -398,7 +398,7 @@ public final class VramelContextHelper {
 //     */
 //    public static int getRouteStartupOrder(VramelContext VramelContext, String routeId) {
 //        for (RouteStartupOrder order : VramelContext.getRouteStartupOrder()) {
-//            if (order.getRoute().getId().equals(routeId)) {
+//            if (order.getFlow().getId().equals(routeId)) {
 //                return order.getStartupOrder();
 //            }
 //        }

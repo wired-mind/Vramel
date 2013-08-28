@@ -64,14 +64,36 @@ public class DataFormatClause<T extends ProcessorDefinition<?>> {
         return dataFormat(new JibxDataFormat(unmarshallClass));
     }
 
+    /**
+     * Uses the JSON data format using the XStream json library
+     */
     public T json() {
-        return json(Object.class);
+        return dataFormat(new JsonDataFormat());
+    }
+
+    /**
+     * Uses the JSON data format
+     *
+     * @param library the json library to use
+     */
+    public T json(JsonLibrary library) {
+        return dataFormat(new JsonDataFormat(library));
+    }
+
+    /**
+     * Uses the JSON data format
+     *
+     * @param type          the json type to use
+     * @param unmarshalType unmarshal type for json jackson type
+     */
+    public T json(JsonLibrary type, Class<?> unmarshalType) {
+        JsonDataFormat json = new JsonDataFormat(type);
+        json.setUnmarshalType(unmarshalType);
+        return dataFormat(json);
     }
 
     public T json(Class<?> unmarshallClass) {
-        final JsonDataFormat json = new JsonDataFormat(JsonLibrary.Gson);
-        json.setUnmarshalType(unmarshallClass);
-        return dataFormat(json);
+        return json(JsonLibrary.Gson, unmarshallClass);
     }
 
     public T json(Expression expression) {

@@ -1,6 +1,5 @@
 package com.nxttxn.vramel.model;
 
-import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.processor.MulticastProcessor;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
@@ -45,7 +44,7 @@ public class MulticastDefinition extends OutputDefinition<MulticastDefinition> {
             // default to use latest aggregation strategy
             setAggregationStrategy(new UseLatestAggregationStrategy());
         }
-        return new MulticastProcessor(list, getParallelProcessing(), getAggregationStrategy());
+        return new MulticastProcessor(list, getParallelProcessing(), getAggregationStrategy(), streaming, stopOnException, timeout, onPrepare, shareUnitOfWork);
     }
 
     public AggregationStrategy getAggregationStrategy() {

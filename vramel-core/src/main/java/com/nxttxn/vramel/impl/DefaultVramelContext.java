@@ -11,6 +11,7 @@ import com.nxttxn.vramel.impl.converter.LazyLoadingTypeConverter;
 import com.nxttxn.vramel.language.bean.BeanLanguage;
 import com.nxttxn.vramel.language.property.PropertyLanguage;
 import com.nxttxn.vramel.language.simple.SimpleLanguage;
+import com.nxttxn.vramel.model.DataFormatDefinition;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.spi.*;
@@ -24,6 +25,7 @@ import com.nxttxn.vramel.spi.PackageScanClassResolver;
 import com.nxttxn.vramel.spi.Registry;
 import com.nxttxn.vramel.spi.TypeConverterRegistry;
 import com.nxttxn.vramel.spi.UuidGenerator;
+import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.*;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
@@ -44,13 +46,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Time: 3:18 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DefaultVramelContext implements ModelVramelContext {
-    private final Logger logger = LoggerFactory.getLogger(DefaultVramelContext.class);
+public class DefaultVramelContext extends ServiceSupport implements ModelVramelContext {
+    private final Logger log = LoggerFactory.getLogger(DefaultVramelContext.class);
     private VramelContextNameStrategy nameStrategy = new DefaultVramelContextNameStrategy();
     private final BusModBase busModBase;
     private final String defaultEndpointConfig = "default_endpoint_config";
     private Map<EndpointKey, Endpoint> endpoints;
     private final AtomicInteger endpointKeyCounter = new AtomicInteger();
+
+    private volatile boolean firstStartDone;
+    private volatile boolean doNotStartFlowsOnFirstStart;
+    private final ThreadLocal<Boolean> isStartingRoutes = new ThreadLocal<Boolean>();
+    private Boolean autoStartup = Boolean.TRUE;
 
     private List<FlowDefinition> flowDefinitions = Lists.newArrayList();
     private DefaultServerFactory defaultServerFactory;
@@ -58,7 +65,13 @@ public class DefaultVramelContext implements ModelVramelContext {
     private List<Consumer> consumers = Lists.newArrayList();
     private Boolean lazyLoadTypeConverters = Boolean.FALSE;
     private Map<String, Component> components = Maps.newHashMap();
+    private Map<String, DataFormatDefinition> dataFormats = new HashMap<String, DataFormatDefinition>();
+    private DataFormatResolver dataFormatResolver = new DefaultDataFormatResolver();
+
     private final Map<String, FactoryFinder> factories = new HashMap<String, FactoryFinder>();
+    private final Map<String, FlowService> routeServices = new LinkedHashMap<String, FlowService>();
+    private final Map<String, FlowService> suspendedRouteServices = new LinkedHashMap<String, FlowService>();
+    private LanguageResolver languageResolver = null;
     private ClassResolver classResolver = new DefaultClassResolver();
     private PackageScanClassResolver packageScanClassResolver;
     private FactoryFinderResolver factoryFinderResolver = new DefaultFactoryFinderResolver();
@@ -78,8 +91,15 @@ public class DefaultVramelContext implements ModelVramelContext {
     private UuidGenerator uuidGenerator = createDefaultUuidGenerator();
     private Map<String, String> properties = new HashMap<String, String>();
     private PropertiesComponent propertiesComponent;
+    private ShutdownStrategy shutdownStrategy = null;
     private final Set<Flow> flows = new LinkedHashSet<Flow>();
+    private final List<Service> servicesToClose = new ArrayList<Service>();
+    private final List<RouteStartupOrder> routeStartupOrder = new ArrayList<RouteStartupOrder>();
+    // start auto assigning route ids using numbering 1000 and upwards
+    private int defaultRouteStartupOrder = 1000;
     private final Set<StartupListener> startupListeners = new LinkedHashSet<StartupListener>();
+    private final StopWatch stopWatch = new StopWatch(false);
+    private Date startDate;
 
     private UuidGenerator createDefaultUuidGenerator() {
         return new JavaUuidGenerator();
@@ -104,11 +124,6 @@ public class DefaultVramelContext implements ModelVramelContext {
         flowsBuilder.addFlowsToVramelContext(this);
     }
 
-    @Override
-    public void run() throws Exception {
-
-        getServerFactory().startAllServers();
-    }
 
     @Override
     public void addFlowDefinitions(List<FlowDefinition> flowDefinitions) throws Exception {
@@ -125,34 +140,365 @@ public class DefaultVramelContext implements ModelVramelContext {
         }
     }
 
-    private void startFlow(FlowDefinition flowDefinition) throws Exception {
+    private void startFlow(FlowDefinition flow) throws Exception {
 
         // assign ids to the routes and validate that the id's is all unique
         FlowDefinitionHelper.forceAssignIds(this, flowDefinitions);
-        String duplicate = FlowDefinitionHelper.validateUniqueIds(flowDefinition, flowDefinitions);
+        String duplicate = FlowDefinitionHelper.validateUniqueIds(flow, flowDefinitions);
         if (duplicate != null) {
-            throw new FailedToStartFlowException(flowDefinition.getId(), "duplicate id detected: " + duplicate + ". Please correct ids to be unique among all your routes.");
+            throw new FailedToStartFlowException(flow.getId(), "duplicate id detected: " + duplicate + ". Please correct ids to be unique among all your routes.");
         }
 
-        // must ensure route is prepared, before we can start it
-        //flowDefinition.prepare(this);
+        // indicate we are staring the route using this thread so
+        // we are able to query this if needed
+        isStartingRoutes.set(true);
+        try {
+            // must ensure route is prepared, before we can start it
+            flow.prepare(this);
 
-
-        List<Flow> flows = new ArrayList<Flow>();
-        final List<FlowContext> contexts = flowDefinition.addFlows(this, flows);
-
-
-        //camel uses a Services design. we aren't using services right now, so just loop over flows and start them
-        for (Flow flow : flows) {
-            final List<Service> services = flow.getServices();
-            flow.onStartingServices(services);
+            List<Flow> flows = new ArrayList<Flow>();
+            List<FlowContext> flowContexts = flow.addFlows(this, flows);
+            FlowService flowService = new FlowService(this, flow, flowContexts, flows);
+            startRouteService(flowService, true);
+        } finally {
+            // we are done staring routes
+            isStartingRoutes.remove();
         }
-
-        flowContexts.addAll(contexts);
-        addFlowCollection(flows);
     }
 
-    private void addFlowCollection(List<Flow> flows) {
+    public boolean isStartingRoutes() {
+        Boolean answer = isStartingRoutes.get();
+        return answer != null && answer;
+    }
+
+    /**
+     * Starts the given route service
+     */
+    protected synchronized void startRouteService(FlowService flowService, boolean addingRoutes) throws Exception {
+        // we may already be starting routes so remember this, so we can unset accordingly in finally block
+        boolean alreadyStartingRoutes = isStartingRoutes();
+        if (!alreadyStartingRoutes) {
+            isStartingRoutes.set(true);
+        }
+
+        try {
+            // the route service could have been suspended, and if so then resume it instead
+            if (flowService.getStatus().isSuspended()) {
+                resumeRouteService(flowService);
+            } else {
+                // start the route service
+                routeServices.put(flowService.getId(), flowService);
+                if (shouldStartRoutes()) {
+                    // this method will log the routes being started
+                    safelyStartRouteServices(true, true, true, false, addingRoutes, flowService);
+                    // start route services if it was configured to auto startup and we are not adding routes
+                    boolean autoStartup = flowService.getFlowDefinition().isAutoStartup(this);
+                    if (!addingRoutes || autoStartup) {
+                        // start the route since auto start is enabled or we are starting a route (not adding new routes)
+                        flowService.start();
+                    }
+                }
+            }
+        } finally {
+            if (!alreadyStartingRoutes) {
+                isStartingRoutes.remove();
+            }
+        }
+    }
+    /**
+     * Should we start newly added routes?
+     */
+    protected boolean shouldStartRoutes() {
+        return isStarted() && !isStarting();
+    }
+
+    /**
+     * @see #safelyStartRouteServices(boolean,boolean,boolean,boolean,java.util.Collection)
+     */
+    protected synchronized void safelyStartRouteServices(boolean forceAutoStart, boolean checkClash, boolean startConsumer,
+                                                         boolean resumeConsumer, boolean addingRoutes, FlowService... routeServices) throws Exception {
+        safelyStartRouteServices(checkClash, startConsumer, resumeConsumer, addingRoutes, Arrays.asList(routeServices));
+    }
+
+
+    private DefaultFlowStartupOrder doPrepareRouteToBeStarted(FlowService flowService) {
+        // add the inputs from this flow service to the list to start afterwards
+        // should be ordered according to the startup number
+        Integer startupOrder = flowService.getFlowDefinition().getStartupOrder();
+        if (startupOrder == null) {
+            // auto assign a default startup order
+            startupOrder = defaultRouteStartupOrder++;
+        }
+
+        // create holder object that contains information about this flow to be started
+        Flow flow = flowService.getFlows().iterator().next();
+        return new DefaultFlowStartupOrder(startupOrder, flow, flowService);
+    }
+    /**
+     * Starts the routes services in a proper manner which ensures the routes will be started in correct order,
+     * check for clash and that the routes will also be shutdown in correct order as well.
+     * <p/>
+     * This method <b>must</b> be used to start routes in a safe manner.
+     *
+     * @param checkClash     whether to check for startup order clash
+     * @param startConsumer  whether the route consumer should be started. Can be used to warmup the route without starting the consumer.
+     * @param resumeConsumer whether the route consumer should be resumed.
+     * @param addingRoutes   whether we are adding new routes
+     * @param flowServices  the routes
+     * @throws Exception is thrown if error starting the routes
+     */
+    protected synchronized void safelyStartRouteServices(boolean checkClash, boolean startConsumer, boolean resumeConsumer,
+                                                         boolean addingRoutes, Collection<FlowService> flowServices) throws Exception {
+        // list of inputs to start when all the routes have been prepared for starting
+        // we use a tree map so the routes will be ordered according to startup order defined on the route
+        Map<Integer, DefaultFlowStartupOrder> inputs = new TreeMap<Integer, DefaultFlowStartupOrder>();
+
+        // figure out the order in which the routes should be started
+        for (FlowService flowService : flowServices) {
+            DefaultFlowStartupOrder order = doPrepareRouteToBeStarted(flowService);
+            // check for clash before we add it as input
+            if (checkClash) {
+                doCheckStartupOrderClash(order, inputs);
+            }
+            inputs.put(order.getStartupOrder(), order);
+        }
+
+        // warm up routes before we start them
+        doWarmUpFlows(inputs, startConsumer);
+
+        if (startConsumer) {
+            if (resumeConsumer) {
+                // and now resume the routes
+                doResumeRouteConsumers(inputs, addingRoutes);
+            } else {
+                // and now start the routes
+                // and check for clash with multiple consumers of the same endpoints which is not allowed
+                doStartRouteConsumers(inputs, addingRoutes);
+            }
+        }
+
+        // inputs no longer needed
+        inputs.clear();
+    }
+
+    private void doStartRouteConsumers(Map<Integer, DefaultFlowStartupOrder> inputs, boolean addingRoutes) throws Exception {
+        doStartOrResumeRouteConsumers(inputs, false, addingRoutes);
+    }
+    private void doResumeRouteConsumers(Map<Integer, DefaultFlowStartupOrder> inputs, boolean addingRoutes) throws Exception {
+        doStartOrResumeRouteConsumers(inputs, true, addingRoutes);
+    }
+
+
+    private boolean doCheckMultipleConsumerSupportClash(Endpoint endpoint, List<Endpoint> routeInputs) {
+        // is multiple consumers supported
+        boolean multipleConsumersSupported = false;
+        if (endpoint instanceof MultipleConsumersSupport) {
+            multipleConsumersSupported = ((MultipleConsumersSupport) endpoint).isMultipleConsumersSupported();
+        }
+
+        if (multipleConsumersSupported) {
+            // multiple consumer allowed, so return true
+            return true;
+        }
+
+        // check in progress list
+        if (routeInputs.contains(endpoint)) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private boolean doCheckStartupOrderClash(DefaultFlowStartupOrder answer, Map<Integer, DefaultFlowStartupOrder> inputs) throws FailedToStartFlowException {
+        // check for clash by startupOrder id
+        DefaultFlowStartupOrder other = inputs.get(answer.getStartupOrder());
+        if (other != null && answer != other) {
+            String otherId = other.getFlow().getId();
+            throw new FailedToStartFlowException(answer.getFlow().getId(), "startupOrder clash. Route " + otherId + " already has startupOrder "
+                    + answer.getStartupOrder() + " configured which this route have as well. Please correct startupOrder to be unique among all your routes.");
+        }
+        // check in existing already started as well
+        for (RouteStartupOrder order : routeStartupOrder) {
+            String otherId = order.getFlow().getId();
+            if (answer.getFlow().getId().equals(otherId)) {
+                // its the same route id so skip clash check as its the same route (can happen when using suspend/resume)
+            } else if (answer.getStartupOrder() == order.getStartupOrder()) {
+                throw new FailedToStartFlowException(answer.getFlow().getId(), "startupOrder clash. Route " + otherId + " already has startupOrder "
+                        + answer.getStartupOrder() + " configured which this route have as well. Please correct startupOrder to be unique among all your routes.");
+            }
+        }
+        return true;
+    }
+
+    private void doStartOrResumeRouteConsumers(Map<Integer, DefaultFlowStartupOrder> inputs, boolean resumeOnly, boolean addingRoute) throws Exception {
+        List<Endpoint> routeInputs = new ArrayList<Endpoint>();
+
+        for (Map.Entry<Integer, DefaultFlowStartupOrder> entry : inputs.entrySet()) {
+            Integer order = entry.getKey();
+            Flow flow = entry.getValue().getFlow();
+            FlowService flowService = entry.getValue().getFlowService();
+
+            // if we are starting camel, then skip routes which are configured to not be auto started
+            boolean autoStartup = flowService.getFlowDefinition().isAutoStartup(this);
+            if (addingRoute && !autoStartup) {
+                log.info("Skipping starting of flow " + flowService.getId() + " as its configured with autoStartup=false");
+                continue;
+            }
+
+            // start the service
+            for (Consumer consumer : flowService.getInputs().values()) {
+                Endpoint endpoint = consumer.getEndpoint();
+
+                // check multiple consumer violation, with the other routes to be started
+                if (!doCheckMultipleConsumerSupportClash(endpoint, routeInputs)) {
+                    throw new FailedToStartFlowException(flowService.getId(),
+                            "Multiple consumers for the same endpoint is not allowed: " + endpoint);
+                }
+
+                // check for multiple consumer violations with existing routes which
+                // have already been started, or is currently starting
+                List<Endpoint> existingEndpoints = new ArrayList<Endpoint>();
+                for (Flow existingRoute : getFlows()) {
+                    if (flow.getId().equals(existingRoute.getId())) {
+                        // skip ourselves
+                        continue;
+                    }
+                    Endpoint existing = existingRoute.getEndpoint();
+                    ServiceStatus status = getRouteStatus(existingRoute.getId());
+                    if (status != null && (status.isStarted() || status.isStarting())) {
+                        existingEndpoints.add(existing);
+                    }
+                }
+                if (!doCheckMultipleConsumerSupportClash(endpoint, existingEndpoints)) {
+                    throw new FailedToStartFlowException(flowService.getId(),
+                            "Multiple consumers for the same endpoint is not allowed: " + endpoint);
+                }
+
+                // start the consumer on the flow
+                log.debug("Route: {} >>> {}", flow.getId(), flow);
+                if (resumeOnly) {
+                    log.debug("Resuming consumer (order: {}) on flow: {}", order, flow.getId());
+                } else {
+                    log.debug("Starting consumer (order: {}) on flow: {}", order, flow.getId());
+                }
+
+                if (resumeOnly && flow.supportsSuspension()) {
+                    // if we are resuming and the flow can be resumed
+                    ServiceHelper.resumeService(consumer);
+                    log.info("Route: " + flow.getId() + " resumed and consuming from: " + endpoint);
+                } else {
+//                    // when starting we should invoke the lifecycle strategies
+//                    for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                        strategy.onServiceAdd(this, consumer, flow);
+//                    }
+                    startService(consumer);
+                    log.info("Route: " + flow.getId() + " started and consuming from: " + endpoint);
+                }
+
+                routeInputs.add(endpoint);
+
+                // add to the order which they was started, so we know how to stop them in reverse order
+                // but only add if we haven't already registered it before (we dont want to double add when restarting)
+                boolean found = false;
+                for (RouteStartupOrder other : routeStartupOrder) {
+                    if (other.getFlow().getId() == flow.getId()) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    routeStartupOrder.add(entry.getValue());
+                }
+            }
+
+            if (resumeOnly) {
+                flowService.resume();
+            } else {
+                // and start the flow service (no need to start children as they are already warmed up)
+                flowService.start(false);
+            }
+        }
+    }
+    private void doWarmUpFlows(Map<Integer, DefaultFlowStartupOrder> inputs, boolean autoStartup) throws Exception {
+        // now prepare the routes by starting its services before we start the input
+        for (Map.Entry<Integer, DefaultFlowStartupOrder> entry : inputs.entrySet()) {
+            // defer starting inputs till later as we want to prepare the routes by starting
+            // all their processors and child services etc.
+            // then later we open the floods to Camel by starting the inputs
+            // what this does is to ensure Camel is more robust on starting routes as all routes
+            // will then be prepared in time before we start inputs which will consume messages to be routed
+            FlowService flowService = entry.getValue().getFlowService();
+            log.debug("Warming up flow id: {} having autoStartup={}", flowService.getId(), autoStartup);
+            flowService.warmUp();
+        }
+    }
+
+    /**
+     * Resumes the given route service
+     */
+    protected synchronized void resumeRouteService(FlowService routeService) throws Exception {
+        // the route service could have been stopped, and if so then start it instead
+        if (!routeService.getStatus().isSuspended()) {
+            startRouteService(routeService, false);
+        } else {
+            // resume the route service
+            if (shouldStartRoutes()) {
+                // this method will log the routes being started
+                safelyStartRouteServices(true, false, true, true, false, routeService);
+                // must resume route service as well
+                routeService.resume();
+            }
+        }
+    }
+
+    public String getPropertyPrefixToken() {
+        PropertiesComponent pc = getPropertiesComponent();
+
+        if (pc != null) {
+            return pc.getPrefixToken();
+        } else {
+            return null;
+        }
+    }
+
+    public String getPropertySuffixToken() {
+        PropertiesComponent pc = getPropertiesComponent();
+
+        if (pc != null) {
+            return pc.getSuffixToken();
+        } else {
+            return null;
+        }
+    }
+
+    protected void logRouteState(Flow flow, String state) {
+        if (log.isInfoEnabled()) {
+            if (flow.getConsumer() != null) {
+                log.info("Route: {} is {}, was consuming from: {}", new Object[]{flow.getId(), state, flow.getConsumer().getEndpoint()});
+            } else {
+                log.info("Route: {} is {}.", flow.getId(), state);
+            }
+        }
+    }
+
+
+    protected synchronized void stopRouteService(FlowService flowService, boolean removingRoutes) throws Exception {
+        flowService.setRemovingRoutes(removingRoutes);
+        stopRouteService(flowService);
+    }
+
+    protected synchronized void stopRouteService(FlowService flowService) throws Exception {
+        flowService.stop();
+        for (Flow flow : flowService.getFlows()) {
+            logRouteState(flow, "stopped");
+        }
+    }
+
+    public void removeFlowCollection(Collection<Flow> flows) {
+        this.flows.removeAll(flows);
+    }
+    public void addFlowCollection(List<Flow> flows) {
         this.flows.addAll(flows);
     }
 
@@ -289,7 +635,7 @@ public class DefaultVramelContext implements ModelVramelContext {
                     try {
                         stopServices(oldEndpoint);
                     } catch (Exception e) {
-                        logger.warn("Error stopping endpoint " + oldEndpoint + ". This exception will be ignored.", e);
+                        log.warn("Error stopping endpoint " + oldEndpoint + ". This exception will be ignored.", e);
                     }
                     answer.add(oldEndpoint);
                     endpoints.remove(entry.getKey());
@@ -335,7 +681,7 @@ public class DefaultVramelContext implements ModelVramelContext {
         ObjectHelper.notEmpty(uri, "uri");
         ObjectHelper.notNull(configOverride, "configOverride");
 
-        logger.trace("Getting endpoint with uri: {}", uri);
+        log.trace("Getting endpoint with uri: {}", uri);
 
         // in case path has property placeholders then try to let property component resolve those
         try {
@@ -349,7 +695,7 @@ public class DefaultVramelContext implements ModelVramelContext {
         // normalize uri so we can do endpoint hits with minor mistakes and parameters is not in the same order
         uri = normalizeEndpointUri(uri);
 
-        logger.trace("Getting endpoint with raw uri: {}, normalized uri: {}", rawUri, uri);
+        log.trace("Getting endpoint with raw uri: {}, normalized uri: {}", rawUri, uri);
 
         Endpoint answer;
         String scheme = null;
@@ -361,12 +707,12 @@ public class DefaultVramelContext implements ModelVramelContext {
                 String splitURI[] = ObjectHelper.splitOnCharacter(uri, ":", 2);
                 if (splitURI[1] != null) {
                     scheme = splitURI[0];
-                    logger.trace("Endpoint uri: {} is from component with name: {}", uri, scheme);
+                    log.trace("Endpoint uri: {} is from component with name: {}", uri, scheme);
                     Component component = getComponent(scheme);
 
                     // Ask the component to resolve the endpoint.
                     if (component != null) {
-                        logger.trace("Creating endpoint from uri: {} using component: {}", uri, component);
+                        log.trace("Creating endpoint from uri: {} using component: {}", uri, component);
 
                         // Have the component create the endpoint if it can.
                         if (component.useRawUri()) {
@@ -375,8 +721,8 @@ public class DefaultVramelContext implements ModelVramelContext {
                             answer = component.createEndpoint(uri, configOverride);
                         }
 
-                        if (answer != null && logger.isDebugEnabled()) {
-                            logger.debug("{} converted to endpoint: {} by component: {}", new Object[]{URISupport.sanitizeUri(uri), answer, component});
+                        if (answer != null && log.isDebugEnabled()) {
+                            log.debug("{} converted to endpoint: {} by component: {}", new Object[]{URISupport.sanitizeUri(uri), answer, component});
                         }
                     }
                 }
@@ -384,7 +730,7 @@ public class DefaultVramelContext implements ModelVramelContext {
                 if (answer == null) {
                     // no component then try in registry and elsewhere
                     answer = createEndpoint(uri);
-                    logger.trace("No component to create endpoint from uri: {} fallback lookup in registry -> {}", uri, answer);
+                    log.trace("No component to create endpoint from uri: {} fallback lookup in registry -> {}", uri, answer);
                 }
 
                 if (answer != null) {
@@ -527,7 +873,7 @@ public class DefaultVramelContext implements ModelVramelContext {
             } else if (pc != null && text.contains(pc.getPrefixToken())) {
                 // the parser will throw exception if property key was not found
                 String answer = pc.parseUri(text);
-                logger.debug("Resolved text: {} -> {}", text, answer);
+                log.debug("Resolved text: {} -> {}", text, answer);
                 return answer;
             }
         }
@@ -713,6 +1059,23 @@ public class DefaultVramelContext implements ModelVramelContext {
         throw new UnsupportedOperationException("Not implemented in vramel");
     }
 
+    public boolean removeService(Object object) throws Exception {
+        if (object instanceof Service) {
+            Service service = (Service) object;
+
+//            for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                if (service instanceof Endpoint) {
+//                    // use specialized endpoint remove
+//                    strategy.onEndpointRemove((Endpoint) service);
+//                } else {
+//                    strategy.onServiceRemove(this, service, null);
+//                }
+//            }
+            return servicesToClose.remove(service);
+        }
+        return false;
+    }
+
     private void doAddService(Object object, boolean closeOnShutdown) throws Exception {
         // inject CamelContext
         if (object instanceof VramelContextAware) {
@@ -738,17 +1101,17 @@ public class DefaultVramelContext implements ModelVramelContext {
 
             // only add to services to close if its a singleton
             // otherwise we could for example end up with a lot of prototype scope endpoints
-//            boolean singleton = true; // assume singleton by default
-//            if (service instanceof IsSingleton) {
-//                singleton = ((IsSingleton) service).isSingleton();
-//            }
-//            // do not add endpoints as they have their own list
-//            if (singleton && !(service instanceof Endpoint)) {
-//                // only add to list of services to close if its not already there
-//                if (closeOnShutdown && !hasService(service)) {
-//                    servicesToClose.add(service);
-//                }
-//            }
+            boolean singleton = true; // assume singleton by default
+            if (service instanceof IsSingleton) {
+                singleton = ((IsSingleton) service).isSingleton();
+            }
+            // do not add endpoints as they have their own list
+            if (singleton && !(service instanceof Endpoint)) {
+                // only add to list of services to close if its not already there
+                if (closeOnShutdown && !hasService(service)) {
+                    servicesToClose.add(service);
+                }
+            }
         }
 
         // and then ensure service is started (as stated in the javadoc)
@@ -757,6 +1120,14 @@ public class DefaultVramelContext implements ModelVramelContext {
         } else if (object instanceof Collection<?>) {
             startServices((Collection<?>)object);
         }
+    }
+
+    public boolean hasService(Object object) {
+        if (object instanceof Service) {
+            Service service = (Service) object;
+            return servicesToClose.contains(service);
+        }
+        return false;
     }
 
     private void startService(Service service) throws Exception {
@@ -788,10 +1159,7 @@ public class DefaultVramelContext implements ModelVramelContext {
         }
     }
 
-    //until we fully implemente services. Always started=true
-    private boolean isStarted() {
-        return true;
-    }
+
 
     public Injector getInjector() {
         if (injector == null) {
@@ -839,6 +1207,473 @@ public class DefaultVramelContext implements ModelVramelContext {
 
     public void setNameStrategy(VramelContextNameStrategy nameStrategy) {
         this.nameStrategy = nameStrategy;
+    }
+
+
+    public void setDataFormats(Map<String, DataFormatDefinition> dataFormats) {
+        this.dataFormats = dataFormats;
+    }
+
+    public Map<String, DataFormatDefinition> getDataFormats() {
+        return dataFormats;
+    }
+
+    public DataFormatResolver getDataFormatResolver() {
+        return dataFormatResolver;
+    }
+
+    public void setDataFormatResolver(DataFormatResolver dataFormatResolver) {
+        this.dataFormatResolver = dataFormatResolver;
+    }
+
+    public DataFormat resolveDataFormat(String name) {
+        DataFormat answer = dataFormatResolver.resolveDataFormat(name, this);
+
+        // inject CamelContext if aware
+        if (answer != null && answer instanceof VramelContextAware) {
+            ((VramelContextAware) answer).setVramelContext(this);
+        }
+
+        return answer;
+    }
+
+    public DataFormatDefinition resolveDataFormatDefinition(String name) {
+        // lookup type and create the data format from it
+        DataFormatDefinition type = lookup(this, name, DataFormatDefinition.class);
+        if (type == null && getDataFormats() != null) {
+            type = getDataFormats().get(name);
+        }
+        return type;
+    }
+
+
+    private static <T> T lookup(VramelContext context, String ref, Class<T> type) {
+        try {
+            return context.getRegistry().lookupByNameAndType(ref, type);
+        } catch (Exception e) {
+            // need to ignore not same type and return it as null
+            return null;
+        }
+    }
+
+    public Component hasComponent(String componentName) {
+        return components.get(componentName);
+    }
+
+    public ShutdownStrategy getShutdownStrategy() {
+        return shutdownStrategy;
+    }
+
+    public void setShutdownStrategy(ShutdownStrategy shutdownStrategy) {
+        this.shutdownStrategy = shutdownStrategy;
+    }
+
+    public Boolean isAutoStartup() {
+        return autoStartup != null && autoStartup;
+    }
+
+    public ServiceStatus getRouteStatus(String key) {
+        FlowService flowService = routeServices.get(key);
+        if (flowService != null) {
+            return flowService.getStatus();
+        }
+        return null;
+    }
+    public void start() throws Exception {
+        startDate = new Date();
+        stopWatch.restart();
+        log.info("Vramel " + getVersion() + " (VramelContext: " + getName() + ") is starting");
+
+        doNotStartFlowsOnFirstStart = !firstStartDone && !isAutoStartup();
+
+        // if the context was configured with auto startup = false, and we are already started,
+        // then we may need to start the routes on the 2nd start call
+        if (firstStartDone && !isAutoStartup() && isStarted()) {
+            // invoke this logic to warm up the routes and if possible also start the routes
+            doStartOrResumeRoutes(routeServices, true, true, false, true);
+        }
+
+        // super will invoke doStart which will prepare internal services and start routes etc.
+        try {
+            firstStartDone = true;
+            super.start();
+        } catch (VetoCamelContextStartException e) {
+            if (e.isRethrowException()) {
+                throw e;
+            } else {
+                log.info("VramelContext ({}) vetoed to not start due {}", getName(), e.getMessage());
+                // swallow exception and change state of this camel context to stopped
+                stop();
+                return;
+            }
+        }
+
+        stopWatch.stop();
+        if (log.isInfoEnabled()) {
+            // count how many routes are actually started
+            int started = 0;
+            for (Flow route : getFlows()) {
+                if (getRouteStatus(route.getId()).isStarted()) {
+                    started++;
+                }
+            }
+            log.info("Total " + getFlows().size() + " routes, of which " + started + " is started.");
+            log.info("Vramel " + getVersion() + " (VramelContext: " + getName() + ") started in " + TimeUtils.printDuration(stopWatch.taken()));
+        }
+//        EventHelper.notifyCamelContextStarted(this);
+    }
+
+    // Implementation methods
+    // -----------------------------------------------------------------------
+
+    protected synchronized void doStart() throws Exception {
+        try {
+            doStartVramel();
+            getServerFactory().startAllServers();
+        } catch (Exception e) {
+            // fire event that we failed to start
+//            EventHelper.notifyCamelContextStartupFailed(this, e);
+            // rethrow cause
+            throw e;
+        }
+    }
+
+    private void doStartVramel() throws Exception {
+//        if (isStreamCaching()) {
+//            // only add a new stream cache if not already configured
+//            if (StreamCaching.getStreamCaching(this) == null) {
+//                log.info("StreamCaching is enabled on CamelContext: " + getName());
+//                addInterceptStrategy(new StreamCaching());
+//            }
+//        }
+
+//        if (isTracing()) {
+//            // tracing is added in the DefaultChannel so we can enable it on the fly
+//            log.info("Tracing is enabled on CamelContext: " + getName());
+//        }
+//
+//        if (isUseMDCLogging()) {
+//            // log if MDC has been enabled
+//            log.info("MDC logging is enabled on CamelContext: " + getName());
+//        }
+
+//        if (isHandleFault()) {
+//            // only add a new handle fault if not already configured
+//            if (HandleFault.getHandleFault(this) == null) {
+//                log.info("HandleFault is enabled on CamelContext: " + getName());
+//                addInterceptStrategy(new HandleFault());
+//            }
+//        }
+
+//        if (getDelayer() != null && getDelayer() > 0) {
+//            // only add a new delayer if not already configured
+//            if (Delayer.getDelayer(this) == null) {
+//                long millis = getDelayer();
+//                log.info("Delayer is enabled with: " + millis + " ms. on CamelContext: " + getName());
+//                addInterceptStrategy(new Delayer(millis));
+//            }
+//        }
+//
+//        // register debugger
+//        if (getDebugger() != null) {
+//            log.info("Debugger: " + getDebugger() + " is enabled on CamelContext: " + getName());
+//            // register this camel context on the debugger
+//            getDebugger().setCamelContext(this);
+//            startService(getDebugger());
+//            addInterceptStrategy(new Debug(getDebugger()));
+//        }
+//
+//        // start management strategy before lifecycles are started
+//        ManagementStrategy managementStrategy = getManagementStrategy();
+//        // inject CamelContext if aware
+//        if (managementStrategy instanceof CamelContextAware) {
+//            ((CamelContextAware) managementStrategy).setCamelContext(this);
+//        }
+//        ServiceHelper.startService(managementStrategy);
+//
+//        // start lifecycle strategies
+//        ServiceHelper.startServices(lifecycleStrategies);
+//        Iterator<LifecycleStrategy> it = lifecycleStrategies.iterator();
+//        while (it.hasNext()) {
+//            LifecycleStrategy strategy = it.next();
+//            try {
+//                strategy.onContextStart(this);
+//            } catch (VetoCamelContextStartException e) {
+//                // okay we should not start Camel since it was vetoed
+//                log.warn("Lifecycle strategy vetoed starting CamelContext ({}) due {}", getName(), e.getMessage());
+//                throw e;
+//            } catch (Exception e) {
+//                log.warn("Lifecycle strategy " + strategy + " failed starting CamelContext ({}) due {}", getName(), e.getMessage());
+//                throw e;
+//            }
+//        }
+//
+//        // start notifiers as services
+//        for (EventNotifier notifier : getManagementStrategy().getEventNotifiers()) {
+//            if (notifier instanceof Service) {
+//                Service service = (Service) notifier;
+//                for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                    strategy.onServiceAdd(this, service, null);
+//                }
+//            }
+//            if (notifier instanceof Service) {
+//                startService((Service)notifier);
+//            }
+//        }
+//
+//        // must let some bootstrap service be started before we can notify the starting event
+//        EventHelper.notifyCamelContextStarting(this);
+
+        forceLazyInitialization();
+
+        // re-create endpoint registry as the cache size limit may be set after the constructor of this instance was called.
+        // and we needed to create endpoints up-front as it may be accessed before this context is started
+        endpoints = new EndpointRegistry(this, endpoints);
+        addService(endpoints);
+        // special for executorServiceManager as want to stop it manually
+//        doAddService(executorServiceManager, false);
+//        addService(producerServicePool);
+//        addService(inflightRepository);
+        addService(shutdownStrategy);
+        addService(packageScanClassResolver);
+
+        // eager lookup any configured properties component to avoid subsequent lookup attempts which may impact performance
+        // due we use properties component for property placeholder resolution at runtime
+        Component existing = hasComponent("properties");
+        if (existing == null) {
+            // no existing properties component so lookup and add as component if possible
+            propertiesComponent = getRegistry().lookupByNameAndType("properties", PropertiesComponent.class);
+            if (propertiesComponent != null) {
+                addComponent("properties", propertiesComponent);
+            }
+        } else {
+            // store reference to the existing properties component
+            if (existing instanceof PropertiesComponent) {
+                propertiesComponent = (PropertiesComponent) existing;
+            } else {
+                // properties component must be expected type
+                throw new IllegalArgumentException("Found properties component of type: " + existing.getClass() + " instead of expected: " + PropertiesComponent.class);
+            }
+        }
+
+        // start components
+        startServices(components.values());
+
+        // start the route definitions before the routes is started
+        startRouteDefinitions(flowDefinitions);
+
+        // start routes
+        if (doNotStartFlowsOnFirstStart) {
+            log.debug("Skip starting of routes as CamelContext has been configured with autoStartup=false");
+        }
+
+        // invoke this logic to warmup the routes and if possible also start the routes
+        doStartOrResumeRoutes(routeServices, true, !doNotStartFlowsOnFirstStart, false, true);
+
+        // starting will continue in the start method
+    }
+
+    protected void startRouteDefinitions(Collection<FlowDefinition> list) throws Exception {
+        if (list != null) {
+            for (FlowDefinition flow : list) {
+                startFlow(flow);
+            }
+        }
+    }
+
+    /**
+     * Force some lazy initialization to occur upfront before we start any
+     * components and create routes
+     */
+    protected void forceLazyInitialization() {
+        getRegistry();
+        getInjector();
+//        getLanguageResolver();
+        getTypeConverterRegistry();
+        getTypeConverter();
+
+//        if (isTypeConverterStatisticsEnabled() != null) {
+//            getTypeConverterRegistry().getStatistics().setStatisticsEnabled(isTypeConverterStatisticsEnabled());
+//        }
+    }
+
+    /**
+     * Starts or resumes the routes
+     *
+     * @param flowServices  the routes to start (will only start a route if its not already started)
+     * @param checkClash     whether to check for startup ordering clash
+     * @param startConsumer  whether the route consumer should be started. Can be used to warmup the route without starting the consumer.
+     * @param resumeConsumer whether the route consumer should be resumed.
+     * @param addingRoutes   whether we are adding new routes
+     * @throws Exception is thrown if error starting routes
+     */
+    protected void doStartOrResumeRoutes(Map<String, FlowService> flowServices, boolean checkClash,
+                                         boolean startConsumer, boolean resumeConsumer, boolean addingRoutes) throws Exception {
+        // filter out already started routes
+        Map<String, FlowService> filtered = new LinkedHashMap<String, FlowService>();
+        for (Map.Entry<String, FlowService> entry : flowServices.entrySet()) {
+            boolean startable = false;
+
+            Consumer consumer = entry.getValue().getFlows().iterator().next().getConsumer();
+            if (consumer instanceof SuspendableService) {
+                // consumer could be suspended, which is not reflected in the RouteService status
+                startable = ((SuspendableService) consumer).isSuspended();
+            }
+
+            if (!startable && consumer instanceof StatefulService) {
+                // consumer could be stopped, which is not reflected in the RouteService status
+                startable = ((StatefulService) consumer).getStatus().isStartable();
+            } else if (!startable) {
+                // no consumer so use state from route service
+                startable = entry.getValue().getStatus().isStartable();
+            }
+
+            if (startable) {
+                filtered.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        if (!filtered.isEmpty()) {
+            // the context is now considered started (i.e. isStarted() == true))
+            // starting routes is done after, not during context startup
+            safelyStartRouteServices(checkClash, startConsumer, resumeConsumer, addingRoutes, filtered.values());
+        }
+
+        // now notify any startup aware listeners as all the routes etc has been started,
+        // allowing the listeners to do custom work after routes has been started
+        for (StartupListener startup : startupListeners) {
+            startup.onVramelContextStarted(this, isStarted());
+        }
+    }
+
+    public List<RouteStartupOrder> getRouteStartupOrder() {
+        return routeStartupOrder;
+    }
+
+    private void shutdownServices(Object service) {
+        // do not rethrow exception as we want to keep shutting down in case of problems
+
+        // allow us to do custom work before delegating to service helper
+        try {
+            if (service instanceof Service) {
+                ServiceHelper.stopAndShutdownService(service);
+            } else if (service instanceof Collection) {
+                ServiceHelper.stopAndShutdownServices((Collection<?>)service);
+            }
+        } catch (Throwable e) {
+            log.warn("Error occurred while shutting down service: " + service + ". This exception will be ignored.", e);
+            // fire event
+//            EventHelper.notifyServiceStopFailure(this, service, e);
+        }
+    }
+    private void shutdownServices(Collection<?> services) {
+        // reverse stopping by default
+        shutdownServices(services, true);
+    }
+
+    private void shutdownServices(Collection<?> services, boolean reverse) {
+        Collection<?> list = services;
+        if (reverse) {
+            List<Object> reverseList = new ArrayList<Object>(services);
+            Collections.reverse(reverseList);
+            list = reverseList;
+        }
+
+        for (Object service : list) {
+            shutdownServices(service);
+        }
+    }
+    protected synchronized void doStop() throws Exception {
+        stopWatch.restart();
+        log.info("Vramel " + getVersion() + " (VramelContext: " + getName() + ") is shutting down");
+//        EventHelper.notifyCamelContextStopping(this);
+
+        // stop route inputs in the same order as they was started so we stop the very first inputs first
+//        try {
+//            // force shutting down routes as they may otherwise cause shutdown to hang
+//            shutdownStrategy.shutdownForced(this, getRouteStartupOrder());
+//        } catch (Throwable e) {
+//            log.warn("Error occurred while shutting down routes. This exception will be ignored.", e);
+//        }
+        getRouteStartupOrder().clear();
+
+        shutdownServices(routeServices.values());
+        // do not clear route services or startup listeners as we can start Camel again and get the route back as before
+
+        // but clear any suspend routes
+        suspendedRouteServices.clear();
+
+        // the stop order is important
+
+
+        // shutdown debugger
+//        ServiceHelper.stopAndShutdownService(getDebugger());
+
+        shutdownServices(endpoints.values());
+        endpoints.clear();
+
+        shutdownServices(components.values());
+        components.clear();
+
+//        try {
+//            for (LifecycleStrategy strategy : lifecycleStrategies) {
+//                strategy.onContextStop(this);
+//            }
+//        } catch (Throwable e) {
+//            log.warn("Error occurred while stopping lifecycle strategies. This exception will be ignored.", e);
+//        }
+
+        // shutdown services as late as possible
+        shutdownServices(servicesToClose);
+        servicesToClose.clear();
+
+        // must notify that we are stopped before stopping the management strategy
+//        EventHelper.notifyCamelContextStopped(this);
+
+        // stop the notifier service
+//        for (EventNotifier notifier : getManagementStrategy().getEventNotifiers()) {
+//            shutdownServices(notifier);
+//        }
+
+        // shutdown executor service and management as the last one
+//        shutdownServices(executorServiceManager);
+//        shutdownServices(managementStrategy);
+//        shutdownServices(managementMBeanAssembler);
+//        shutdownServices(lifecycleStrategies);
+        // do not clear lifecycleStrategies as we can start Camel again and get the route back as before
+
+        // stop the lazy created so they can be re-created on restart
+        forceStopLazyInitialization();
+
+        // stop to clear introspection cache
+        IntrospectionSupport.stop();
+
+        stopWatch.stop();
+        if (log.isInfoEnabled()) {
+            log.info("Uptime {}", getUptime());
+            log.info("Apache Camel " + getVersion() + " (CamelContext: " + getName() + ") is shutdown in " + TimeUtils.printDuration(stopWatch.taken()));
+        }
+
+        // and clear start date
+        startDate = null;
+    }
+
+    public String getUptime() {
+        // compute and log uptime
+        if (startDate == null) {
+            return "not started";
+        }
+        long delta = new Date().getTime() - startDate.getTime();
+        return TimeUtils.printDuration(delta);
+    }
+    /**
+     * Force clear lazy initialization so they can be re-created on restart
+     */
+    protected void forceStopLazyInitialization() {
+        injector = null;
+        languageResolver = null;
+        typeConverterRegistry = null;
+        typeConverter = null;
     }
 
 }

@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class VramelBusMod extends BusModBase {
 
-    private VramelContext vramelContext;
+    private DefaultVramelContext vramelContext;
 
     @Override
     public void start() {
@@ -61,7 +61,7 @@ public class VramelBusMod extends BusModBase {
             doWithVramelContext(vramelContext);
 
         try {
-            vramelContext.run();
+            vramelContext.start();
         } catch (Exception e) {
             logger.error("Cannot start vramel context.", e);
         }

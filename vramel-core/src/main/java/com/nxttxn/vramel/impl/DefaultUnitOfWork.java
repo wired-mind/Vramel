@@ -30,6 +30,8 @@ import com.nxttxn.vramel.Message;
 import com.nxttxn.vramel.Service;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.spi.Synchronization;
+import com.nxttxn.vramel.spi.SynchronizationVetoable;
 import com.nxttxn.vramel.spi.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,7 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     private UnitOfWork parent;
     private String id;
     private VramelContext context;
+    private List<Synchronization> synchronizations;
     private Message originalInMessage;
     private final Stack<FlowContext> routeContextStack = new Stack<FlowContext>();
 
@@ -140,9 +143,9 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     public void stop() throws Exception {
         // need to clean up when we are stopping to not leak memory
         //for now comment out features not ported yet from camel
-//        if (synchronizations != null) {
-//            synchronizations.clear();
-//        }
+        if (synchronizations != null) {
+            synchronizations.clear();
+        }
 //        if (tracedRouteNodes != null) {
 //            tracedRouteNodes.clear();
 //        }
@@ -165,5 +168,49 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     @Override
     public String toString() {
         return "DefaultUnitOfWork";
+    }
+
+    public synchronized void addSynchronization(Synchronization synchronization) {
+        if (synchronizations == null) {
+            synchronizations = new ArrayList<Synchronization>();
+        }
+        log.trace("Adding synchronization {}", synchronization);
+        synchronizations.add(synchronization);
+    }
+
+    public synchronized void removeSynchronization(Synchronization synchronization) {
+        if (synchronizations != null) {
+            synchronizations.remove(synchronization);
+        }
+    }
+
+    public synchronized boolean containsSynchronization(Synchronization synchronization) {
+        return synchronizations != null && synchronizations.contains(synchronization);
+    }
+
+    public void handoverSynchronization(Exchange target) {
+        if (synchronizations == null || synchronizations.isEmpty()) {
+            return;
+        }
+
+        Iterator<Synchronization> it = synchronizations.iterator();
+        while (it.hasNext()) {
+            Synchronization synchronization = it.next();
+
+            boolean handover = true;
+            if (synchronization instanceof SynchronizationVetoable) {
+                SynchronizationVetoable veto = (SynchronizationVetoable) synchronization;
+                handover = veto.allowHandover();
+            }
+
+            if (handover) {
+                log.trace("Handover synchronization {} to: {}", synchronization, target);
+                target.addOnCompletion(synchronization);
+                // remove it if its handed over
+                it.remove();
+            } else {
+                log.trace("Handover not allow for synchronization {}", synchronization);
+            }
+        }
     }
 }

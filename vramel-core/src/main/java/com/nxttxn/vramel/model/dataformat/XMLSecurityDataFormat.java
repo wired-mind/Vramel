@@ -28,7 +28,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import com.nxttxn.vramel.model.DataFormatDefinition;
 import com.nxttxn.vramel.spi.DataFormat;
-import com.nxttxn.vramel.spi.FlowContext;
 import org.apache.camel.spi.NamespaceAware;
 import org.apache.camel.util.jsse.KeyStoreParameters;
 
@@ -214,10 +213,6 @@ public class XMLSecurityDataFormat extends DataFormatDefinition implements Names
         this.setKeyPassword(keyPassword);
     }
 
-    @Override
-    protected DataFormat createDataFormat(FlowContext flowContext) throws Exception {
-        return new com.nxttxn.vramel.components.xmlsecurity.XMLSecurityDataFormat();
-    }
 
     @Override
     protected void configureDataFormat(DataFormat dataFormat) {

@@ -23,6 +23,7 @@ import java.util.Map;
 
 import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.OnExceptionDefinition;
 import com.nxttxn.vramel.model.ProcessorDefinitionHelper;
@@ -30,6 +31,7 @@ import com.nxttxn.vramel.processor.exceptionpolicy.DefaultExceptionPolicyStrateg
 import com.nxttxn.vramel.processor.exceptionpolicy.ExceptionPolicyKey;
 import com.nxttxn.vramel.processor.exceptionpolicy.ExceptionPolicyStrategy;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.support.ChildServiceSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @version
  */
-public abstract class ErrorHandlerSupport implements ErrorHandler {
+public abstract class ErrorHandlerSupport extends ChildServiceSupport implements ErrorHandler {
 
     protected final transient Logger log = LoggerFactory.getLogger(getClass());
 
@@ -105,6 +107,6 @@ public abstract class ErrorHandlerSupport implements ErrorHandler {
     /**
      * Gets the output
      */
-    public abstract AsyncProcessor getOutput();
+    public abstract Processor getOutput();
 
 }

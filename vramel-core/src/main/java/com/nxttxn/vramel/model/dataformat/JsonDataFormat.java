@@ -1,3 +1,19 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.nxttxn.vramel.model.dataformat;
 
 import com.nxttxn.vramel.Expression;
@@ -8,30 +24,44 @@ import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.util.ObjectHelper;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+
+
 /**
- * Created with IntelliJ IDEA.
- * User: chuck
- * Date: 6/18/13
- * Time: 4:15 PM
- * To change this template use File | Settings | File Templates.
+ * Represents the Json {@link DataFormat}
+ *
+ * @version
  */
+@XmlRootElement(name = "json")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class JsonDataFormat extends DataFormatDefinition {
-    private final JsonLibrary library;
+    @XmlAttribute
     private Boolean prettyPrint;
+    @XmlAttribute
+    private JsonLibrary library = JsonLibrary.Gson;
+    @XmlAttribute
     private String unmarshalTypeName;
+    @XmlTransient
     private Class<?> unmarshalType;
     private Expression expression;
+
+    public JsonDataFormat() {
+    }
 
     public JsonDataFormat(JsonLibrary library) {
         this.library = library;
     }
 
-    public JsonDataFormat(JsonLibrary library, Expression expression) {
 
+    public JsonDataFormat(JsonLibrary library, Expression expression) {
         this.library = library;
         this.expression = expression;
     }
-
 
     public Boolean getPrettyPrint() {
         return prettyPrint;
@@ -39,15 +69,6 @@ public class JsonDataFormat extends DataFormatDefinition {
 
     public void setPrettyPrint(Boolean prettyPrint) {
         this.prettyPrint = prettyPrint;
-    }
-
-
-    public Class<?> getUnmarshalType() {
-        return unmarshalType;
-    }
-
-    public void setUnmarshalType(Class<?> unmarshalType) {
-        this.unmarshalType = unmarshalType;
     }
 
     public String getUnmarshalTypeName() {
@@ -58,23 +79,35 @@ public class JsonDataFormat extends DataFormatDefinition {
         this.unmarshalTypeName = unmarshalTypeName;
     }
 
+    public Class<?> getUnmarshalType() {
+        return unmarshalType;
+    }
+
+    public void setUnmarshalType(Class<?> unmarshalType) {
+        this.unmarshalType = unmarshalType;
+    }
+
+    public JsonLibrary getLibrary() {
+        return library;
+    }
+
+    public void setLibrary(JsonLibrary library) {
+        this.library = library;
+    }
 
     @Override
-    protected DataFormat createDataFormat(FlowContext flowContext) throws Exception {
+    protected DataFormat createDataFormat(FlowContext flowContext) {
+        if (library == JsonLibrary.XStream) {
+            setProperty(this, "dataFormatName", "json-xstream");
+        } else if (library == JsonLibrary.Jackson) {
+            setProperty(this, "dataFormatName", "json-jackson");
+        } else {
+            setProperty(this, "dataFormatName", "json-gson");
+        }
 
         if (expression == null) {
             expression = ExpressionBuilder.constantExpression(this.unmarshalType);
         }
-//        if (library == JsonLibrary.XStream) {
-//            setProperty(this, "dataFormatName", "json-xstream");
-//        } else if (library == JsonLibrary.Jackson) {
-//            setProperty(this, "dataFormatName", "json-jackson");
-//        } else {
-//            setProperty(this, "dataFormatName", "json-gson");
-//        }
-
-        //hard coding gson for now
-        setProperty(this, "dataFormat", new GsonDataFormat(expression));
 
         if (unmarshalType == null && unmarshalTypeName != null) {
             try {
@@ -83,8 +116,6 @@ public class JsonDataFormat extends DataFormatDefinition {
                 throw ObjectHelper.wrapRuntimeCamelException(e);
             }
         }
-
-
 
         return super.createDataFormat(flowContext);
     }
@@ -98,4 +129,5 @@ public class JsonDataFormat extends DataFormatDefinition {
             setProperty(dataFormat, "prettyPrint", unmarshalType);
         }
     }
+
 }

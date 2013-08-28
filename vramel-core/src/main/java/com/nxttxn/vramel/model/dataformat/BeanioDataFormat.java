@@ -16,8 +16,10 @@
  */
 package com.nxttxn.vramel.model.dataformat;
 
+import com.nxttxn.vramel.components.beanio.BeanIODataFormat;
 import com.nxttxn.vramel.model.DataFormatDefinition;
 import com.nxttxn.vramel.spi.DataFormat;
+import com.nxttxn.vramel.spi.FlowContext;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

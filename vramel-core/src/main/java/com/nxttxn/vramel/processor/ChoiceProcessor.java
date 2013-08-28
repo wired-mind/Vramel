@@ -29,6 +29,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
+import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,5 +156,11 @@ public class ChoiceProcessor extends PipelineSupport implements AsyncProcessor, 
         return otherwise != null || (filters != null && !filters.isEmpty());
     }
 
+    protected void doStart() throws Exception {
+        ServiceHelper.startServices(filters, otherwise);
+    }
 
+    protected void doStop() throws Exception {
+        ServiceHelper.stopServices(otherwise, filters);
+    }
 }

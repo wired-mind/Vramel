@@ -2,10 +2,7 @@ package com.nxttxn.vramel.util;
 
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.builder.ErrorHandlerBuilder;
-import com.nxttxn.vramel.model.FlowDefinition;
-import com.nxttxn.vramel.model.OnExceptionDefinition;
-import com.nxttxn.vramel.model.ProcessorDefinition;
-import com.nxttxn.vramel.model.ProcessorDefinitionHelper;
+import com.nxttxn.vramel.model.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -35,10 +32,10 @@ public class FlowDefinitionHelper {
 
             // if there was a custom id assigned, then make sure to support property placeholders
             //not supported yet
-//            if (flow.hasCustomIdAssigned()) {
-//                String id = flow.getId();
-//                flow.setId(context.resolvePropertyPlaceholders(id));
-//            }
+            if (flow.hasCustomIdAssigned()) {
+                String id = flow.getId();
+                flow.setId(context.resolvePropertyPlaceholders(id));
+            }
         }
     }
 
@@ -77,6 +74,18 @@ public class FlowDefinitionHelper {
     }
 
     /**
+     * Prepares the flow.
+     * <p/>
+     * This method does <b>not</b> mark the flow as prepared afterwards.
+     *
+     * @param context the camel context
+     * @param flow   the flow
+     */
+    public static void prepareRoute(ModelVramelContext context, FlowDefinition flow) {
+        prepareRoute(context, flow, null, null);
+    }
+
+    /**
      * Prepares the flow which supports context scoped features such as onException, interceptors and onCompletions
      * <p/>
      * This method does <b>not</b> mark the flow as prepared afterwards.
@@ -85,8 +94,9 @@ public class FlowDefinitionHelper {
      * @param flow                              the flow
      * @param onExceptions                       optional list of onExceptions
      */
-    public static void prepareRoute(VramelContext context, FlowDefinition flow,
-                                    List<OnExceptionDefinition> onExceptions) {
+    public static void prepareRoute(ModelVramelContext context, FlowDefinition flow,
+                                    List<OnExceptionDefinition> onExceptions,
+                                    List<OnCompletionDefinition> onCompletions) {
 
         // abstracts is the cross cutting concerns
         List<ProcessorDefinition<?>> abstracts = new ArrayList<ProcessorDefinition<?>>();
@@ -101,6 +111,9 @@ public class FlowDefinitionHelper {
 
         // parent and error handler builder should be initialized first
         initParentAndErrorHandlerBuilder(context, flow, abstracts, onExceptions);
+
+        // then on completion
+        initOnCompletions(abstracts, upper, onCompletions);
 
         initOnExceptions(abstracts, upper, onExceptions);
 
@@ -142,6 +155,46 @@ public class FlowDefinitionHelper {
                 upper.add(index, output);
             }
         }
+    }
+
+    public static void initParent(ProcessorDefinition parent) {
+        List<ProcessorDefinition> children = parent.getOutputs();
+        for (ProcessorDefinition child : children) {
+            child.setParent(parent);
+            if (child.getOutputs() != null && !child.getOutputs().isEmpty()) {
+                // recursive the children
+                initParent(child);
+            }
+        }
+    }
+
+
+    private static void initOnCompletions(List<ProcessorDefinition<?>> abstracts, List<ProcessorDefinition<?>> upper,
+                                          List<OnCompletionDefinition> onCompletions) {
+        List<OnCompletionDefinition> completions = new ArrayList<OnCompletionDefinition>();
+
+        // find the route scoped onCompletions
+        for (ProcessorDefinition out : abstracts) {
+            if (out instanceof OnCompletionDefinition) {
+                completions.add((OnCompletionDefinition) out);
+            }
+        }
+
+        // only add global onCompletion if there are no route already
+        if (completions.isEmpty() && onCompletions != null) {
+            completions = onCompletions;
+            // init the parent
+            for (OnCompletionDefinition global : completions) {
+                initParent(global);
+            }
+        }
+
+        // are there any completions to init at all?
+        if (completions.isEmpty()) {
+            return;
+        }
+
+        upper.addAll(completions);
     }
 
 

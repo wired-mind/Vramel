@@ -18,6 +18,7 @@ package com.nxttxn.vramel.processor.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.model.ModelChannel;
@@ -25,11 +26,14 @@ import com.nxttxn.vramel.model.ProcessorDefinition;
 import com.nxttxn.vramel.processor.FlowContextProcessor;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
+import com.nxttxn.vramel.util.ObjectHelper;
+import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultChannel implements ModelChannel {
+public class DefaultChannel extends ServiceSupport implements ModelChannel {
 
     private static final transient Logger LOG = LoggerFactory.getLogger(DefaultChannel.class);
 
@@ -98,6 +102,17 @@ public class DefaultChannel implements ModelChannel {
         return flowContext;
     }
 
+    @Override
+    protected void doStart() throws Exception {
+        // create route context processor to wrap output
+        flowContextProcessor = new FlowContextProcessor(flowContext, getOutput());
+        ServiceHelper.startServices(errorHandler, output, flowContextProcessor);
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        ServiceHelper.stopServices(output, errorHandler, flowContextProcessor);
+    }
 
 
     public void initChannel(ProcessorDefinition<?> outputDefinition, FlowContext flowContext) throws Exception {
@@ -135,7 +150,7 @@ public class DefaultChannel implements ModelChannel {
 
     @Override
     public void postInitChannel(ProcessorDefinition<?> outputDefinition, FlowContext flowContext) throws Exception {
-        flowContextProcessor = new FlowContextProcessor(flowContext, getOutput());
+
 
     }
 
@@ -153,11 +168,32 @@ public class DefaultChannel implements ModelChannel {
             return true;
         }
 
+        // process the exchange using the route context processor
+        ObjectHelper.notNull(flowContextProcessor, "FlowContextProcessor", this);
         return flowContextProcessor.process(exchange, optionalAsyncResultHandler);
     }
 
     private boolean continueProcessing(Exchange exchange) {
-        //camel does some interesting stuff here, not sure we need to yet.
+        Object stop = exchange.getProperty(Exchange.ROUTE_STOP);
+        if (stop != null) {
+            boolean doStop = exchange.getContext().getTypeConverter().convertTo(Boolean.class, stop);
+            if (doStop) {
+                LOG.debug("Exchange is marked to stop routing: {}", exchange);
+                return false;
+            }
+        }
+
+//        // determine if we can still run, or the camel context is forcing a shutdown
+//        boolean forceShutdown = vramelContext.getShutdownStrategy().forceShutdown(this);
+//        if (forceShutdown) {
+//            LOG.debug("Run not allowed as ShutdownStrategy is forcing shutting down, will reject executing exchange: {}", exchange);
+//            if (exchange.getException() == null) {
+//                exchange.setException(new RejectedExecutionException());
+//            }
+//            return false;
+//        }
+
+        // yes we can continue
         return true;
     }
 

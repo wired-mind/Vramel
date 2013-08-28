@@ -7,6 +7,8 @@ import com.nxttxn.vramel.spi.UnitOfWork;
 import com.nxttxn.vramel.util.ObjectHelper;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,7 +30,7 @@ public class DefaultExchange implements Exchange {
     private UnitOfWork unitOfWork;
     private String fromRouteId;
     private String exchangeId;
-
+    private List<Synchronization> onCompletions;
 
     public DefaultExchange(VramelContext context, ExchangePattern pattern) {
         this.vramelContext = context;
@@ -40,13 +42,12 @@ public class DefaultExchange implements Exchange {
         this.fromEndpoint = fromEndpoint;
     }
     public DefaultExchange(VramelContext vramelContext) {
-
-        this.vramelContext = vramelContext;
+        this(vramelContext, ExchangePattern.InOut);
     }
 
     public DefaultExchange(Exchange parent) {
-        this.vramelContext = parent.getContext();
-
+        this(parent.getContext(), parent.getPattern());
+        this.fromEndpoint = parent.getFromEndpoint();
         this.fromRouteId = parent.getFromRouteId();
         this.unitOfWork = parent.getUnitOfWork();
     }
@@ -197,6 +198,14 @@ public class DefaultExchange implements Exchange {
 
 
 
+    public Endpoint getFromEndpoint() {
+        return fromEndpoint;
+    }
+
+    public void setFromEndpoint(Endpoint fromEndpoint) {
+        this.fromEndpoint = fromEndpoint;
+    }
+
     @Override
     public Boolean isFailed() {
         return (hasOut() && getOut().isFault()) || getException() != null;
@@ -241,9 +250,7 @@ public class DefaultExchange implements Exchange {
         return unitOfWork;
     }
 
-    public void setUnitOfWork(UnitOfWork unitOfWork) {
-        this.unitOfWork = unitOfWork;
-    }
+
 
 
     @Override
@@ -281,17 +288,76 @@ public class DefaultExchange implements Exchange {
         this.exchangeId = id;
     }
 
-    @Override
+
+
     public ExchangePattern getPattern() {
-        //we started by not implementing ExchangePattern. We're adding it in partially for
-        //broader support. Still going to hardcode the pattern to INOUT for now.
-        //Once ExchangePattern is ported fully this won't be hardcoded.
-        return ExchangePattern.InOut;
+        return pattern;
     }
 
-    @Override
+    public void setPattern(ExchangePattern pattern) {
+        this.pattern = pattern;
+    }
+
+    public void setUnitOfWork(UnitOfWork unitOfWork) {
+        this.unitOfWork = unitOfWork;
+        if (onCompletions != null) {
+            // now an unit of work has been assigned so add the on completions
+            // we might have registered already
+            for (Synchronization onCompletion : onCompletions) {
+                unitOfWork.addSynchronization(onCompletion);
+            }
+            // cleanup the temporary on completion list as they now have been registered
+            // on the unit of work
+            onCompletions.clear();
+            onCompletions = null;
+        }
+    }
+
     public void addOnCompletion(Synchronization onCompletion) {
-        throw new UnsupportedOperationException("Interceptors are not yet ported");
+        if (unitOfWork == null) {
+            // unit of work not yet registered so we store the on completion temporary
+            // until the unit of work is assigned to this exchange by the UnitOfWorkProcessor
+            if (onCompletions == null) {
+                onCompletions = new ArrayList<Synchronization>();
+            }
+            onCompletions.add(onCompletion);
+        } else {
+            getUnitOfWork().addSynchronization(onCompletion);
+        }
+    }
+
+    public boolean containsOnCompletion(Synchronization onCompletion) {
+        if (unitOfWork != null) {
+            // if there is an unit of work then the completions is moved there
+            return unitOfWork.containsSynchronization(onCompletion);
+        } else {
+            // check temporary completions if no unit of work yet
+            return onCompletions != null && onCompletions.contains(onCompletion);
+        }
+    }
+
+    public void handoverCompletions(Exchange target) {
+        if (onCompletions != null) {
+            for (Synchronization onCompletion : onCompletions) {
+                target.addOnCompletion(onCompletion);
+            }
+            // cleanup the temporary on completion list as they have been handed over
+            onCompletions.clear();
+            onCompletions = null;
+        } else if (unitOfWork != null) {
+            // let unit of work handover
+            unitOfWork.handoverSynchronization(target);
+        }
+    }
+
+    public List<Synchronization> handoverCompletions() {
+        List<Synchronization> answer = null;
+        if (onCompletions != null) {
+            answer = new ArrayList<Synchronization>(onCompletions);
+            onCompletions.clear();
+            onCompletions = null;
+        }
+        return answer;
     }
 
     @SuppressWarnings("deprecation")

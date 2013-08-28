@@ -17,6 +17,8 @@
 package com.nxttxn.vramel.builder;
 
 import com.nxttxn.vramel.Expression;
+import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.model.language.HeaderExpression;
 import com.nxttxn.vramel.model.language.MethodCallExpression;
 import com.nxttxn.vramel.model.language.PropertyExpression;
@@ -34,8 +36,25 @@ import java.util.List;
  * @version
  */
 public abstract class BuilderSupport {
+    private ModelVramelContext context;
     private ErrorHandlerBuilder errorHandlerBuilder;
 
+
+    protected BuilderSupport(VramelContext context) {
+        this.context = (ModelVramelContext)context;
+    }
+
+    @Deprecated
+    public void setContext(VramelContext context) {
+        this.context = (ModelVramelContext)context;
+    }
+
+    public void setContext(ModelVramelContext context) {
+        this.context = context;
+    }
+    public ModelVramelContext getContext() {
+        return context;
+    }
     // Builder methods
     // -------------------------------------------------------------------------
 

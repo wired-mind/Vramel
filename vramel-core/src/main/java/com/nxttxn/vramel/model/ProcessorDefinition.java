@@ -10,15 +10,16 @@ import com.nxttxn.vramel.processor.PipelineProcessor;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.processor.interceptor.DefaultChannel;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.util.IntrospectionSupport;
+import com.nxttxn.vramel.util.ObjectHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
 
+import javax.xml.bind.annotation.XmlAnyAttribute;
 import javax.xml.bind.annotation.XmlAttribute;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import javax.xml.namespace.QName;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,6 +38,9 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
     public abstract List<ProcessorDefinition<?>> getOutputs();
 
     private ProcessorDefinition<?> parent;
+
+    // use xs:any to support optional property placeholders
+    private Map<QName, Object> otherAttributes;
 
     public ProcessorDefinition<?> getParent() {
         return parent;
@@ -360,6 +364,86 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
     }
 
 
+    /**
+     * <a href="http://camel.apache.org/splitter.html">Splitter EIP:</a>
+     * Creates a splitter allowing you split a message into a number of pieces and process them individually.
+     * <p>
+     * This splitter responds with the original input message. You can use a custom {@link AggregationStrategy} to
+     * control what to respond from the splitter.
+     *
+     * @return the expression clause builder for the expression on which to split
+     */
+    public ExpressionClause<SplitDefinition> split() {
+        SplitDefinition answer = new SplitDefinition();
+        addOutput(answer);
+        return ExpressionClause.createAndSetExpression(answer);
+    }
+
+    /**
+     * <a href="http://camel.apache.org/splitter.html">Splitter EIP:</a>
+     * Creates a splitter allowing you split a message into a number of pieces and process them individually.
+     * <p>
+     * This splitter responds with the original input message. You can use a custom {@link AggregationStrategy} to
+     * control what to respond from the splitter.
+     *
+     * @param expression  the expression on which to split the message
+     * @return the builder
+     */
+    public SplitDefinition split(Expression expression) {
+        SplitDefinition answer = new SplitDefinition(expression);
+        addOutput(answer);
+        return answer;
+    }
+
+    /**
+     * <a href="http://camel.apache.org/splitter.html">Splitter EIP:</a>
+     * Creates a splitter allowing you split a message into a number of pieces and process them individually.
+     * <p>
+     * The splitter responds with the answer produced by the given {@link AggregationStrategy}.
+     *
+     * @param expression  the expression on which to split
+     * @param aggregationStrategy  the strategy used to aggregate responses for every part
+     * @return the builder
+     */
+    public SplitDefinition split(Expression expression, AggregationStrategy aggregationStrategy) {
+        SplitDefinition answer = new SplitDefinition(expression);
+        addOutput(answer);
+        answer.setAggregationStrategy(aggregationStrategy);
+        return answer;
+    }
+
+
+
+    /**
+     * Adds a placeholder for the given option
+     * <p/>
+     * Requires using the {@link org.apache.camel.component.properties.PropertiesComponent}
+     *
+     * @param option  the name of the option
+     * @param key     the placeholder key
+     * @return the builder
+     */
+    public T placeholder(String option, String key) {
+        QName name = new QName(Constants.PLACEHOLDER_QNAME, option);
+        return attribute(name, key);
+    }
+
+    /**
+     * Adds an optional attribute
+     *
+     * @param name    the name of the attribute
+     * @param value   the value
+     * @return the builder
+     */
+    @SuppressWarnings("unchecked")
+    public T attribute(QName name, Object value) {
+        if (otherAttributes == null) {
+            otherAttributes = new HashMap<QName, Object>();
+        }
+        otherAttributes.put(name, value);
+        return (T) this;
+    }
+
     public Processor createProcessor(FlowContext flowContext) throws Exception{
         throw new UnsupportedOperationException("Not implemented yet for class: " + getClass().getName());
     }
@@ -408,6 +492,139 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
         }
     }
 
+    public Map<QName, Object> getOtherAttributes() {
+        return otherAttributes;
+    }
+
+    @XmlAnyAttribute
+    public void setOtherAttributes(Map<QName, Object> otherAttributes) {
+        this.otherAttributes = otherAttributes;
+    }
+
+    /**
+     * Inspects the given definition and resolves any property placeholders from its properties.
+     * <p/>
+     * This implementation will check all the getter/setter pairs on this instance and for all the values
+     * (which is a String type) will be property placeholder resolved.
+     *
+     * @param flowContext the route context
+     * @param definition   the definition
+     * @throws Exception is thrown if property placeholders was used and there was an error resolving them
+     * @see org.apache.camel.CamelContext#resolvePropertyPlaceholders(String)
+     * @see org.apache.camel.component.properties.PropertiesComponent
+     */
+    protected void resolvePropertyPlaceholders(FlowContext flowContext, Object definition) throws Exception {
+        log.trace("Resolving property placeholders for: {}", definition);
+
+        // find all getter/setter which we can use for property placeholders
+        Map<String, Object> properties = new HashMap<String, Object>();
+        IntrospectionSupport.getProperties(definition, properties, null);
+
+        ProcessorDefinition<?> processorDefinition = null;
+        if (definition instanceof ProcessorDefinition) {
+            processorDefinition = (ProcessorDefinition<?>) definition;
+        }
+        // include additional properties which have the Camel placeholder QName
+        // and when the definition parameter is this (otherAttributes belong to this)
+        if (processorDefinition != null && processorDefinition.getOtherAttributes() != null) {
+            for (QName key : processorDefinition.getOtherAttributes().keySet()) {
+                if (Constants.PLACEHOLDER_QNAME.equals(key.getNamespaceURI())) {
+                    String local = key.getLocalPart();
+                    Object value = processorDefinition.getOtherAttributes().get(key);
+                    if (value != null && value instanceof String) {
+                        // value must be enclosed with placeholder tokens
+                        String s = (String) value;
+                        String prefixToken = flowContext.getVramelContext().getPropertyPrefixToken();
+                        String suffixToken = flowContext.getVramelContext().getPropertySuffixToken();
+                        if (prefixToken == null) {
+                            throw new IllegalArgumentException("Property with name [" + local + "] uses property placeholders; however, no properties component is configured.");
+                        }
+
+                        if (!s.startsWith(prefixToken)) {
+                            s = prefixToken + s;
+                        }
+                        if (!s.endsWith(suffixToken)) {
+                            s = s + suffixToken;
+                        }
+                        value = s;
+                    }
+                    properties.put(local, value);
+                }
+            }
+        }
+
+        if (!properties.isEmpty()) {
+            log.trace("There are {} properties on: {}", properties.size(), definition);
+            // lookup and resolve properties for String based properties
+            for (Map.Entry<String, Object> entry : properties.entrySet()) {
+                // the name is always a String
+                String name = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    // value must be a String, as a String is the key for a property placeholder
+                    String text = (String) value;
+                    text = flowContext.getVramelContext().resolvePropertyPlaceholders(text);
+                    if (text != value) {
+                        // invoke setter as the text has changed
+                        boolean changed = IntrospectionSupport.setProperty(flowContext.getVramelContext().getTypeConverter(), definition, name, text);
+                        if (!changed) {
+                            throw new IllegalArgumentException("No setter to set property: " + name + " to: " + text + " on: " + definition);
+                        }
+                        if (log.isDebugEnabled()) {
+                            log.debug("Changed property [{}] from: {} to: {}", new Object[]{name, value, text});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Inspects the given definition and resolves known fields
+     * <p/>
+     * This implementation will check all the getter/setter pairs on this instance and for all the values
+     * (which is a String type) will check if it refers to a known field (such as on Exchange).
+     *
+     * @param definition   the definition
+     */
+    protected void resolveKnownConstantFields(Object definition) throws Exception {
+        log.trace("Resolving known fields for: {}", definition);
+
+        // find all String getter/setter
+        Map<String, Object> properties = new HashMap<String, Object>();
+        IntrospectionSupport.getProperties(definition, properties, null);
+
+        if (!properties.isEmpty()) {
+            log.trace("There are {} properties on: {}", properties.size(), definition);
+
+            // lookup and resolve known constant fields for String based properties
+            for (Map.Entry<String, Object> entry : properties.entrySet()) {
+                String name = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    // we can only resolve String typed values
+                    String text = (String) value;
+
+                    // is the value a known field (currently we only support constants from Exchange.class)
+                    if (text.startsWith("Exchange.")) {
+                        String field = ObjectHelper.after(text, "Exchange.");
+                        String constant = ObjectHelper.lookupConstantFieldValue(Exchange.class, field);
+                        if (constant != null) {
+                            // invoke setter as the text has changed
+                            IntrospectionSupport.setProperty(definition, name, constant);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Changed property [{}] from: {} to: {}", new Object[]{name, value, constant});
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Constant field with name: " + field + " not found on Exchange.class");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Creates the processor and wraps it in any necessary interceptors and error handlers
      */
@@ -418,10 +635,10 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
         preCreateProcessor();
 
         // resolve properties before we create the processor
-        //skip: resolvePropertyPlaceholders(flowContext, this);
+        resolvePropertyPlaceholders(flowContext, this);
 
         // resolve constant fields (eg Exchange.FILE_NAME)
-        //skip: resolveKnownConstantFields(this);
+        resolveKnownConstantFields(this);
 
         // also resolve properties and constant fields on embedded expressions
         ProcessorDefinition<?> me = (ProcessorDefinition<?>) this;
@@ -430,10 +647,10 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
             ExpressionDefinition expressionDefinition = exp.getExpression();
             if (expressionDefinition != null) {
                 // resolve properties before we create the processor
-                //skip: resolvePropertyPlaceholders(flowContext, expressionDefinition);
+                resolvePropertyPlaceholders(flowContext, expressionDefinition);
 
                 // resolve constant fields (eg Exchange.FILE_NAME)
-                //skip: resolveKnownConstantFields(expressionDefinition);
+                resolveKnownConstantFields(expressionDefinition);
             }
         }
 

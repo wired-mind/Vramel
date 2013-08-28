@@ -18,15 +18,17 @@ import java.util.List;
  * Time: 3:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FlowsDefinition {
+public class FlowsDefinition extends OptionalIdentifiedDefinition<FlowsDefinition> {
     @XmlElementRef
     private List<FlowDefinition> flows = Lists.newArrayList();
     @XmlTransient
     private List<OnExceptionDefinition> onExceptions = new ArrayList<OnExceptionDefinition>();
     @XmlTransient
+    private List<OnCompletionDefinition> onCompletions = new ArrayList<OnCompletionDefinition>();
+    @XmlTransient
     private ErrorHandlerFactory errorHandlerBuilder;
 
-    private VramelContext vramelContext;
+    private ModelVramelContext vramelContext;
 
     public List<OnExceptionDefinition> getOnExceptions() {
         return onExceptions;
@@ -81,7 +83,7 @@ public class FlowsDefinition {
      */
     public FlowDefinition flow(FlowDefinition flow) {
         // must prepare the flow before we can add it to the routes list
-        FlowDefinitionHelper.prepareRoute(getVramelContext(), flow, getOnExceptions());
+        FlowDefinitionHelper.prepareRoute(getVramelContext(), flow, getOnExceptions(), getOnCompletions());
 
         getFlows().add(flow);
         // mark this flow as prepared
@@ -102,12 +104,31 @@ public class FlowsDefinition {
         return answer;
     }
 
-    public void setVramelContext(VramelContext vramelContext) {
+    /**
+     * Adds an on completion
+     *
+     * @return the builder
+     */
+    public OnCompletionDefinition onCompletion() {
+        OnCompletionDefinition answer = new OnCompletionDefinition();
+        getOnCompletions().add(answer);
+        return answer;
+    }
+
+    public void setVramelContext(ModelVramelContext vramelContext) {
         this.vramelContext = vramelContext;
     }
 
-    public VramelContext getVramelContext() {
+    public ModelVramelContext getVramelContext() {
         return vramelContext;
+    }
+
+    public List<OnCompletionDefinition> getOnCompletions() {
+        return onCompletions;
+    }
+
+    public void setOnCompletions(List<OnCompletionDefinition> onCompletions) {
+        this.onCompletions = onCompletions;
     }
 
 

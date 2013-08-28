@@ -93,4 +93,7 @@ public class EventDrivenConsumerFlow extends DefaultFlow {
     }
 
 
+    public boolean supportsSuspension() {
+        return consumer instanceof SuspendableService;
+    }
 }

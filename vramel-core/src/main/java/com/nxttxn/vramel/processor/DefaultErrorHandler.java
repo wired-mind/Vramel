@@ -22,10 +22,7 @@ import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.processor.exceptionpolicy.ExceptionPolicyStrategy;
 import com.nxttxn.vramel.spi.UnitOfWork;
-import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
-import com.nxttxn.vramel.util.AsyncProcessorHelper;
-import com.nxttxn.vramel.util.ExchangeHelper;
-import com.nxttxn.vramel.util.VramelLogger;
+import com.nxttxn.vramel.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -36,7 +33,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DefaultErrorHandler extends ErrorHandlerSupport {
 
     private final VramelContext vramelContext;
-    private final AsyncProcessor output;
+    protected final Processor output;
+    protected final AsyncProcessor outputAsync;
     private final VramelLogger logger;
     private final ExceptionPolicyStrategy exceptionPolicyStrategy;
 
@@ -51,7 +49,8 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
     public DefaultErrorHandler(VramelContext vramelContext, Processor output, VramelLogger logger,
                                ExceptionPolicyStrategy exceptionPolicyStrategy) {
         this.vramelContext = vramelContext;
-        this.output = AsyncProcessorConverterHelper.convert(output);
+        this.output = output;
+        this.outputAsync = AsyncProcessorConverterHelper.convert(output);
         this.logger = logger;
         this.exceptionPolicyStrategy = exceptionPolicyStrategy;
 
@@ -70,20 +69,23 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
     }
 
     @Override
-    public AsyncProcessor getOutput() {
+    public Processor getOutput() {
         return output;
     }
 
-
     public void process(Exchange exchange) throws Exception {
+        if (output == null) {
+            // no output then just return
+            return;
+        }
         AsyncProcessorHelper.process(this, exchange);
     }
 
     @Override
     public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        checkNotNull(output);
+        checkNotNull(outputAsync);
         try {
-            return output.process(exchange, new OptionalAsyncResultHandler() {
+            return outputAsync.process(exchange, new OptionalAsyncResultHandler() {
                 @Override
                 public void handle(AsyncExchangeResult optionalAsyncResult) {
 
@@ -288,5 +290,26 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
         }
 
         return exceptionPolicy.getExceptionPolicy(exceptionPolicies, exchange, exception);
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        ServiceHelper.startServices(output, outputAsync);
+
+
+
+
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        // noop, do not stop any services which we only do when shutting down
+        // as the error handler can be context scoped, and should not stop in case
+        // a route stops
+    }
+
+    @Override
+    protected void doShutdown() throws Exception {
+        ServiceHelper.stopAndShutdownServices(output, outputAsync);
     }
 }

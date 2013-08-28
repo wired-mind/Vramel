@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.util;
 
 import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.spi.UnitOfWork;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -202,5 +203,31 @@ public class ExchangeHelper {
         }
         return context.getTypeConverter().convertTo(type, result);
     }
+
+    /**
+     * Creates a new instance and copies from the current message exchange so that it can be
+     * forwarded to another destination as a new instance. Unlike regular copy this operation
+     * will not share the same {@link org.apache.camel.spi.UnitOfWork} so its should be used
+     * for async messaging, where the original and copied exchange are independent.
+     *
+     * @param exchange original copy of the exchange
+     * @param handover whether the on completion callbacks should be handed over to the new copy.
+     */
+    public static Exchange createCorrelatedCopy(Exchange exchange, boolean handover) {
+        String id = exchange.getExchangeId();
+
+        Exchange copy = exchange.copy();
+        // do not share the unit of work
+        copy.setUnitOfWork(null);
+        // hand over on completion to the copy if we got any
+        UnitOfWork uow = exchange.getUnitOfWork();
+        if (handover && uow != null) {
+            uow.handoverSynchronization(copy);
+        }
+        // set a correlation id so we can track back the original exchange
+        copy.setProperty(Exchange.CORRELATION_ID, id);
+        return copy;
+    }
+
 
 }

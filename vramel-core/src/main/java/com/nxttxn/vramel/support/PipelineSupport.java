@@ -26,7 +26,7 @@ import java.util.List;
  * Time: 1:17 AM
  * To change this template use File | Settings | File Templates.
  */
-public class PipelineSupport {
+public abstract class PipelineSupport extends ServiceSupport {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
 
@@ -135,4 +135,6 @@ public class PipelineSupport {
 
 
     }
+
+
 }

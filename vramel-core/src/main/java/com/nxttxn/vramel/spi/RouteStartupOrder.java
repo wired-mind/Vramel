@@ -47,7 +47,7 @@ public interface RouteStartupOrder {
      *
      * @return the route
      */
-    Flow getRoute();
+    Flow getFlow();
 
     /**
      * Gets the input to this route (often only one consumer)

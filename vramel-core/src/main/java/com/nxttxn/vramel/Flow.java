@@ -38,4 +38,13 @@ public interface Flow {
      */
     String getId();
 
+    void warmUp();
+
+    /**
+     * Whether or not the route supports suspension (suspend and resume)
+     *
+     * @return <tt>true</tt> if this route supports suspension
+     */
+    boolean supportsSuspension();
+
 }

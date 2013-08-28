@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 
+
 /**
  * Represents the JiBX XML {@link org.apache.camel.spi.DataFormat}
  */
@@ -65,7 +66,7 @@ public class JibxDataFormat extends DataFormatDefinition {
     }
 
     @Override
-    protected DataFormat createDataFormat(FlowContext flowContext) throws Exception {
+    protected DataFormat createDataFormat(FlowContext flowContext) {
         if (unmarshallClass == null && unmarshallTypeName != null) {
             try {
                 unmarshallClass = flowContext.getVramelContext().getClassResolver().resolveMandatoryClass(unmarshallTypeName);

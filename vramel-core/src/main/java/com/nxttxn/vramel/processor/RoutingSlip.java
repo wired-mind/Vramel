@@ -12,6 +12,7 @@ import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
+import com.nxttxn.vramel.util.ServiceHelper;
 
 import java.util.Iterator;
 
@@ -28,7 +29,7 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
     protected final VramelContext vramelContext;
     protected String uriDelimiter;
     protected Expression expression;
-    private final ProducerCache producerCache;
+    private ProducerCache producerCache;
 
     /**
      * The iterator to be used for retrieving the next routing slip(s) to be used.
@@ -56,7 +57,6 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
     public RoutingSlip(VramelContext vramelContext) {
         checkNotNull(vramelContext);
         this.vramelContext = vramelContext;
-        producerCache = new ProducerCache(this, this.vramelContext);
     }
 
     public RoutingSlip(VramelContext vramelContext, Expression expression, String uriDelimiter) {
@@ -65,7 +65,6 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
         this.vramelContext = vramelContext;
         this.expression = expression;
         this.uriDelimiter = uriDelimiter;
-        producerCache = new ProducerCache(this, this.vramelContext);
     }
 
 
@@ -261,4 +260,20 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
             return !routingSlips.hasNext(exchange);
         }
     }
+
+    protected void doStart() throws Exception {
+        if (producerCache == null) {
+            producerCache = new ProducerCache(this, vramelContext);
+        }
+        ServiceHelper.startService(producerCache);
+    }
+
+    protected void doStop() throws Exception {
+        ServiceHelper.stopService(producerCache);
+    }
+
+    protected void doShutdown() throws Exception {
+        ServiceHelper.stopAndShutdownService(producerCache);
+    }
+
 }

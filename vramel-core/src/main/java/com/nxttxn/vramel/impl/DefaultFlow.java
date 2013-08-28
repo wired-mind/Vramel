@@ -20,6 +20,7 @@ import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Flow;
 import com.nxttxn.vramel.Service;
 import com.nxttxn.vramel.spi.FlowContext;
+import com.nxttxn.vramel.support.ServiceSupport;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ import java.util.Map;
  *
  * @version
  */
-public abstract class DefaultFlow implements Flow {
+public abstract class DefaultFlow extends ServiceSupport implements Flow {
 
     private final Endpoint endpoint;
     private final Map<String, Object> properties = new HashMap<String, Object>();
@@ -97,6 +98,21 @@ public abstract class DefaultFlow implements Flow {
     }
 
 
+    /**
+     * Do not invoke this method directly, use {@link org.apache.camel.CamelContext#startRoute(String)} to start a route.
+     */
+    @Override
+    public void start() throws Exception {
+        super.start();
+    }
+
+    /**
+     * Do not invoke this method directly, use {@link org.apache.camel.CamelContext#stopRoute(String)} to stop a route.
+     */
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+    }
 
     /**
      * Strategy method to allow derived classes to lazily load services for the route
@@ -110,6 +126,12 @@ public abstract class DefaultFlow implements Flow {
 
     protected void doStop() throws Exception {
         // noop
+    }
+
+    @Override
+    protected void doShutdown() throws Exception {
+        // clear services when shutting down
+        services.clear();
     }
 
 
