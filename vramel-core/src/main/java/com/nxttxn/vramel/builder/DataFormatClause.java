@@ -230,4 +230,40 @@ public class DataFormatClause<T extends ProcessorDefinition<?>> {
         return dataFormat(xsdf);
     }
 
+    /**
+     * Uses the beanio data format
+     */
+    public T beanio(String mapping, String streamName) {
+        BeanioDataFormat dataFormat = new BeanioDataFormat();
+        dataFormat.setMapping(mapping);
+        dataFormat.setStreamName(streamName);
+        return dataFormat(dataFormat);
+    }
+
+    /**
+     * Uses the beanio data format
+     */
+    public T beanio(String mapping, String streamName, String encoding) {
+        BeanioDataFormat dataFormat = new BeanioDataFormat();
+        dataFormat.setMapping(mapping);
+        dataFormat.setStreamName(streamName);
+        dataFormat.setEncoding(encoding);
+        return dataFormat(dataFormat);
+    }
+
+    /**
+     * Uses the beanio data format
+     */
+    public T beanio(String mapping, String streamName, String encoding,
+                    boolean ignoreUnidentifiedRecords, boolean ignoreUnexpectedRecords, boolean ignoreInvalidRecords) {
+        BeanioDataFormat dataFormat = new BeanioDataFormat();
+        dataFormat.setMapping(mapping);
+        dataFormat.setStreamName(streamName);
+        dataFormat.setEncoding(encoding);
+        dataFormat.setIgnoreInvalidRecords(ignoreInvalidRecords);
+        dataFormat.setIgnoreUnexpectedRecords(ignoreUnexpectedRecords);
+        dataFormat.setIgnoreInvalidRecords(ignoreInvalidRecords);
+        return dataFormat(dataFormat);
+    }
+
 }

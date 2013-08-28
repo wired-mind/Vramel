@@ -60,4 +60,7 @@ dependencies {
     //xmlsec (apache xml security) xml digsig/crypto
     compile "org.apache.santuario:xmlsec:1.5.5"
 
+    //beanio
+    compile "org.beanio:beanio:2.0.5"
+
 }
