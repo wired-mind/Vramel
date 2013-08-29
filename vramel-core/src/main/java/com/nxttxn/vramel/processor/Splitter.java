@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
 
 
 import com.nxttxn.vramel.*;
@@ -53,14 +52,14 @@ public class Splitter extends MulticastProcessor implements AsyncProcessor {
 
     private final Expression expression;
 
-    public Splitter(VramelContext vramelContext, Expression expression, Processor destination, AggregationStrategy aggregationStrategy) {
-        this(vramelContext, expression, destination, aggregationStrategy, false, false, false, 0, null, false);
+    public Splitter(Expression expression, Processor destination, AggregationStrategy aggregationStrategy) {
+        this(expression, destination, aggregationStrategy, false, false, false, 0, null, false);
     }
 
-    public Splitter(VramelContext vramelContext, Expression expression, Processor destination, AggregationStrategy aggregationStrategy,
+    public Splitter(Expression expression, Processor destination, AggregationStrategy aggregationStrategy,
                     boolean parallelProcessing,
                     boolean streaming, boolean stopOnException, long timeout, Processor onPrepare, boolean useSubUnitOfWork) {
-        super(vramelContext, Collections.singleton(destination), aggregationStrategy, parallelProcessing, streaming, stopOnException, timeout, onPrepare, useSubUnitOfWork);
+        super(Collections.singleton(destination), aggregationStrategy, parallelProcessing, streaming, stopOnException, timeout, onPrepare, useSubUnitOfWork);
         this.expression = expression;
         notNull(expression, "expression");
         notNull(destination, "destination");
@@ -73,7 +72,7 @@ public class Splitter extends MulticastProcessor implements AsyncProcessor {
 
 
     @Override
-    public boolean process(Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) {
+    public boolean process(Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
         final AggregationStrategy strategy = getAggregationStrategy();
 
         // if no custom aggregation strategy is being used then fallback to keep the original
@@ -84,7 +83,7 @@ public class Splitter extends MulticastProcessor implements AsyncProcessor {
             setAggregationStrategyOnExchange(exchange, original);
         }
 
-        return super.process(exchange, callback);
+        return super.process(exchange, optionalAsyncResultHandler);
     }
 
     @Override
@@ -97,7 +96,8 @@ public class Splitter extends MulticastProcessor implements AsyncProcessor {
 
         Iterable<ProcessorExchangePair> answer;
         if (isStreaming()) {
-            answer = createProcessorExchangePairsIterable(exchange, value);
+            throw new UnsupportedOperationException("Streaming not enabled yet");
+//            answer = createProcessorExchangePairsIterable(exchange, value);
         } else {
             answer = createProcessorExchangePairsList(exchange, value);
         }
@@ -220,7 +220,9 @@ public class Splitter extends MulticastProcessor implements AsyncProcessor {
     private static Exchange copyExchangeNoAttachments(Exchange exchange, boolean preserveExchangeId) {
         Exchange answer = ExchangeHelper.createCopy(exchange, preserveExchangeId);
         // we do not want attachments for the splitted sub-messages
-        answer.getIn().setAttachments(null);
+//        answer.getIn().setAttachments(null);
         return answer;
     }
+
+
 }

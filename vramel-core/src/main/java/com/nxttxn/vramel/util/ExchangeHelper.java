@@ -229,5 +229,21 @@ public class ExchangeHelper {
         return copy;
     }
 
+    /**
+     * Creates a new instance and copies from the current message exchange so that it can be
+     * forwarded to another destination as a new instance.
+     *
+     * @param exchange original copy of the exchange
+     * @param preserveExchangeId whether or not the exchange id should be preserved
+     * @return the copy
+     */
+    public static Exchange createCopy(Exchange exchange, boolean preserveExchangeId) {
+        Exchange copy = exchange.copy();
+        if (preserveExchangeId) {
+            // must preserve exchange id
+            copy.setExchangeId(exchange.getExchangeId());
+        }
+        return copy;
+    }
 
 }

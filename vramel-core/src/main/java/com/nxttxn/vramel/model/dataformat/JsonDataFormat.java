@@ -128,6 +128,10 @@ public class JsonDataFormat extends DataFormatDefinition {
         if (prettyPrint != null) {
             setProperty(dataFormat, "prettyPrint", unmarshalType);
         }
+
+        if (expression != null) {
+            setProperty(dataFormat, "unmarshalTypeExpression", expression);
+        }
     }
 
 }

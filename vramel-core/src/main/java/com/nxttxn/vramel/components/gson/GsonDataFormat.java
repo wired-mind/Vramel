@@ -20,7 +20,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class GsonDataFormat implements DataFormat {
-    private final Expression unmarshalTypeExpression;
+    private Expression unmarshalTypeExpression;
     private Gson gson;
 
     private List<ExclusionStrategy> exclusionStrategies;
@@ -185,6 +185,14 @@ public class GsonDataFormat implements DataFormat {
 
     public void setPolymorphic(Boolean polymorphic) {
         this.polymorphic = polymorphic;
+    }
+
+    public Expression getUnmarshalTypeExpression() {
+        return unmarshalTypeExpression;
+    }
+
+    public void setUnmarshalTypeExpression(Expression unmarshalTypeExpression) {
+        this.unmarshalTypeExpression = unmarshalTypeExpression;
     }
 
     private class InheritanceAdapter<T> implements JsonSerializer<T>, JsonDeserializer<T>{

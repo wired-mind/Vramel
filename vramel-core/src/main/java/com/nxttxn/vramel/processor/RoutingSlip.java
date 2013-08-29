@@ -8,6 +8,7 @@ import com.nxttxn.vramel.impl.ProducerCache;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.DoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.support.MulticastSupport;
 import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;

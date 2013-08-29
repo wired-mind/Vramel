@@ -22,6 +22,7 @@ import com.nxttxn.vramel.Expression;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.model.language.ExpressionDefinition;
 import com.nxttxn.vramel.processor.Splitter;
+import com.nxttxn.vramel.processor.SubUnitOfWorkProcessor;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
 import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.util.VramelContextHelper;
@@ -41,7 +42,7 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @XmlRootElement(name = "split")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SplitDefinition extends ExpressionNode implements {
+public class SplitDefinition extends ExpressionNode {
     @XmlTransient
     private AggregationStrategy aggregationStrategy;
     @XmlAttribute
@@ -90,9 +91,9 @@ public class SplitDefinition extends ExpressionNode implements {
     }
 
     @Override
-    public Processor createProcessor(FlowContext routeContext) throws Exception {
-        Processor childProcessor = this.createChildProcessor(routeContext, true);
-        aggregationStrategy = createAggregationStrategy(routeContext);
+    public Processor createProcessor(FlowContext flowContext) throws Exception {
+        Processor childProcessor = this.createChildProcessor(flowContext);
+        aggregationStrategy = createAggregationStrategy(flowContext);
 
 
         long timeout = getTimeout() != null ? getTimeout() : 0;
@@ -100,13 +101,13 @@ public class SplitDefinition extends ExpressionNode implements {
             throw new IllegalArgumentException("Timeout is used but ParallelProcessing has not been enabled.");
         }
         if (onPrepareRef != null) {
-            onPrepare = VramelContextHelper.mandatoryLookup(routeContext.getVramelContext(), onPrepareRef, Processor.class);
+            onPrepare = VramelContextHelper.mandatoryLookup(flowContext.getVramelContext(), onPrepareRef, Processor.class);
         }
 
-        Expression exp = getExpression().createExpression(routeContext);
+        Expression exp = getExpression().createExpression(flowContext);
 
-        Splitter answer = new Splitter(routeContext.getVramelContext(), exp, childProcessor, aggregationStrategy,
-                isParallelProcessing(), threadPool, shutdownThreadPool, isStreaming(), isStopOnException(),
+        Splitter answer = new Splitter(exp, childProcessor, aggregationStrategy,
+                isParallelProcessing(), isStreaming(), isStopOnException(),
                 timeout, onPrepare, isShareUnitOfWork());
         if (isShareUnitOfWork()) {
             // wrap answer in a sub unit of work, since we share the unit of work
@@ -186,15 +187,7 @@ public class SplitDefinition extends ExpressionNode implements {
         return this;
     }
 
-    public SplitDefinition executorService(ExecutorService executorService) {
-        setExecutorService(executorService);
-        return this;
-    }
 
-    public SplitDefinition executorServiceRef(String executorServiceRef) {
-        setExecutorServiceRef(executorServiceRef);
-        return this;
-    }
 
     /**
      * Uses the {@link Processor} when preparing the {@link org.apache.camel.Exchange} to be send.

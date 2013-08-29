@@ -42,9 +42,13 @@ public interface Exchange {
     String FILE_LENGTH          = "VramelFileLength";
     String MAXIMUM_CACHE_POOL_SIZE     = "VramelMaximumCachePoolSize";
     String MAXIMUM_ENDPOINT_CACHE_SIZE = "VramelMaximumEndpointCacheSize";
-
+    String MULTICAST_INDEX             = "VramelMulticastIndex";
+    String MULTICAST_COMPLETE          = "VramelMulticastComplete";
     String ON_COMPLETION      = "VramelOnCompletion";
 
+    String PARENT_UNIT_OF_WORK = "VramelParentUnitOfWork";
+
+    String ROLLBACK_ONLY           = "VramelRollbackOnly";
     String ROUTE_STOP              = "VramelRouteStop";
     String SLIP_ENDPOINT      = "VramelSlipEndpoint";
 
@@ -61,6 +65,7 @@ public interface Exchange {
     String TIMER_PERIOD          = "VramelTimerPeriod";
     String TIMER_TIME            = "VramelTimerTime";
 
+    String UNIT_OF_WORK_EXHAUSTED    = "VramelUnitOfWorkExhausted";
     String AGGREGATION_RESULTS = "VramelAggregationResults";
 
     Message getIn();

@@ -17,6 +17,7 @@
 package com.nxttxn.vramel.processor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,6 +27,7 @@ import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.FixedSizeDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.support.MulticastSupport;
 import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
@@ -38,12 +40,13 @@ import org.slf4j.LoggerFactory;
  * they are true their processors are used, with a default otherwise clause used
  * if none match.
  */
-public class ChoiceProcessor extends PipelineSupport implements AsyncProcessor, Navigate<Processor> {
+public class ChoiceProcessor extends MulticastSupport implements AsyncProcessor, Navigate<Processor> {
     private static final transient Logger LOG = LoggerFactory.getLogger(ChoiceProcessor.class);
     private final List<FilterProcessor> filters;
     private final AsyncProcessor otherwise;
 
     public ChoiceProcessor(List<FilterProcessor> filters, Processor otherwise) {
+        super(null, null, true, false, false, 0, null, true);
         this.filters = filters;
         this.otherwise = AsyncProcessorConverterHelper.convert(otherwise);
     }
@@ -53,7 +56,7 @@ public class ChoiceProcessor extends PipelineSupport implements AsyncProcessor, 
     }
     public boolean process(Exchange exchange, OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
 
-        List<FilterProcessor> matchedFilters = computeMatchedFilters(exchange);
+        Collection<FilterProcessor> matchedFilters = computeMatchedFilters(exchange);
         final boolean noMatches = matchedFilters.isEmpty();
         if (noMatches) {
             if (otherwise != null) {
@@ -65,21 +68,17 @@ public class ChoiceProcessor extends PipelineSupport implements AsyncProcessor, 
             return false;
         }
 
-        final Iterable<ProcessorExchangePair<FilterProcessor>> processorExchangePairs = createProcessorExchangePairs(exchange, matchedFilters);
-
         final DefaultExchangeHandler defaultExchangeHandler = new DefaultExchangeHandler(exchange, optionalAsyncResultHandler, new FixedSizeDoneStrategy<Exchange>(matchedFilters.size(), new AtomicInteger(0)));
 
-        for (ProcessorExchangePair<FilterProcessor> pair : processorExchangePairs) {
-            final Exchange copy = pair.getExchange();
-            final FilterProcessor matchedFilter = pair.getProcessor();
+        for (FilterProcessor matchedFilter : matchedFilters) {
             matchedFilter.processNext(exchange, defaultExchangeHandler);
         }
 
         return false;
     }
 
-    private List<FilterProcessor> computeMatchedFilters(Exchange exchange) throws Exception {
-        List<FilterProcessor> matchedFilters = Lists.newArrayList();
+    private Collection<FilterProcessor> computeMatchedFilters(Exchange exchange) throws Exception {
+        Collection<FilterProcessor> matchedFilters = Lists.newArrayList();
         for (int i = 0; i < filters.size(); i++) {
             FilterProcessor filter = filters.get(i);
             Predicate predicate = filter.getPredicate();

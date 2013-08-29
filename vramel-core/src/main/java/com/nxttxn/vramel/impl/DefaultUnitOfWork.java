@@ -19,20 +19,12 @@ package com.nxttxn.vramel.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Stack;
 
 
-import com.nxttxn.vramel.Exchange;
-import com.nxttxn.vramel.Message;
-import com.nxttxn.vramel.Service;
-import com.nxttxn.vramel.VramelContext;
-import com.nxttxn.vramel.spi.FlowContext;
-import com.nxttxn.vramel.spi.Synchronization;
-import com.nxttxn.vramel.spi.SynchronizationVetoable;
-import com.nxttxn.vramel.spi.UnitOfWork;
+import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.spi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +47,7 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     private List<Synchronization> synchronizations;
     private Message originalInMessage;
     private final Stack<FlowContext> routeContextStack = new Stack<FlowContext>();
+    private Stack<DefaultSubUnitOfWork> subUnitOfWorks;
 
     private final transient Logger log;
 
@@ -210,6 +203,71 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
                 it.remove();
             } else {
                 log.trace("Handover not allow for synchronization {}", synchronization);
+            }
+        }
+    }
+
+    public UnitOfWork createChildUnitOfWork(Exchange childExchange) {
+        // create a new child unit of work, and mark me as its parent
+        UnitOfWork answer = newInstance(childExchange);
+        answer.setParentUnitOfWork(this);
+        return answer;
+    }
+
+    @Override
+    public void setParentUnitOfWork(UnitOfWork parentUnitOfWork) {
+        this.parent = parentUnitOfWork;
+    }
+
+    @Override
+    public void beginSubUnitOfWork(Exchange exchange) {
+        if (log.isTraceEnabled()) {
+            log.trace("beginSubUnitOfWork exchangeId: {}", exchange.getExchangeId());
+        }
+
+        if (subUnitOfWorks == null) {
+            subUnitOfWorks = new Stack<DefaultSubUnitOfWork>();
+        }
+        subUnitOfWorks.push(new DefaultSubUnitOfWork());
+    }
+
+    @Override
+    public void endSubUnitOfWork(Exchange exchange) {
+        if (log.isTraceEnabled()) {
+            log.trace("endSubUnitOfWork exchangeId: {}", exchange.getExchangeId());
+        }
+
+        if (subUnitOfWorks == null || subUnitOfWorks.isEmpty()) {
+            return;
+        }
+
+        // pop last sub unit of work as its now ended
+        SubUnitOfWork subUoW = subUnitOfWorks.pop();
+        if (subUoW.isFailed()) {
+            // the sub unit of work failed so set an exception containing all the caused exceptions
+            // and mark the exchange for rollback only
+
+            // if there are multiple exceptions then wrap those into another exception with them all
+            Exception cause;
+            List<Exception> list = subUoW.getExceptions();
+            if (list != null) {
+                if (list.size() == 1) {
+                    cause = list.get(0);
+                } else {
+                    cause = new VramelUnitOfWorkException(exchange, list);
+                }
+                exchange.setException(cause);
+            }
+            // mark it as rollback and that the unit of work is exhausted. This ensures that we do not try
+            // to redeliver this exception (again)
+            exchange.setProperty(Exchange.ROLLBACK_ONLY, true);
+            exchange.setProperty(Exchange.UNIT_OF_WORK_EXHAUSTED, true);
+            // and remove any indications of error handled which will prevent this exception to be noticed
+            // by the error handler which we want to react with the result of the sub unit of work
+            exchange.setProperty(Exchange.ERRORHANDLER_HANDLED, null);
+            exchange.setProperty(Exchange.FAILURE_HANDLED, null);
+            if (log.isTraceEnabled()) {
+                log.trace("endSubUnitOfWork exchangeId: {} with {} caused exceptions.", exchange.getExchangeId(), list != null ? list.size() : 0);
             }
         }
     }

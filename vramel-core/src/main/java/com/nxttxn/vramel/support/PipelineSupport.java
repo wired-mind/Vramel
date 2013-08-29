@@ -4,91 +4,27 @@ import com.google.common.base.Optional;
 import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Processor;
-import com.nxttxn.vramel.Producer;
-import com.nxttxn.vramel.processor.ProcessorExchangePair;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.IteratorDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.Iterator;
 
 import static com.nxttxn.vramel.processor.PipelineHelper.continueProcessing;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
- * Date: 6/27/13
- * Time: 1:17 AM
+ * Date: 8/28/13
+ * Time: 11:08 PM
  * To change this template use File | Settings | File Templates.
  */
 public abstract class PipelineSupport extends ServiceSupport {
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
-
-
     //basic recursive pipeline
     protected boolean process(final Exchange original, final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler, final Iterator<Processor> processors, Processor processor) throws Exception {
         AsyncProcessor ap = AsyncProcessorConverterHelper.convert(processor);
         return ap.process(exchange, new PipelineResultsHandler(optionalAsyncResultHandler, processors, exchange, original));
-    }
-
-    protected <T extends Processor> Iterable<ProcessorExchangePair<T>> createProcessorExchangePairs(Exchange original, List<T> processorList) {
-        List<ProcessorExchangePair<T>> result = new ArrayList<>(processorList.size());
-
-        int index = 0;
-        for (T processor : processorList) {
-            Exchange copy = original.copy();
-            result.add(new DefaultProcessorExchangePair<T>(index++, processor, copy));
-        }
-
-        return result;
-    }
-
-    /**
-     * Class that represent each step in the multicast route to do
-     */
-    static final class DefaultProcessorExchangePair<T extends Processor> implements ProcessorExchangePair<T> {
-        private final int index;
-        private final T processor;
-        private final Exchange exchange;
-
-        private DefaultProcessorExchangePair(int index, T processor, Exchange exchange) {
-            this.index = index;
-            this.processor = processor;
-            this.exchange = exchange;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public Exchange getExchange() {
-            return exchange;
-        }
-
-        public Producer getProducer() {
-            if (processor instanceof Producer) {
-                return (Producer) processor;
-            }
-            return null;
-        }
-
-        public T getProcessor() {
-            return processor;
-        }
-
-        public void begin() {
-            // noop
-        }
-
-        public void done() {
-            // noop
-        }
-
     }
 
     private class PipelineResultsHandler extends DefaultExchangeHandler {
@@ -135,6 +71,4 @@ public abstract class PipelineSupport extends ServiceSupport {
 
 
     }
-
-
 }

@@ -116,4 +116,46 @@ public interface UnitOfWork extends Service {
      */
     boolean containsSynchronization(Synchronization synchronization);
 
+    /**
+     * Create a child unit of work, which is associated to this unit of work as its parent.
+     * <p/>
+     * This is often used when EIPs need to support {@link SubUnitOfWork}s. For example a splitter,
+     * where the sub messages of the splitter all participate in the same sub unit of work.
+     * That sub unit of work then decides whether the Splitter (in general) is failed or a
+     * processed successfully.
+     *
+     * @param childExchange the child exchange
+     * @return the created child unit of work
+     * @see SubUnitOfWork
+     * @see SubUnitOfWorkCallback
+     */
+    UnitOfWork createChildUnitOfWork(Exchange childExchange);
+
+    /**
+     * Sets the parent unit of work.
+     *
+     * @param parentUnitOfWork the parent
+     */
+    void setParentUnitOfWork(UnitOfWork parentUnitOfWork);
+
+
+    /**
+     * Begins a {@link SubUnitOfWork}, where sub (child) unit of works participate in a parent unit of work.
+     * The {@link SubUnitOfWork} will callback to the parent unit of work using {@link SubUnitOfWorkCallback}s.
+     *
+     * @param exchange the exchange
+     */
+    void beginSubUnitOfWork(Exchange exchange);
+
+    /**
+     * Ends a {@link SubUnitOfWork}.
+     * <p/>
+     * The {@link #beginSubUnitOfWork(org.apache.camel.Exchange)} must have been invoked
+     * prior to this operation.
+     *
+     * @param exchange the exchange
+     */
+    void endSubUnitOfWork(Exchange exchange);
+
+
 }

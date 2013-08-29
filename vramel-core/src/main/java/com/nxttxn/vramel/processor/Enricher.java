@@ -5,8 +5,12 @@ import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Producer;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
-import com.nxttxn.vramel.processor.async.*;
+import com.nxttxn.vramel.processor.async.AggregatingExchangeHandlerBase;
+import com.nxttxn.vramel.processor.async.FixedSizeDoneStrategy;
+import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.AggregationSupport;
+import com.nxttxn.vramel.support.MulticastSupport;
+import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import org.apache.camel.util.ServiceHelper;
@@ -25,7 +29,6 @@ public class Enricher extends AggregationSupport implements AsyncProcessor {
 
     public Enricher(AggregationStrategy aggregationStrategy, Producer producer) {
         super(aggregationStrategy);
-
         this.producer = producer;
     }
 

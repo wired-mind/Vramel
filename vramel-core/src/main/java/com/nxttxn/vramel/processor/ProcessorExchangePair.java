@@ -12,7 +12,7 @@ import com.nxttxn.vramel.Producer;
  * Time: 11:10 AM
  * To change this template use File | Settings | File Templates.
  */
-public interface ProcessorExchangePair<T extends Processor> {
+public interface ProcessorExchangePair {
 
     int getIndex();
 
@@ -20,7 +20,7 @@ public interface ProcessorExchangePair<T extends Processor> {
 
     Producer getProducer();
 
-    T getProcessor();
+    Processor getProcessor();
 
     void begin();
 

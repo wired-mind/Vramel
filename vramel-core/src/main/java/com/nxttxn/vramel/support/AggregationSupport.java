@@ -2,21 +2,16 @@ package com.nxttxn.vramel.support;
 
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
-import com.nxttxn.vramel.processor.aggregate.CompletionAwareAggregationStrategy;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.CastUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
- * Date: 6/26/13
- * Time: 1:15 PM
+ * Date: 8/29/13
+ * Time: 12:03 AM
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AggregationSupport extends PipelineSupport {
@@ -28,14 +23,14 @@ public abstract class AggregationSupport extends PipelineSupport {
 
 
     /**
-     * Use {@link #getAggregationStrategy(Exchange)} instead.
+     * Use {@link #getAggregationStrategy(com.nxttxn.vramel.Exchange)} instead.
      */
     public AggregationStrategy getAggregationStrategy() {
         return aggregationStrategy;
     }
 
     /**
-     * Sets the given {@link org.apache.camel.processor.aggregate.AggregationStrategy} on the {@link Exchange}.
+     * Sets the given {@link org.apache.camel.processor.aggregate.AggregationStrategy} on the {@link com.nxttxn.vramel.Exchange}.
      *
      * @param exchange            the exchange
      * @param aggregationStrategy the strategy
@@ -73,6 +68,4 @@ public abstract class AggregationSupport extends PipelineSupport {
         }
         return answer;
     }
-
-
 }
