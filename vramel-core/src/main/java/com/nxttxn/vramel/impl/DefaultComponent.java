@@ -4,6 +4,7 @@ import com.nxttxn.vramel.Component;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.ResolveEndpointFailedException;
 import com.nxttxn.vramel.VramelContext;
+import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Time: 6:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class DefaultComponent implements Component{
+public abstract class DefaultComponent extends ServiceSupport implements Component{
     private static final transient Logger LOG = LoggerFactory.getLogger(DefaultComponent.class);
     private VramelContext vramelContext;
 
@@ -35,6 +36,13 @@ public abstract class DefaultComponent implements Component{
     protected DefaultComponent() {
     }
 
+    protected void doStart() throws Exception {
+        ObjectHelper.notNull(getVramelContext(), "vramelContext");
+    }
+
+    protected void doStop() throws Exception {
+        // noop
+    }
     @Deprecated
     protected String preProcessUri(String uri) {
         // Give components a chance to preprocess URIs and migrate to URI syntax that discourages invalid URIs
