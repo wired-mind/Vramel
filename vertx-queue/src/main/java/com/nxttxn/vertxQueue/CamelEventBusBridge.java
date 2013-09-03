@@ -1,16 +1,22 @@
 package com.nxttxn.vertxQueue;
 
+import com.nxttxn.vramel.Endpoint;
+import com.nxttxn.vramel.ProducerTemplate;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.components.vertx.VertxMessage;
 import com.nxttxn.vramel.components.vertxQueue.QueueMessage;
 import com.nxttxn.vramel.impl.DefaultExchange;
 import com.nxttxn.vramel.impl.DefaultExchangeHolder;
+import com.nxttxn.vramel.impl.DefaultProducerTemplate;
+import com.nxttxn.vramel.impl.DefaultVramelContext;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.AsyncProcessor;
 import org.apache.camel.Exchange;
 import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.Message;
@@ -24,6 +30,7 @@ public class CamelEventBusBridge implements AsyncProcessor {
     private VertxContext vertxContext;
 
     private static final Logger LOG = LoggerFactory.getLogger(CamelEventBusBridge.class);
+    private DefaultVramelContext vramelContext;
 
     public CamelEventBusBridge() {
 
@@ -37,7 +44,6 @@ public class CamelEventBusBridge implements AsyncProcessor {
     }
 
     public boolean process(final Exchange exchange, final AsyncCallback callback)  {
-        Vertx vertx = getVertxContext().getVertx();
 
         final CountDownLatch vertxLatch = new CountDownLatch (1);
         try {
@@ -46,18 +52,14 @@ public class CamelEventBusBridge implements AsyncProcessor {
             VertxMessage vertxMessage = VertxMessage.create(msg);
             LOG.info(String.format("Vertx Queue Bridge ready to send message to vertx: %s", msg.toString()));
 
-            vertx.eventBus().send(msg.getHandlerUri(), SerializationUtils.serialize(vertxMessage), new Handler<Message<byte[]>>() {
-                @Override
-                public void handle(Message<byte[]> message) {
+            final ProducerTemplate producerTemplate = vramelContext.createProducerTemplate();
 
-                    com.nxttxn.vramel.Exchange responseExchange = new DefaultExchange((VramelContext) null);
-                    try {
-                        DefaultExchangeHolder.unmarshal(responseExchange, message.body);
-                        if (responseExchange.isFailed()) {
-                            exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", responseExchange.getException()));
-                        }
-                    } catch (Exception e) {
-                        exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed. Could not parse response. Expected Vramel Exchange.", e));
+            final String endpointUri = String.format("vertx:%s", msg.getHandlerUri());
+            producerTemplate.requestBodyAndHeaders(endpointUri, vertxMessage.getBody(), vertxMessage.getHeaders(), new AsyncResultHandler<Object>() {
+                @Override
+                public void handle(AsyncResult<Object> event) {
+                    if (event.failed()) {
+                        exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", event.exception));
                     }
 
                     callback.done(true); //async isn't setup anyway for hazelcast!!!
@@ -86,6 +88,7 @@ public class CamelEventBusBridge implements AsyncProcessor {
 
     public void setVertxContext(VertxContext vertxContext) {
         this.vertxContext = vertxContext;
+        this.vramelContext = new DefaultVramelContext(vertxContext.getVertx());
     }
 
 

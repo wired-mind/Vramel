@@ -19,7 +19,9 @@ package com.nxttxn.vramel.spi;
 
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Message;
+import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.Service;
+import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 
 /**
  * An object representing the unit of work processing an {@link Exchange}
@@ -157,5 +159,29 @@ public interface UnitOfWork extends Service {
      */
     void endSubUnitOfWork(Exchange exchange);
 
+
+    /**
+     * Strategy for optional work to be execute before processing
+     * <p/>
+     * For example the {@link org.apache.camel.impl.MDCUnitOfWork} leverages this
+     * to ensure MDC is handled correctly during routing exchanges using the
+     * asynchronous routing engine.
+     *
+     * @param processor the processor to be executed
+     * @param exchange  the current exchange
+     * @param callback  the callback
+     * @return the callback to be used (can return a wrapped callback)
+     */
+    OptionalAsyncResultHandler beforeProcess(Processor processor, Exchange exchange, OptionalAsyncResultHandler callback);
+
+    /**
+     * Strategy for optional work to be executed after the processing
+     *
+     * @param processor the processor executed
+     * @param exchange  the current exchange
+     * @param callback  the callback used
+     * @param doneSync  whether the process was done synchronously or asynchronously
+     */
+    void afterProcess(Processor processor, Exchange exchange, OptionalAsyncResultHandler callback, boolean doneSync);
 
 }

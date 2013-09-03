@@ -48,8 +48,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultVramelContext extends ServiceSupport implements ModelVramelContext {
     private final Logger log = LoggerFactory.getLogger(DefaultVramelContext.class);
+    private final Vertx vertx;
     private VramelContextNameStrategy nameStrategy = new DefaultVramelContextNameStrategy();
-    private final BusModBase busModBase;
     private final String defaultEndpointConfig = "default_endpoint_config";
     private Map<EndpointKey, Endpoint> endpoints;
     private final AtomicInteger endpointKeyCounter = new AtomicInteger();
@@ -79,7 +79,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     private Injector injector;
     private TypeConverter typeConverter;
     private TypeConverterRegistry typeConverterRegistry;
-    private JsonObject config;
+    private JsonObject config = new JsonObject();
     private final HashMap<String, Language> languages = new HashMap<String, Language>() {{
         put("bean", new BeanLanguage());
         put("simple", new SimpleLanguage());
@@ -105,17 +105,20 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         return new JavaUuidGenerator();
     }
 
-    public DefaultVramelContext(BusModBase busModBase) {
-
-        this.busModBase = busModBase;
-        this.config = busModBase.getContainer().getConfig();
-        this.defaultServerFactory = new DefaultServerFactory(busModBase.getVertx());
-        this.defaultClientFactory = new DefaultClientFactory(busModBase.getVertx());
+    public DefaultVramelContext(Vertx vertx) {
+        this.vertx = vertx;
+        this.defaultServerFactory = new DefaultServerFactory(vertx);
+        this.defaultClientFactory = new DefaultClientFactory(vertx);
 
         this.endpoints = new EndpointRegistry(this);
 
         packageScanClassResolver = new DefaultPackageScanClassResolver();
+    }
 
+    public DefaultVramelContext(BusModBase busModBase) {
+        this(busModBase.getVertx());
+
+        this.config = busModBase.getContainer().getConfig();
     }
 
 
@@ -205,6 +208,25 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
             }
         }
     }
+
+    @Override
+    public ProducerTemplate createProducerTemplate() {
+        int size = VramelContextHelper.getMaximumCachePoolSize(this);
+        return createProducerTemplate(size);
+    }
+
+    @Override
+    public ProducerTemplate createProducerTemplate(int maximumCacheSize) {
+        DefaultProducerTemplate answer = new DefaultProducerTemplate(this);
+        answer.setMaximumCacheSize(maximumCacheSize);
+        // start it so its ready to use
+        try {
+            startService(answer);
+        } catch (Exception e) {
+            throw ObjectHelper.wrapRuntimeCamelException(e);
+        }
+        return answer;
+    }
     /**
      * Should we start newly added routes?
      */
@@ -219,6 +241,8 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
                                                          boolean resumeConsumer, boolean addingRoutes, FlowService... routeServices) throws Exception {
         safelyStartRouteServices(checkClash, startConsumer, resumeConsumer, addingRoutes, Arrays.asList(routeServices));
     }
+
+
 
 
     private DefaultFlowStartupOrder doPrepareRouteToBeStarted(FlowService flowService) {
@@ -849,7 +873,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
 
     @Override
     public Vertx getVertx() {
-        return busModBase.getVertx();
+        return vertx;
     }
     protected PropertiesComponent getPropertiesComponent() {
         return propertiesComponent;
@@ -904,7 +928,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
 
     @Override
     public EventBus getEventBus() {
-        return busModBase.getVertx().eventBus();
+        return getVertx().eventBus();
     }
 
     @Override

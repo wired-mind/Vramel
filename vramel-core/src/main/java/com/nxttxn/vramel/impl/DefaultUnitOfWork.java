@@ -24,6 +24,7 @@ import java.util.Stack;
 
 
 import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -270,5 +271,13 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
                 log.trace("endSubUnitOfWork exchangeId: {} with {} caused exceptions.", exchange.getExchangeId(), list != null ? list.size() : 0);
             }
         }
+    }
+
+    public OptionalAsyncResultHandler beforeProcess(Processor processor, Exchange exchange, OptionalAsyncResultHandler callback) {
+        // no wrapping needed
+        return callback;
+    }
+
+    public void afterProcess(Processor processor, Exchange exchange, OptionalAsyncResultHandler callback, boolean doneSync) {
     }
 }

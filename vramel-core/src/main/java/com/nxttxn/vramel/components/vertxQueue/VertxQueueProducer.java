@@ -2,15 +2,12 @@ package com.nxttxn.vramel.components.vertxQueue;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultAsyncProducer;
-import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
-import org.apache.commons.lang3.SerializationUtils;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -33,25 +30,13 @@ public class VertxQueueProducer extends DefaultAsyncProducer {
         final VramelContext vramelContext = getEndpoint().getVramelContext();
 
 
-        byte[] jsonBytes = exchange.getIn().getBody(byte[].class);
-        final Map<String, Object> headers = exchange.getIn().getHeaders();
-        final String jsonString = new String(jsonBytes);
-        final JsonObject jsonObject = new JsonObject()
-                .putObject("body", new JsonObject(jsonString))
-                .putObject("headers", new JsonObject() {{
-                    for (Map.Entry<String, Object> header : headers.entrySet()) {
-                        final Object value = header.getValue();
-                        if (value instanceof Serializable) {
-                            putBinary(header.getKey(), SerializationUtils.serialize((Serializable)value));
-                        }
-                    }
-
-                }});
+        String jsonBody = exchange.getIn().getBody(String.class);
+        final QueueMessage queueMessage = QueueMessage.create(new JsonObject(jsonBody), exchange.getIn().getHeaders());
 
         logger.info(String.format("[Vertx Queue Producer] Sending to %s", address));
-        logger.debug(String.format("[Vertx Queue Producer][Request] - %s: %s", address, jsonObject.toString()));
+        logger.debug(String.format("[Vertx Queue Producer][Request] - %s: %s", address, queueMessage.toString()));
 
-        vramelContext.getEventBus().send(address, jsonObject, new Handler<Message<JsonObject>>() {
+        vramelContext.getEventBus().send(address, queueMessage.asJson(), new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
                 final String status = message.body.getString("status");

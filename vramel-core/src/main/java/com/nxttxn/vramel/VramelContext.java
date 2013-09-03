@@ -188,4 +188,7 @@ public interface VramelContext {
     String getPropertySuffixToken();
 
 
+    ProducerTemplate createProducerTemplate();
+
+    ProducerTemplate createProducerTemplate(int maximumCacheSize);
 }
