@@ -27,6 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class RestConsumer extends DefaultConsumer {
     private static final Logger logger = LoggerFactory.getLogger(RestConsumer.class);
+    public static final String FALLBACK_CONTENT_TYPE = "text/plain";
     private final RestChannelAdapter endpoint;
     private final int httpOk = 200;
 
@@ -67,7 +68,7 @@ public class RestConsumer extends DefaultConsumer {
                             in.setHeader(param.getKey(), param.getValue());
                         }
 
-                        final String defaultContentType = in.getHeader(Exchange.CONTENT_TYPE, String.class);
+                        final String defaultContentType = in.getHeader(Exchange.CONTENT_TYPE, FALLBACK_CONTENT_TYPE, String.class);
                         in.setHeader(Exchange.HTTP_METHOD, request.method);
 
                         try {
@@ -119,7 +120,9 @@ public class RestConsumer extends DefaultConsumer {
         }
         // set the content type in the response.
         String contentType = message.getHeader(Exchange.CONTENT_TYPE, defaultContentType, String.class);
-        response.putHeader("Content-Type", contentType);
+        if (contentType != null) {
+            response.putHeader("Content-Type", contentType);
+        }
 
 
 
