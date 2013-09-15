@@ -167,10 +167,6 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
         addOutput(unmarshalDefinition);
         return (T)this;
     }
-    public T toF(String uri, Object... args) {
-        return toF(uri, null, args);
-    }
-
     @SuppressWarnings("unchecked")
     public T toF(String uri, JsonObject config, Object... args) {
 
@@ -178,6 +174,18 @@ public abstract class ProcessorDefinition<T extends ProcessorDefinition<T>> exte
         addOutput(toDefinition);
         return (T)this;
     }
+
+    public T toF(String uri, Object... args) {
+        return toF(uri, null, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    public T to(String uri, JsonObject config) {
+        ToDefinition toDefinition = new ToDefinition(uri, config);
+        addOutput(toDefinition);
+        return (T)this;
+    }
+
     public MulticastDefinition multicast(AggregationStrategy aggregationStrategy) {
         MulticastDefinition multicastDefinition = new MulticastDefinition();
         multicastDefinition.setAggregationStrategy(aggregationStrategy);
