@@ -71,7 +71,7 @@ public class GsonDataFormat implements DataFormat {
         BufferedReader reader = IOHelper.buffered(new InputStreamReader(stream));
         //Object result = getGson().fromJson(reader, unmarshalType);
 
-        final Gson hgson = new GsonBuilder().setDateFormat("YYYY-MM-DD HH:MM:SS").setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        final Gson hgson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         Object result = hgson.fromJson(reader, unmarshalType);
 
         reader.close();
@@ -79,7 +79,7 @@ public class GsonDataFormat implements DataFormat {
     }
 
     protected void buildDefaultGson() throws Exception {
-        GsonBuilder builder = new GsonBuilder().setDateFormat("YYYY-MM-DD HH:MM:SS").setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+        GsonBuilder builder = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
         if (exclusionStrategies != null && !exclusionStrategies.isEmpty()) {
             ExclusionStrategy[] strategies = exclusionStrategies.toArray(new ExclusionStrategy[exclusionStrategies.size()]);
             builder.setExclusionStrategies(strategies);
