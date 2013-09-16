@@ -810,21 +810,21 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     @Override
     public Component getComponent(String scheme) {
 
-        Component component = components.get(scheme);
-        if (component == null) {
-            try {
-
-                final String componentClassName = String.format("com.nxttxn.vramel.components.%s.%sComponent", scheme, WordUtils.capitalize(scheme));
-                final Class<?> aClass = getClass().getClassLoader().loadClass(componentClassName);
-                final Constructor<?> constructor = aClass.getConstructor(VramelContext.class);
-                component = (Component) constructor.newInstance(this);
-                addComponent(scheme, component);
-            } catch (Exception e) {
-                throw new ResolveEndpointFailedException(String.format("Unknown component, %s", scheme), e);
+        synchronized (components) {
+            Component component = components.get(scheme);
+            if (component == null) {
+                try {
+                    final String componentClassName = String.format("com.nxttxn.vramel.components.%s.%sComponent", scheme, WordUtils.capitalize(scheme));
+                    final Class<?> aClass = getClass().getClassLoader().loadClass(componentClassName);
+                    final Constructor<?> constructor = aClass.getConstructor(VramelContext.class);
+                    component = (Component) constructor.newInstance(this);
+                    addComponent(scheme, component);
+                } catch (Exception e) {
+                    throw new ResolveEndpointFailedException(String.format("Unknown component, %s", scheme), e);
+                }
             }
+            return component;
         }
-        return component;
-
     }
 
     @Override
