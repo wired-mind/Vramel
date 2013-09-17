@@ -4,6 +4,8 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.nxttxn.vramel.ClientFactory;
 import com.nxttxn.vramel.impl.jpos.JPOSClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
 
@@ -21,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * To change this template use File | Settings | File Templates.
  */
 public class DefaultClientFactory implements ClientFactory {
+    protected final Logger logger = LoggerFactory.getLogger(DefaultClientFactory.class);
     private final Vertx vertx;
     private final Map<URI, HttpClient> httpClients = Maps.newHashMap();
     private final Map<URI, JPOSClient> jposClients = Maps.newHashMap();
@@ -62,7 +65,7 @@ public class DefaultClientFactory implements ClientFactory {
         if (uri.getScheme().equals("https")) {
             ssl = true;
         }
-
+        logger.info("[DefaultClientFactory] - Creating http client : {}", uri.toString());
         HttpClient httpClient = vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort());
         if (keystorePath.isPresent()) {
             httpClient = httpClient.setKeyStorePath(keystorePath.get()).setKeyStorePassword(keystorePassword.get());

@@ -36,13 +36,14 @@ public abstract class AbstractHandler extends OptionalAsyncResultHandler{
 
             logger.debug(String.format("[%s] Result: %s", getName(), result.get().toString()));
             Optional<Exchange> currentResult = processResult(result);
-            logger.debug(String.format("[%s] Processed Result: %s", getName(), currentResult.get().toString()));
-            if (doneStrategy.isDone(currentResult.get())) {
-                Optional<Exchange> finalResult = getFinalResult(currentResult);
+            final Exchange nextExchange = createNextExchange(currentResult.get());
+            logger.debug(String.format("[%s] Processed Result: %s", getName(), nextExchange.toString()));
+            if (doneStrategy.isDone(nextExchange)) {
+                Optional<Exchange> finalResult = getFinalResult(Optional.of(nextExchange));
                 logger.debug(String.format("[%s] Final Result: %s", getName(), finalResult.get().toString()));
                 optionalAsyncResultHandler.done(finalResult.get());
             } else {
-                proceed(currentResult);
+                proceed(Optional.of(nextExchange));
             }
         } catch (Exception e) {
             result.get().setException(e);
@@ -61,4 +62,15 @@ public abstract class AbstractHandler extends OptionalAsyncResultHandler{
 
     protected abstract String getName();
 
+    protected Exchange createNextExchange(Exchange previousExchange) {
+        Exchange answer = previousExchange;
+
+        // now lets set the input of the next exchange to the output of the
+        // previous message if it is not null
+        if (answer.hasOut()) {
+            answer.setIn(answer.getOut());
+            answer.setOut(null);
+        }
+        return answer;
+    }
 }

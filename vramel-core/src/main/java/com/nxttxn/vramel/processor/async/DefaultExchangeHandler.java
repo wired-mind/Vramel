@@ -74,15 +74,4 @@ public class DefaultExchangeHandler extends AbstractHandler {
         }
     }
 
-    protected Exchange createNextExchange(Exchange previousExchange) {
-        Exchange answer = previousExchange;
-
-        // now lets set the input of the next exchange to the output of the
-        // previous message if it is not null
-        if (answer.hasOut()) {
-            answer.setIn(answer.getOut());
-            answer.setOut(null);
-        }
-        return answer;
-    }
 }
