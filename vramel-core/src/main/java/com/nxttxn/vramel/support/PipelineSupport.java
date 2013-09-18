@@ -48,7 +48,7 @@ public abstract class PipelineSupport extends ServiceSupport {
             }
 
             // continue processing the pipeline asynchronously
-            Exchange nextExchange = currentResult.or(exchange);
+            Exchange nextExchange = createNextExchange(currentResult.or(exchange));
 
 
             final Processor next = processors.next();

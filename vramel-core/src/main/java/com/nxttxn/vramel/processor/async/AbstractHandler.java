@@ -36,14 +36,14 @@ public abstract class AbstractHandler extends OptionalAsyncResultHandler{
 
             logger.debug(String.format("[%s] Result: %s", getName(), result.get().toString()));
             Optional<Exchange> currentResult = processResult(result);
-            final Exchange nextExchange = createNextExchange(currentResult.get());
-            logger.debug(String.format("[%s] Processed Result: %s", getName(), nextExchange.toString()));
-            if (doneStrategy.isDone(nextExchange)) {
-                Optional<Exchange> finalResult = getFinalResult(Optional.of(nextExchange));
+
+            logger.debug(String.format("[%s] Processed Result: %s", getName(), currentResult.get().toString()));
+            if (doneStrategy.isDone(currentResult.get())) {
+                Optional<Exchange> finalResult = getFinalResult(currentResult);
                 logger.debug(String.format("[%s] Final Result: %s", getName(), finalResult.get().toString()));
                 optionalAsyncResultHandler.done(finalResult.get());
             } else {
-                proceed(Optional.of(nextExchange));
+                proceed(currentResult);
             }
         } catch (Exception e) {
             result.get().setException(e);

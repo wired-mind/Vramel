@@ -236,7 +236,7 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
 
         @Override
         protected void proceed(Optional<Exchange> currentResult) throws Exception {
-            Exchange nextExchange = currentResult.or(current);
+            Exchange nextExchange = createNextExchange(currentResult.or(current));
             logger.info(String.format("Ready to process next processor using exchange: %s", nextExchange.toString()));
             process(original, nextExchange, optionalAsyncResultHandler, routingSlips);
         }
