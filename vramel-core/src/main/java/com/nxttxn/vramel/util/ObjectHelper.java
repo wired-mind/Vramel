@@ -267,6 +267,105 @@ public class ObjectHelper {
     }
 
     /**
+     * A helper method for comparing objects for equality in which it uses type coercion to coerce
+     * types between the left and right values. This allows you test for equality for example with
+     * a String and Integer type as Camel will be able to coerce the types.
+     */
+    public static boolean typeCoerceEquals(TypeConverter converter, Object leftValue, Object rightValue) {
+        // sanity check
+        if (leftValue == null && rightValue == null) {
+            // they are equal
+            return true;
+        } else if (leftValue == null || rightValue == null) {
+            // only one of them is null so they are not equal
+            return false;
+        }
+
+        // try without type coerce
+        boolean answer = equal(leftValue, rightValue);
+        if (answer) {
+            return true;
+        }
+
+        // are they same type, if so return false as the equals returned false
+        if (leftValue.getClass().isInstance(rightValue)) {
+            return false;
+        }
+
+        // convert left to right
+        Object value = converter.tryConvertTo(rightValue.getClass(), leftValue);
+        answer = equal(value, rightValue);
+        if (answer) {
+            return true;
+        }
+
+        // convert right to left
+        value = converter.tryConvertTo(leftValue.getClass(), rightValue);
+        answer = equal(leftValue, value);
+        return answer;
+    }
+
+    /**
+     * A helper method for comparing objects for inequality in which it uses type coercion to coerce
+     * types between the left and right values.  This allows you test for inequality for example with
+     * a String and Integer type as Camel will be able to coerce the types.
+     */
+    public static boolean typeCoerceNotEquals(TypeConverter converter, Object leftValue, Object rightValue) {
+        return !typeCoerceEquals(converter, leftValue, rightValue);
+    }
+    /**
+     * A helper method for comparing objects ordering in which it uses type coercion to coerce
+     * types between the left and right values.  This allows you test for ordering for example with
+     * a String and Integer type as Camel will be able to coerce the types.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static int typeCoerceCompare(TypeConverter converter, Object leftValue, Object rightValue) {
+
+        // if both values is numeric then compare using numeric
+        Long leftNum = converter.tryConvertTo(Long.class, leftValue);
+        Long rightNum = converter.tryConvertTo(Long.class, rightValue);
+        if (leftNum != null && rightNum != null) {
+            return leftNum.compareTo(rightNum);
+        }
+
+        // also try with floating point numbers
+        Double leftDouble = converter.tryConvertTo(Double.class, leftValue);
+        Double rightDouble = converter.tryConvertTo(Double.class, rightValue);
+        if (leftDouble != null && rightDouble != null) {
+            return leftDouble.compareTo(rightDouble);
+        }
+
+        // prefer to NOT coerce to String so use the type which is not String
+        // for example if we are comparing String vs Integer then prefer to coerce to Integer
+        // as all types can be converted to String which does not work well for comparison
+        // as eg "10" < 6 would return true, where as 10 < 6 will return false.
+        // if they are both String then it doesn't matter
+        if (rightValue instanceof String && (!(leftValue instanceof String))) {
+            // if right is String and left is not then flip order (remember to * -1 the result then)
+            return typeCoerceCompare(converter, rightValue, leftValue) * -1;
+        }
+
+        // prefer to coerce to the right hand side at first
+        if (rightValue instanceof Comparable) {
+            Object value = converter.tryConvertTo(rightValue.getClass(), leftValue);
+            if (value != null) {
+                return ((Comparable) rightValue).compareTo(value) * -1;
+            }
+        }
+
+        // then fallback to the left hand side
+        if (leftValue instanceof Comparable) {
+            Object value = converter.tryConvertTo(leftValue.getClass(), rightValue);
+            if (value != null) {
+                return ((Comparable) leftValue).compareTo(value);
+            }
+        }
+
+        // use regular compare
+        return compare(leftValue, rightValue);
+    }
+
+    /**
      * Cleans the string to a pure Java identifier so we can use it for loading class names.
      * <p/>
      * Especially from Spring DSL people can have \n \t or other characters that otherwise
