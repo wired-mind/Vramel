@@ -31,6 +31,10 @@ public interface Exchange {
     String FAILURE_HANDLED      = "VramelFailureHandled";
     String FAILURE_ROUTE_ID     = "VramelFailureRouteId";
     String ERRORHANDLER_HANDLED       = "VramelErrorHandlerHandled";
+
+    String GROUPED_EXCHANGE = "VramelGroupedExchange";
+
+
     String HTTP_METHOD             = "VramelHttpMethod";
     String HTTP_QUERY              = "VramelHttpQuery";
     String HTTP_RESPONSE_CODE      = "VramelHttpResponseCode";
