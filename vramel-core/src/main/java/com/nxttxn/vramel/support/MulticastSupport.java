@@ -1,23 +1,25 @@
 package com.nxttxn.vramel.support;
 
-import com.google.common.base.Optional;
-import com.nxttxn.vramel.*;
+import com.nxttxn.vramel.ErrorHandlerFactory;
+import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.Processor;
+import com.nxttxn.vramel.Producer;
 import com.nxttxn.vramel.processor.ChildUnitOfWorkProcessor;
 import com.nxttxn.vramel.processor.ProcessorExchangePair;
 import com.nxttxn.vramel.processor.UnitOfWorkProcessor;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
-import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
-import com.nxttxn.vramel.processor.async.IteratorDoneStrategy;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.spi.UnitOfWork;
-import com.nxttxn.vramel.util.*;
+import com.nxttxn.vramel.util.ExchangeHelper;
+import com.nxttxn.vramel.util.KeyValueHolder;
+import com.nxttxn.vramel.util.ObjectHelper;
+import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.nxttxn.vramel.processor.PipelineHelper.continueProcessing;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 

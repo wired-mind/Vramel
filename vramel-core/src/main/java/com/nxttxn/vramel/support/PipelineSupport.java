@@ -42,8 +42,8 @@ public abstract class PipelineSupport extends ServiceSupport {
         @Override
         protected void proceed(Optional<Exchange> currentResult) throws Exception {
             // check for error if so we should break out
-            if (!continueProcessing(exchange, "so breaking out of pipeline", logger)) {
-                optionalAsyncResultHandler.done(exchange);
+            if (!continueProcessing(currentResult.or(exchange), "so breaking out of pipeline", logger)) {
+                optionalAsyncResultHandler.done(currentResult.or(exchange));
                 return;
             }
 
