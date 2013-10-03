@@ -26,7 +26,7 @@ public class FixedSizeDoneStrategy<T> implements DoneStrategy<T> {
 
         final boolean done = resultCount == expectedResultsCount;
         if (done) {
-            logger.info("Sequence finished. {} total in sequence.", resultCount);
+            logger.debug("Sequence finished. {} total in sequence.", resultCount);
         }
 
         return done;

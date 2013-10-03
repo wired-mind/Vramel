@@ -26,7 +26,7 @@ public abstract class AbstractHandler extends OptionalAsyncResultHandler{
     public void handle(AsyncExchangeResult asyncExchangeResult) {
         final Optional<Exchange> result = asyncExchangeResult.result;
         try {
-            logger.info("{} completed", getName());
+            logger.debug("{} completed", getName());
             if (asyncExchangeResult.failed()) {
                 failed(result);
                 optionalAsyncResultHandler.done(result.get());
