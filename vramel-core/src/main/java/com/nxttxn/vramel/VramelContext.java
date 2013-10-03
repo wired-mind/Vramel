@@ -8,6 +8,7 @@ import com.nxttxn.vramel.spi.*;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.deploy.Container;
 
 import java.util.List;
 import java.util.Map;
@@ -191,4 +192,6 @@ public interface VramelContext {
     ProducerTemplate createProducerTemplate();
 
     ProducerTemplate createProducerTemplate(int maximumCacheSize);
+
+    Container getContainer();
 }

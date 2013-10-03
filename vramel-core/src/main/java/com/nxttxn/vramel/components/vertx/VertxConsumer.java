@@ -8,8 +8,10 @@ import com.nxttxn.vramel.processor.async.AsyncExchangeResult;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import org.apache.commons.lang3.SerializationUtils;
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
+import org.vertx.java.core.json.JsonObject;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,12 +28,26 @@ public class VertxConsumer extends DefaultConsumer {
         super(endpoint, processor);
         this.endpoint = (VertxChannelAdapter) endpoint;
 
-        getEventBus().registerHandler(this.endpoint.getAddress(), new Handler<Message<byte[]>>() {
+        final VramelContext context = this.endpoint.getVramelContext();
+        final Vertx vertx = context.getVertx();
+
+        String address = this.endpoint.getAddress();
+        if (vertx.isWorker()) {
+            String proxyAddress = address;
+            address = String.format("worker-proxied://%s", address);
+
+            context.getContainer().deployVerticle("com.nxttxn.vramel.components.vertx.VertxConsumerWorkerProxy", new JsonObject().putString("proxyAddress", proxyAddress).putString("address", address));
+            logger.info("[Vertx Connsumer] Worker detected. Creating Proxy: {} -> {}. See Vertx1.3.1-Final DefaultNetClient.java line 59", proxyAddress, address);
+        }
+
+
+        final String finalAddress = address;
+        getEventBus().registerHandler(address, new Handler<Message<byte[]>>() {
 
             @Override
             public void handle(final Message<byte[]> message) {
 
-                logger.info("[Vertx Consumer] [{}] Received Message", ((VertxChannelAdapter) endpoint).getAddress());
+                logger.info("[Vertx Consumer] [{}] Received Message", finalAddress);
                 Exchange exchange = getEndpoint().createExchange();
                 try {
                     DefaultExchangeHolder.unmarshal(exchange, message.body);
@@ -71,7 +87,7 @@ public class VertxConsumer extends DefaultConsumer {
                         }
                     });
                 } catch (Exception e) {
-                    logger.error(String.format("[Vertx Consumer] Error processing flow: %s", ((VertxChannelAdapter) endpoint).getAddress()), e);
+                    logger.error(String.format("[Vertx Consumer] Error processing flow: %s", finalAddress), e);
                     exchange.setException(new RuntimeVramelException("Vertx consumer failed to process message: " + e.getMessage()));
                     sendError(message, exchange);
                 }

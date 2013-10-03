@@ -34,6 +34,7 @@ import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.deploy.Container;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -100,6 +101,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     private final Set<StartupListener> startupListeners = new LinkedHashSet<StartupListener>();
     private final StopWatch stopWatch = new StopWatch(false);
     private Date startDate;
+    private Container container;
 
     private UuidGenerator createDefaultUuidGenerator() {
         return new JavaUuidGenerator();
@@ -118,7 +120,8 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     public DefaultVramelContext(BusModBase busModBase) {
         this(busModBase.getVertx());
 
-        this.config = busModBase.getContainer().getConfig();
+        container = busModBase.getContainer();
+        this.config = container.getConfig();
     }
 
 
@@ -1700,4 +1703,8 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         typeConverter = null;
     }
 
+    @Override
+    public Container getContainer() {
+        return container;
+    }
 }
