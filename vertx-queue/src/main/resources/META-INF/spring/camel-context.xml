@@ -10,8 +10,14 @@
     <!-- vramelContext is the Camel runtime, where we can host Camel routes -->
     <!-- define the default error handler, and refer to a redelivery policy to use -->
 
+    <bean
+            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+
+
+    </bean>
+
     <bean id="vertxContext" class="com.nxttxn.vertxQueue.VertxContext">
-        <constructor-arg value="25501"/>
+        <constructor-arg value="${cluster-port:25501}"/>
     </bean>
 
     <bean id="hazelcastInstance" factory-bean="vertxContext"

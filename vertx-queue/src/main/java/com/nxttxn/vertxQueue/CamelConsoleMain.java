@@ -40,6 +40,12 @@ public final class CamelConsoleMain {
         // Main makes it easier to run a Spring application
         final Main main = new Main();
 
+        main.addOption(main.new ParameterOption("cluster-port", "Cluster Port", "The vertx cluster port", "cluster-port") {
+            @Override
+            protected void doProcess(String arg, String parameter, LinkedList<String> remainingArgs) {
+                System.setProperty("cluster-port", parameter);
+            }
+        });
         //for now configure a default queue automatically. Don't allow any overriding or customization. Feel free to add these options if needed.
         setupQueue(main, defaultQueueName, defaultConcurrentConsumers);
 
