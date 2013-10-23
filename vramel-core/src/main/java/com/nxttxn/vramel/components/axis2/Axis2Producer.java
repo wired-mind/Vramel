@@ -25,6 +25,7 @@ import org.apache.rampart.policy.model.CryptoConfig;
 import org.apache.rampart.policy.model.RampartConfig;
 import org.apache.ws.security.WSPasswordCallback;
 import org.apache.ws.security.handler.WSHandlerConstants;
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
 import javax.security.auth.callback.Callback;
@@ -78,8 +79,8 @@ public class Axis2Producer extends DefaultAsyncProducer {
         password = Optional.fromNullable(config.getString("password", null));
         userCertAlias = Optional.fromNullable(config.getString("userCertAlias", null));
         encryptionUser = Optional.fromNullable(config.getString("encryptionUser", null));
-        serviceClient = new VertxServiceClient(basicConfigurationContext, getClass().getResource(wsdl.get()),
-                new QName(namespaceURI.get(), service.get()), port.get());
+        final QName qName = new QName(namespaceURI.get(), service.get());
+        serviceClient = new VertxServiceClient(basicConfigurationContext, getClass().getResource(wsdl.get()), qName, port.get());
 
 
         Options opts = new Options();

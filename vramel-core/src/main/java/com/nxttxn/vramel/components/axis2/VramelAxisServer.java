@@ -2,6 +2,7 @@ package com.nxttxn.vramel.components.axis2;
 
 import com.google.common.base.Optional;
 import com.nxttxn.axis2.transport.vertx.VertxListener;
+import com.nxttxn.axis2.transport.vertx.VertxUtils;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.description.*;
@@ -49,6 +50,7 @@ public class VramelAxisServer extends AxisServer{
         service.addParameter(vramelConsumer, axis2Consumer);
         //Path is used to setup vertx "route" only for a server
         service.addParameter(VertxListener.PATH, endpoint.getPath());
+        service.addParameter(VertxUtils.VERTX, this.endpoint.getVramelContext().getVertx());
 
         axisConfig.addService(service);
 

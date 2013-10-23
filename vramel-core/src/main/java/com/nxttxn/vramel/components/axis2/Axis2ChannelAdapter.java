@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
 
 import java.net.URL;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,6 +26,7 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
     private final String path;
     private final JsonObject config;
     private final VramelAxisServer vramelAxisServer;
+    private final Optional<ConfigurationContext> configurationContext;
 
     public Axis2ChannelAdapter(VramelContext vramelContext, String path, JsonObject config) throws AxisFault {
         super(String.format("axis2:%s", path), vramelContext);
@@ -35,6 +35,12 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
 
 
         vramelAxisServer = new VramelAxisServer(this);
+        final URL axis2Url = getAxis2Url();
+        if (axis2Url != null) {
+            configurationContext = Optional.of(createConfigurationContext(axis2Url));
+        } else {
+            configurationContext = Optional.absent();
+        }
     }
 
     @Override
@@ -44,14 +50,20 @@ public class Axis2ChannelAdapter extends DefaultEndpoint {
 
     @Override
     public Producer createProducer() throws Exception {
-        return new Axis2Producer(this, createConfigurationContext());
+        if (!configurationContext.isPresent()) {
+            throw new RuntimeVramelException("Cannot create axis2 producer. No axis2 client file specified");
+        }
+        return new Axis2Producer(this, configurationContext.get());
     }
 
-    public ConfigurationContext createConfigurationContext() throws AxisFault {
-        final String axis2Path = getAxis2Path();
-        final URL axis2Url = getClass().getResource(axis2Path);
+    public ConfigurationContext createConfigurationContext(URL axis2Url) throws AxisFault {
         logger.info("[Client] Loading axis2 from {}", axis2Url.toString());
         return ConfigurationContextFactory.createConfigurationContextFromURIs(axis2Url, null);
+    }
+
+    private URL getAxis2Url() {
+        final String axis2Path = getAxis2Path();
+        return getClass().getResource(axis2Path);
     }
 
     public ConfigurationContext createServerConfigurationContext() throws Exception {
