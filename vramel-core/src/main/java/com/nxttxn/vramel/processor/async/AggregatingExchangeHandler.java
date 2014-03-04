@@ -3,6 +3,7 @@ package com.nxttxn.vramel.processor.async;
 import com.google.common.base.Optional;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.processor.aggregate.AggregationStrategy;
+import com.nxttxn.vramel.util.ExchangeHelper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +33,7 @@ public class AggregatingExchangeHandler extends AggregatingExchangeHandlerBase {
     protected Optional<Exchange> getFinalResult(Optional<Exchange> finalResult) {
         final Exchange subExchange = result.get();
         doAggregationComplete(subExchange);
-        copyResults(original, subExchange);
+        ExchangeHelper.copyResults(original, subExchange);
         return Optional.of(original);
     }
 

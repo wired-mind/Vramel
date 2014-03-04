@@ -246,4 +246,22 @@ public class ExchangeHelper {
         return copy;
     }
 
+    public static void copyResults(Exchange result, Exchange source) {
+        if (result == source) {
+            if (!result.hasOut()) {
+                result.getOut().copyFrom(source.getIn());
+            }
+            return;
+        }
+
+        result.setException(source.getException());
+        if (source.hasOut()) {
+            result.getOut().copyFrom(source.getOut());
+        } else {
+            result.getOut().copyFrom(source.getIn());
+        }
+        if (source.hasProperties()) {
+            result.getProperties().putAll(source.getProperties());
+        }
+    }
 }

@@ -8,16 +8,13 @@ import com.nxttxn.vramel.impl.ProducerCache;
 import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.DoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
-import com.nxttxn.vramel.support.MulticastSupport;
 import com.nxttxn.vramel.support.PipelineSupport;
-import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
-import com.nxttxn.vramel.util.AsyncProcessorHelper;
-import com.nxttxn.vramel.util.ObjectHelper;
-import com.nxttxn.vramel.util.ServiceHelper;
+import com.nxttxn.vramel.util.*;
 
 import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.nxttxn.vramel.util.ExchangeHelper.copyResults;
 
 /**
  * Created with IntelliJ IDEA.
@@ -111,7 +108,8 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
     private void process(final Exchange original, final Exchange current, final OptionalAsyncResultHandler optionalAsyncResultHandler, final RoutingSlipIterator routingSlips) throws Exception {
 
         if (!routingSlips.hasNext(current)) {
-            optionalAsyncResultHandler.done(current);
+            copyResults(original, current);
+            optionalAsyncResultHandler.done(original);
             return;
         }
 
@@ -228,11 +226,7 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
 
 
 
-        @Override
-        protected Optional<Exchange> getFinalResult(Optional<Exchange> finalResult) {
-            copyResults(original, finalResult.get());
-            return Optional.of(original);
-        }
+
 
         @Override
         protected void proceed(Optional<Exchange> currentResult) throws Exception {
@@ -258,7 +252,8 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
 
         @Override
         public boolean isDone(Exchange exchange) {
-            return !routingSlips.hasNext(exchange);
+            //The routing slip is never done. Routing is finished when the iterator says so.
+            return false;
         }
     }
 

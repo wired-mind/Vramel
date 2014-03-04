@@ -9,10 +9,9 @@ import com.nxttxn.vramel.processor.async.AggregatingExchangeHandlerBase;
 import com.nxttxn.vramel.processor.async.FixedSizeDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.AggregationSupport;
-import com.nxttxn.vramel.support.MulticastSupport;
-import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
+import com.nxttxn.vramel.util.ExchangeHelper;
 import org.apache.camel.util.ServiceHelper;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,7 +63,7 @@ public class Enricher extends AggregationSupport implements AsyncProcessor {
         protected Optional<Exchange> getFinalResult(Optional<Exchange> finalResult) {
             final Exchange aggregatedExchange = finalResult.get();
             doAggregationComplete(aggregatedExchange);
-            copyResults(original, aggregatedExchange);
+            ExchangeHelper.copyResults(original, aggregatedExchange);
             return Optional.of(original);
         }
 

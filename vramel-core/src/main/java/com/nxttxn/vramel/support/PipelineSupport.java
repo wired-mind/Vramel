@@ -8,6 +8,7 @@ import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.IteratorDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
+import com.nxttxn.vramel.util.ExchangeHelper;
 
 import java.util.Iterator;
 
@@ -59,7 +60,7 @@ public abstract class PipelineSupport extends ServiceSupport {
 
         @Override
         protected Optional<Exchange> getFinalResult(Optional<Exchange> finalResult) {
-            copyResults(original, finalResult.get());
+            ExchangeHelper.copyResults(original, finalResult.get());
             return Optional.of(original);
         }
 
