@@ -41,6 +41,7 @@ import com.nxttxn.vramel.util.CastUtils;
 import com.nxttxn.vramel.util.IOHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.StringHelper;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,7 @@ public class AnnotationTypeConverterLoader implements TypeConverterLoader {
 
         // if there is any packages to scan and load @Converter classes, then do it
         if (packageNames != null && packageNames.length > 0) {
-            LOG.trace("Found converter packages to scan: {}", packageNames);
+            LOG.trace("Found converter packages to scan: {}", StringUtils.join(packageNames,','));
             Set<Class<?>> scannedClasses = resolver.findAnnotated(Converter.class, packageNames);
             if (scannedClasses.isEmpty()) {
                 throw new TypeConverterLoaderException("Cannot find any type converter classes from the following packages: " + Arrays.asList(packageNames));
