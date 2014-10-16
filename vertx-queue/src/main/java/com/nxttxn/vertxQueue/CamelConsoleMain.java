@@ -76,6 +76,8 @@ public final class CamelConsoleMain {
             public void configure() throws Exception {
                 final String backlogName = String.format("%s.backlog", queueName);
 
+                // On any exception processing the backlog, retry delivering the message 8 times, progessively
+                // waiting longer and longer between retries, up to 1 hour
                 onException(Throwable.class)
                         .maximumRedeliveries(8)
                         .useExponentialBackOff()
@@ -84,13 +86,13 @@ public final class CamelConsoleMain {
                         .redeliveryDelay(30 * 1000)
                         .maximumRedeliveryDelay(60 * 60 * 1000);
 
+                // every 1 second check for items in the backlog queue.
                 fromF("hazelcast:seda:%s?concurrentConsumers=%s&transacted=true", backlogName, concurrentConsumers)
-
-                        .choice()
-                        .when(method("backlogRoutePolicy", "lastExchangeSuccessful"))
+                    .choice()
+                    .when(method("backlogRoutePolicy", "lastExchangeSuccessful"))
                         .toF("hazelcast:queue:%s", queueName)
-                        .otherwise()
-                        .throwException(new RuntimeException("Cannot flush backlog yet. Last exchange failed."));
+                    .otherwise()
+                        .throwException(new RuntimeException("["+ backlogName + "] Cannot flush backlog yet. Last exchange failed."));
             }
         };
     }
