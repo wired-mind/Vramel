@@ -59,9 +59,11 @@ public class CamelEventBusBridge implements AsyncProcessor {
                 @Override
                 public void handle(AsyncResult<Object> event) {
                     if (event.failed()) {
+                        LOG.error("Failed to send vertxQueue message to: "+ endpointUri, event.exception);
                         exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", event.exception));
+                    } else {
+                        LOG.info("Successfully delivered vertxQueue message to: " + endpointUri);
                     }
-
                     callback.done(true); //async isn't setup anyway for hazelcast!!!
                     vertxLatch.countDown();
                 }
@@ -69,7 +71,10 @@ public class CamelEventBusBridge implements AsyncProcessor {
 
 
             if (!vertxLatch.await (timeout, TimeUnit.SECONDS)) {
+                LOG.error("Timed out waiting for response from vertxQueue endpoint: "+ endpointUri);
                 exchange.setException(new EventBusException("Vertx exchange timed out."));
+            } else {
+                LOG.info("Sent vertxQueue message to: " + endpointUri);
             }
 
         }
