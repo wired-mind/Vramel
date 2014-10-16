@@ -23,15 +23,22 @@ import org.apache.camel.spring.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A main class to run the example from your editor.
  */
 public final class CamelConsoleMain {
     private static final Logger LOG = LoggerFactory.getLogger(CamelConsoleMain.class);
-    private static final int defaultConcurrentConsumers = 40;
+    public static final int DEFAULT_EVENT_BUS_SEND_TIMEOUT = 60;
+    private static final int defaultConcurrentConsumers = 1;
     public static final String defaultQueueName = "default";
+
+    private static int threadCount = defaultConcurrentConsumers;
+    private static int eventBusSendTimeout = DEFAULT_EVENT_BUS_SEND_TIMEOUT;
+    private static List<String> queueNames = new ArrayList<>();
 
     private CamelConsoleMain() {
     }
@@ -46,13 +53,29 @@ public final class CamelConsoleMain {
                 System.setProperty("cluster-port", parameter);
             }
         });
-        //for now configure a default queue automatically. Don't allow any overriding or customization. Feel free to add these options if needed.
-        setupQueue(main, defaultQueueName, defaultConcurrentConsumers);
+
+        main.addOption(main.new ParameterOption("tc", "Thread Count", "Count of concurrent consumer threads", "thread-count") {
+            @Override
+            protected void doProcess(String arg, String parameter, LinkedList<String> remainingArgs) {
+                setThreadCount(parameter);
+            }
+        });
+
+        main.addOption(main.new ParameterOption("eb-timeout", "Event-bus Send Timout", "The timeout in seconds to use "+
+            "when sending queued messages on the event bus", "eb-timeout") {
+            @Override
+            protected void doProcess(String arg, String parameter, LinkedList<String> remainingArgs) {
+                setEventBusSendTimeout(parameter);
+            }
+        });
+
+        // Configure a default queue automatically.
+        getQueueNames().add(defaultQueueName);
 
         main.addOption(main.new ParameterOption("q", "Queue", "Name of queue to setup", "queue") {
             @Override
             protected void doProcess(String arg, final String parameter, LinkedList<String> remainingArgs) {
-                setupQueue(main, parameter, defaultConcurrentConsumers);
+                getQueueNames().add(parameter);
             }
         });
 
@@ -61,8 +84,18 @@ public final class CamelConsoleMain {
         main.setApplicationContextUri("META-INF/spring/camel-context.xml");
         // enable hangup support allows Camel to detect when the JVM is terminated
         main.enableHangupSupport();
+        // Parse arguments so we have a list of queue names and other configurable parameters
+        main.parseArguments(args);
+        // Setup routes for each queue
+        setupQueues(main);
         // run and block until Camel is stopped (or JVM terminated)
-        main.run(args);
+        main.run();
+    }
+
+    private static void setupQueues(Main main) {
+        for(String queueName : getQueueNames()) {
+            setupQueue(main, queueName, getThreadCount());
+        }
     }
 
     private static void setupQueue(Main main, String queueName, int concurrentConsumers) {
@@ -125,4 +158,33 @@ public final class CamelConsoleMain {
             }
         };
     }
+
+    public static int getThreadCount() {
+        return threadCount;
+    }
+
+    public static void setThreadCount(String threadCount) {
+        try {
+            CamelConsoleMain.threadCount = Integer.parseInt(threadCount);
+        } catch (NumberFormatException e) {
+            LOG.error(threadCount + " is not a valid integer thread-count. "+e.getMessage());
+        }
+    }
+
+    public static int getEventBusSendTimeout() {
+        return eventBusSendTimeout;
+    }
+
+    public static void setEventBusSendTimeout(String eventBusSendTimeout) {
+        try {
+            CamelConsoleMain.eventBusSendTimeout = Integer.parseInt(eventBusSendTimeout);
+        } catch (NumberFormatException e) {
+            LOG.error(eventBusSendTimeout+" is not a valid integer for eb-timeout. "+ e.getMessage());
+        }
+    }
+
+    public static List<String> getQueueNames() {
+        return queueNames;
+    }
+
 }
