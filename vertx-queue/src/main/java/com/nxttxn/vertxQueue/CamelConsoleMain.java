@@ -109,6 +109,9 @@ public final class CamelConsoleMain {
             public void configure() throws Exception {
                 final String backlogName = String.format("%s.backlog", queueName);
 
+                LOG.info("Configuring a backlog flow for endpoint "+backlogName+" using " +
+                        String.valueOf(concurrentConsumers) + " concurrent consumer threads.");
+
                 // On any exception processing the backlog, retry delivering the message 8 times, progessively
                 // waiting longer and longer between retries, up to 1 hour
                 onException(Throwable.class)
@@ -135,6 +138,8 @@ public final class CamelConsoleMain {
             @Override
             public void configure() throws Exception {
 
+                LOG.info("Configuring flow for endpoint "+queueName+" using "+ String.valueOf(concurrentConsumers) +
+                        " concurrent consumer threads.");
 
                 final String backlogName = String.format("%s.backlog", queueName);
 
