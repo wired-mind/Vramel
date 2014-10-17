@@ -1,31 +1,21 @@
 package com.nxttxn.vertxQueue;
 
-import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.ProducerTemplate;
-import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.components.vertx.VertxMessage;
 import com.nxttxn.vramel.components.vertxQueue.QueueMessage;
-import com.nxttxn.vramel.impl.DefaultExchange;
-import com.nxttxn.vramel.impl.DefaultExchangeHolder;
-import com.nxttxn.vramel.impl.DefaultProducerTemplate;
 import com.nxttxn.vramel.impl.DefaultVramelContext;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.AsyncProcessor;
 import org.apache.camel.Exchange;
-import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.eventbus.Message;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-public class CamelEventBusBridge implements AsyncProcessor {
 
-    private final long timeout = 30L;
+public class CamelEventBusBridge implements AsyncProcessor {
 
     private VertxContext vertxContext;
 
@@ -34,10 +24,7 @@ public class CamelEventBusBridge implements AsyncProcessor {
 
     public CamelEventBusBridge() {
 
-
     }
-
-
 
     public void process(Exchange exchange) {
 
@@ -59,17 +46,22 @@ public class CamelEventBusBridge implements AsyncProcessor {
                 @Override
                 public void handle(AsyncResult<Object> event) {
                     if (event.failed()) {
+                        LOG.error("Failed to send vertxQueue message to: "+ endpointUri, event.exception);
                         exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", event.exception));
+                    } else {
+                        LOG.info("Successfully delivered vertxQueue message to: " + endpointUri);
                     }
-
                     callback.done(true); //async isn't setup anyway for hazelcast!!!
                     vertxLatch.countDown();
                 }
             });
 
 
-            if (!vertxLatch.await (timeout, TimeUnit.SECONDS)) {
+            if (!vertxLatch.await (CamelConsoleMain.getEventBusSendTimeout(), TimeUnit.SECONDS)) {
+                LOG.error("Timed out waiting for response from vertxQueue endpoint: "+ endpointUri);
                 exchange.setException(new EventBusException("Vertx exchange timed out."));
+            } else {
+                LOG.info("Sent vertxQueue message to: " + endpointUri);
             }
 
         }
@@ -80,7 +72,6 @@ public class CamelEventBusBridge implements AsyncProcessor {
         return true;
 
     }
-
 
     public VertxContext getVertxContext() {
         return vertxContext;
