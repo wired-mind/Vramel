@@ -77,6 +77,11 @@ public class BacklogRoutePolicy extends org.apache.camel.impl.RoutePolicySupport
     public boolean lastExchangeSuccessful(Exchange exchange) {
         BusMessage msg = new BusMessage((String) exchange.getIn().getBody());
         final boolean lastExchangeFailed = backloggedHandlers.contains(msg.getHandlerUri());
+        if(!lastExchangeFailed) {
+            LOG.info("Backlog for "+msg.getHandlerUri()+" has cleared. Flushing backlog queue");
+        } else {
+            LOG.warn("vertxQueue for "+msg.getHandlerUri()+" is still backlogged. Cannot clear yet.");
+        }
         return !lastExchangeFailed;
     }
 }

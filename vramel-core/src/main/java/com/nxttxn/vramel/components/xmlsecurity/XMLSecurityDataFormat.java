@@ -856,15 +856,8 @@ public class XMLSecurityDataFormat implements DataFormat, VramelContextAware {
                 choppedSource = choppedSource.substring(0, choppedSource.length() - 1);
             }
 
-            return super.deserialize(choppedSource, ctx);
-
+            return super.deserialize(choppedSource.getBytes(), ctx);
         }
 
-        private WhitespaceIgnoringDocumentSerializer() {
-            //Use the documentbuilderFactory from our XmlConverter class as this correctly initiailzes for whitespace
-            final XmlConverter xmlConverter = new XmlConverter();
-            dbf = xmlConverter.getDocumentBuilderFactory();
-
-        }
     }
 }
