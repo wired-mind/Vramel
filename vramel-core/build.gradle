@@ -6,6 +6,8 @@
 
 
 apply plugin: 'java'
+
+apply from: "../gradle/maven.gradle"
 // apply from: 'https://raw.github.com/bat-cha/gradle-plugin-git-dependencies/0.1/git-dependencies.gradle'
 
  buildscript {
@@ -23,8 +25,9 @@ apply plugin: 'java'
  
 dependencies {
 
-    compile "org.vert-x:vertx-core:1.3.1.final"
-    compile "org.vert-x:vertx-platform:1.3.1.final"
+    compile "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-platform:$vertxVersion"
+
     compile "org.slf4j:slf4j-api:1.7.5"
     
     testCompile group: 'junit', name: 'junit', version: '4.+'
@@ -41,7 +44,7 @@ dependencies {
     //gson
     compile "com.google.code.gson:gson:2.2.4"
     //axis2
-    compile("com.nxttxn:vertx-transport:1.0.0")
+    compile("com.nxttxn:vertx-transport:1.0.1")
 //            .ext.git = "https://github.com/wired-mind/vert-x-transports.git"
 
     compile "org.apache.axis2:axis2-kernel:1.7.0-SNAPSHOT"
@@ -63,4 +66,47 @@ dependencies {
     //beanio
     compile "org.beanio:beanio:2.0.5"
 
+    compile 'com.hazelcast:hazelcast:3.2.3'
+
+
+
+}
+
+/*
+If you're uploading stuff to Maven, Gradle needs to generate a POM.
+Please edit the details below.
+ */
+def configurePom(def pom) {
+    pom.project {
+        name rootProject.name
+        description 'Description of your module here'
+        inceptionYear '2014'
+        packaging 'jar'
+
+        url 'Your project url'
+
+        developers {
+            developer {
+                id 'developer id (e.g. github username)'
+                name 'developer name'
+                email 'developer email'
+            }
+        }
+
+        scm {
+            url 'url to your repo - e.g. github repo url'
+        }
+
+        licenses {
+            license {
+                name 'The name of the license used, e.g.: The Apache Software License, Version 2.0'
+                url 'URl to the license, e.g.: http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        properties {
+            setProperty('project.build.sourceEncoding', 'UTF8')
+        }
+    }
 }

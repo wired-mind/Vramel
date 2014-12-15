@@ -5,6 +5,7 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.VertxFactory;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -25,7 +26,7 @@ public class VertxContext {
     private Vertx vertx;
 
     public VertxContext(int port) {
-        vertx = Vertx.newVertx(port, getDefaultAddress());
+        vertx = VertxFactory.newVertx(port, getDefaultAddress());
         LOG.info(String.format("VertxContext initialized with vertx instance using port: %s.", port));
     }
 

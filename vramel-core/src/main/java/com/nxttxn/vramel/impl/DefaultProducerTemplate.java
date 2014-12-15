@@ -27,6 +27,7 @@ import com.nxttxn.vramel.util.VramelContextHelper;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.impl.DefaultFutureResult;
 
 import java.util.Map;
 
@@ -117,9 +118,9 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
                         // must invoke extract result body in case of exception to be rethrown
                         try {
                             final Object result = extractResultBody(event.result.get());
-                            handler.handle(new AsyncResult<Object>(result));
+                            handler.handle(new DefaultFutureResult<Object>(result));
                         } catch (Exception e) {
-                            handler.handle(new AsyncResult<>(e));
+                            handler.handle(new DefaultFutureResult<>(e));
                         }
                     }
                 }
@@ -148,13 +149,13 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
                         try {
                             Object result = extractResultBody(event.result.get(), pattern);
                             if (pattern.isOutCapable()) {
-                                handler.handle(new AsyncResult<>(result));
+                                handler.handle(new DefaultFutureResult<>(result));
                             } else {
                                 // return null if not OUT capable
-                                handler.handle(new AsyncResult<>(null));
+                                handler.handle(new DefaultFutureResult<>(null));
                             }
                         } catch (Exception e) {
-                            handler.handle(new AsyncResult<>(e));
+                            handler.handle(new DefaultFutureResult<>(e));
                         }
 
                     }
@@ -183,7 +184,7 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
         requestBodyAndHeaders(endpointUri, body, headers, new AsyncResultHandler<Object>() {
             @Override
             public void handle(AsyncResult<Object> event) {
-                final T result = vramelContext.getTypeConverter().convertTo(type, event.result);
+                final T result = vramelContext.getTypeConverter().convertTo(type, event.result());
                 handler.handle(result);
             }
         });

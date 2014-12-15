@@ -8,7 +8,9 @@ import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultFutureResult;
 import org.vertx.java.core.net.NetClient;
+import org.vertx.java.core.net.NetSocket;
 
 import java.net.URI;
 import java.util.Map;
@@ -95,12 +97,12 @@ public class JPOSClient {
                         @Override
                         public void handle(AsyncResult<ISOMsg> isoMsgAsyncResult) {
                             if (isoMsgAsyncResult.failed()) {
-                                logger.error("[JPOSClient] Unable to establish connection with JPOS within timeout.", isoMsgAsyncResult.exception);
+                                logger.error("[JPOSClient] Unable to establish connection with JPOS within timeout.", isoMsgAsyncResult.cause());
                                 return;
                             }
 
                             active = true;
-                            logger.info("[JPOSClient] JPOS connection established: {}", isoMsgAsyncResult.result);
+                            logger.info("[JPOSClient] JPOS connection established: {}", isoMsgAsyncResult.result());
                         }
                     });
                 } catch (Exception e) {
@@ -117,10 +119,10 @@ public class JPOSClient {
             }
         });
 
-        netClient.connect(port.intValue(), host, jposChannel).exceptionHandler(new Handler<Exception>() {
+        netClient.connect(port.intValue(), host, new AsyncResultHandler<NetSocket>() {
             @Override
-            public void handle(Exception e) {
-                logger.error("[JPOSClient] NetClient connection exception", e);
+            public void handle(AsyncResult<NetSocket> event) {
+                jposChannel.handle(event.result());
             }
         });
     }
@@ -142,14 +144,14 @@ public class JPOSClient {
             //first make sure it's not already waiting for us
             ISOMsg result = removeResult(key);
             if (result != null) {
-                asyncResultHandler.handle(new AsyncResult<ISOMsg>(result));
+                asyncResultHandler.handle(new DefaultFutureResult<ISOMsg>(result));
                 return;
             }
 
             out.sendISOMsg(isoMsg);
             receiveISOMsg(key, asyncResultHandler, timeout);
         } catch (Exception e) {
-            asyncResultHandler.handle(new AsyncResult<ISOMsg>(e));
+            asyncResultHandler.handle(new DefaultFutureResult<ISOMsg>(e));
         }
     }
 
@@ -190,7 +192,7 @@ public class JPOSClient {
 
     public void whenActive(int timeout, AsyncResultHandler<Void> asyncResultHandler) {
         if (active) {
-            asyncResultHandler.handle(new AsyncResult<>((Void) null));
+            asyncResultHandler.handle(new DefaultFutureResult<Void>((Void) null));
             return;
         }
 
@@ -200,7 +202,7 @@ public class JPOSClient {
             protected boolean resultReceived() {
                 if (active) {
                     logger.info("[JPOSClient] is now active. Notifying whenActive caller.");
-                    asyncResultHandler.handle(new AsyncResult<Void>((Void) null));
+                    asyncResultHandler.handle(new DefaultFutureResult<Void>((Void) null));
                 }
                 return active;
             }
@@ -220,7 +222,7 @@ public class JPOSClient {
             try {
                 final ISOMsg resultIsoMsg = removeResult(key);
                 if (resultIsoMsg != null) {
-                    asyncResultHandler.handle(new AsyncResult<>(resultIsoMsg));
+                    asyncResultHandler.handle(new DefaultFutureResult<ISOMsg>(resultIsoMsg));
                     return true;
                 }
             } catch (ISOException e) {

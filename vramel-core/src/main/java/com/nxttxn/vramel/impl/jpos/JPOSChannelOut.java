@@ -15,43 +15,48 @@ import org.vertx.java.core.streams.ReadStream;
  * Time: 9:47 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JPOSChannelOut implements ReadStream {
+public class JPOSChannelOut implements ReadStream<JPOSChannelOut> {
     protected final Logger logger = LoggerFactory.getLogger(JPOSChannelOut.class);
     private Handler<Buffer> dataHandler;
     private boolean paused;
-    private Handler<Exception> exceptionHandler;
+    private Handler<Throwable> exceptionHandler;
     private Handler<Void> endHandler;
 
 
 
     @Override
-    public void dataHandler(Handler<Buffer> dataHandler) {
+    public JPOSChannelOut dataHandler(Handler<Buffer> dataHandler) {
 
         this.dataHandler = dataHandler;
+        return this;
     }
 
     @Override
-    public void pause() {
+    public JPOSChannelOut pause() {
         paused = true;
+        return this;
     }
 
 
 
     @Override
-    public void resume() {
+    public JPOSChannelOut resume() {
         paused = false;
+        return this;
     }
 
     @Override
-    public void exceptionHandler(Handler<Exception> exceptionHandler) {
+    public JPOSChannelOut exceptionHandler(Handler<Throwable> exceptionHandler) {
 
         this.exceptionHandler = exceptionHandler;
+        return this;
     }
 
     @Override
-    public void endHandler(Handler<Void> endHandler) {
+    public JPOSChannelOut endHandler(Handler<Void> endHandler) {
 
         this.endHandler = endHandler;
+        return this;
     }
 
 

@@ -6,7 +6,8 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.deploy.Verticle;
+import org.vertx.java.platform.Verticle;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,8 +19,8 @@ import org.vertx.java.deploy.Verticle;
 public class VertxConsumerWorkerProxy extends Verticle {
     protected final Logger logger = LoggerFactory.getLogger(VertxConsumerWorkerProxy.class);
     @Override
-    public void start() throws Exception {
-        final JsonObject config = getContainer().getConfig();
+    public void start() {
+        final JsonObject config = getContainer().config();
         final String proxyAddress = config.getString("proxyAddress");
         final String address = config.getString("address");
 
@@ -28,10 +29,10 @@ public class VertxConsumerWorkerProxy extends Verticle {
             @Override
             public void handle(final Message<byte[]> message) {
                 logger.debug(String.format("Proxying message from %s to %s.", proxyAddress, address));
-                eventBus.send(address, message.body, new Handler<Message<byte[]>>() {
+                eventBus.send(address, message.body(), new Handler<Message<byte[]>>() {
                     @Override
                     public void handle(Message<byte[]> response) {
-                        message.reply(response.body);
+                        message.reply(response.body());
                     }
                 });
 

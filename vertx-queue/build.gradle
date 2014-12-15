@@ -1,10 +1,13 @@
 
 apply plugin: 'java'
 
+apply from: "../gradle/maven.gradle"
+
 dependencies {
 
 
-    compile "org.vert-x:vertx-core:1.3.1.final"
+    compile 'io.vertx:vertx-core:$vertxVersion'
+
     compile project(":vramel-core")
     compile group: 'org.apache.camel', name: 'camel-core', version:'2.11.0'
     compile group: 'org.apache.camel', name: 'camel-spring', version:'2.11.0'
@@ -12,9 +15,48 @@ dependencies {
     compile (group: 'org.apache.camel', name: 'camel-hazelcast', version:'2.11.0') {
         exclude module: 'hazelcast'
     }
-    compile group: 'com.hazelcast', name: 'hazelcast', version:'2.4.1'
+    compile 'com.hazelcast:hazelcast:3.2.3'
 
 }
 
 
 
+
+/*
+If you're uploading stuff to Maven, Gradle needs to generate a POM.
+Please edit the details below.
+ */
+def configurePom(def pom) {
+    pom.project {
+        name rootProject.name
+        description 'Description of your module here'
+        inceptionYear '2014'
+        packaging 'jar'
+
+        url 'Your project url'
+
+        developers {
+            developer {
+                id 'developer id (e.g. github username)'
+                name 'developer name'
+                email 'developer email'
+            }
+        }
+
+        scm {
+            url 'url to your repo - e.g. github repo url'
+        }
+
+        licenses {
+            license {
+                name 'The name of the license used, e.g.: The Apache Software License, Version 2.0'
+                url 'URl to the license, e.g.: http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        properties {
+            setProperty('project.build.sourceEncoding', 'UTF8')
+        }
+    }
+}

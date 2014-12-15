@@ -47,17 +47,17 @@ public class HTTPListener {
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest request) {
-                logger.info("Incoming request: {} {} {}", request.method, request.path, request.query);
-                request.response.statusCode = 405;
-                request.response.statusMessage = request.method.toUpperCase() + " Request Not Allowed";
-                request.response.end();
+                logger.info("Incoming request: {} {} {}", request.method(), request.path(), request.query());
+                request.response().setStatusCode(405);
+                request.response().setStatusMessage(request.method().toUpperCase() + " Request Not Allowed");
+                request.response().end();
             }
         });
         routeMatcher.get("/status", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest request) {
                 setCORS(request, CORSSettings.create(config));
-                request.response.end("Ok");
+                request.response().end("Ok");
             }
         });
 
@@ -131,17 +131,17 @@ public class HTTPListener {
         return new Handler<HttpServerRequest>() {
             public void handle(HttpServerRequest req) {
                 if (logger.isTraceEnabled()) logger.trace("In CORS options handler");
-                req.response.headers().put("Cache-Control", "public,max-age=31536000");
+                req.response().headers().set("Cache-Control", "public,max-age=31536000");
                 long oneYearSeconds = 365 * 24 * 60 * 60;
                 long oneYearms = oneYearSeconds * 1000;
                 String expires = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").format(new Date(System.currentTimeMillis() + oneYearms));
-                req.response.headers().put("Expires", expires);
-                req.response.headers().put("Access-Control-Allow-Methods", corsSettings.getAllowMethods().get());
-                req.response.headers().put("Access-Control-Max-Age", String.valueOf(oneYearSeconds));
-                req.response.headers().put("Access-Control-Allow-Headers", corsSettings.getAllowHeaders().get());
+                req.response().headers().set("Expires", expires);
+                req.response().headers().set("Access-Control-Allow-Methods", corsSettings.getAllowMethods().get());
+                req.response().headers().set("Access-Control-Max-Age", String.valueOf(oneYearSeconds));
+                req.response().headers().set("Access-Control-Allow-Headers", corsSettings.getAllowHeaders().get());
                 setCORS(req, corsSettings);
-                req.response.statusCode = 204;
-                req.response.end();
+                req.response().setStatusCode(204);
+                req.response().end();
             }
         };
     }
@@ -151,9 +151,9 @@ public class HTTPListener {
         if (logger.isTraceEnabled()) logger.trace("Setting CORS");
         final Optional<String> allowOrigin = corsSettings.getAllowOrigin();
         if (allowOrigin.isPresent()) {
-            req.response.headers().put("Access-Control-Allow-Origin", allowOrigin.get());
-            req.response.headers().put("Access-Control-Allow-Credentials", corsSettings.getAllowCredentials().toString());
-            req.response.headers().put("Access-Control-Expose-Headers", corsSettings.getAllowHeaders().get());
+            req.response().headers().set("Access-Control-Allow-Origin", allowOrigin.get());
+            req.response().headers().set("Access-Control-Allow-Credentials", corsSettings.getAllowCredentials().toString());
+            req.response().headers().set("Access-Control-Expose-Headers", corsSettings.getAllowHeaders().get());
 
         }
     }

@@ -69,14 +69,14 @@ public class JposProducer extends DefaultAsyncProducer {
                     @Override
                     public void handle(AsyncResult<ISOMsg> isoMsgAsyncResult) {
                         if (isoMsgAsyncResult.failed()) {
-                            exchange.setException(new RuntimeVramelException("Error sending ISOMsg.", isoMsgAsyncResult.exception));
+                            exchange.setException(new RuntimeVramelException("Error sending ISOMsg.", isoMsgAsyncResult.cause()));
                             optionalAsyncResultHandler.done(exchange);
                             return;
                         }
 
                         try {
                             final Message out = in.copy();
-                            endpoint.addISOMsgToMessage(isoMsgAsyncResult.result, out);
+                            endpoint.addISOMsgToMessage(isoMsgAsyncResult.result(), out);
                             exchange.setOut(out);
                         } catch (ISOException e) {
                             exchange.setException(e);

@@ -52,12 +52,12 @@ public class VertxProducer extends DefaultAsyncProducer {
             @Override
             public void handle(Message<byte[]> message) {
                 if (!isTransferExchange) {
-                    exchange.getOut().setBody(message.body);
+                    exchange.getOut().setBody(message.body());
                     optionalAsyncResultHandler.done(exchange);
                 } else {
                     Exchange responseExchange = exchange;
                     try {
-                        DefaultExchangeHolder.unmarshal(responseExchange, message.body);
+                        DefaultExchangeHolder.unmarshal(responseExchange, message.body());
                     } catch (Exception e) {
                         logger.error("Error unmarshaling vertx response", e);
                         exchange.setException(new RuntimeVramelException("Cannot read the vertx response.", e));

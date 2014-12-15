@@ -46,8 +46,8 @@ public class CamelEventBusBridge implements AsyncProcessor {
                 @Override
                 public void handle(AsyncResult<Object> event) {
                     if (event.failed()) {
-                        LOG.error("Failed to send vertxQueue message to: "+ endpointUri, event.exception);
-                        exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", event.exception));
+                        LOG.error("Failed to send vertxQueue message to: "+ endpointUri, event.cause());
+                        exchange.setException(new EventBusException("Vertx Queue Processor: Attempted to send message to vertx and failed.", new Exception(event.cause())));
                     } else {
                         LOG.info("Successfully delivered vertxQueue message to: " + endpointUri);
                     }

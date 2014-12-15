@@ -39,9 +39,9 @@ public class VertxQueueProducer extends DefaultAsyncProducer {
         vramelContext.getEventBus().send(address, queueMessage.asJson(), new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
-                final String status = message.body.getString("status");
+                final String status = message.body().getString("status");
                 if (!status.equals("ok")) {
-                    final String responseMessage = message.body.getString("message");
+                    final String responseMessage = message.body().getString("message");
 
                     exchange.setException(new RuntimeVramelException("Failed to enqueue message using vertx queue: " + responseMessage));
                 }

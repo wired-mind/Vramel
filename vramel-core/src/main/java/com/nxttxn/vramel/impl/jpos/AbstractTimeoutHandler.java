@@ -6,6 +6,7 @@ import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultFutureResult;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,7 +41,7 @@ public abstract class AbstractTimeoutHandler<T> implements Handler<Long> {
         }
 
         if (isTimedOut) {
-            asyncResultHandler.handle(new AsyncResult<T>(new RuntimeException("Timeout waiting for JPOS response")));
+            asyncResultHandler.handle(new DefaultFutureResult<T>(new RuntimeException("Timeout waiting for JPOS response")));
         }
     }
 

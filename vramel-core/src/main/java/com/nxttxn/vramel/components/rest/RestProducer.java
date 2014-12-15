@@ -14,8 +14,8 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
-import org.vertx.java.core.http.impl.ws.Base64;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.json.impl.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -63,9 +63,9 @@ public class RestProducer extends DefaultAsyncProducer {
 
     @Override
     public boolean process(final Exchange exchange, final OptionalAsyncResultHandler optionalAsyncResultHandler) throws Exception {
-        final Handler<Exception> exceptionHandler = new Handler<Exception>() {
+        final Handler<Throwable> exceptionHandler = new Handler<Throwable>() {
             @Override
-            public void handle(Exception e) {
+            public void handle(Throwable e) {
                 exchange.setException(e);
                 optionalAsyncResultHandler.done(exchange);
             }
@@ -76,8 +76,8 @@ public class RestProducer extends DefaultAsyncProducer {
         HttpClientRequest request = httpClient.request(method, uri, new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse httpClientResponse) {
-                logger.info(String.format("[Rest Producer] [Reply] [%s - %s]: %s - %s", method, uri, httpClientResponse.statusCode, httpClientResponse.statusMessage));
-                for (Map.Entry<String, String> header : httpClientResponse.headers().entrySet()) {
+                logger.info(String.format("[Rest Producer] [Reply] [%s - %s]: %s - %s", method, uri, httpClientResponse.statusCode(), httpClientResponse.statusMessage()));
+                for (Map.Entry<String, String> header : httpClientResponse.headers().entries()) {
                     exchange.getOut().setHeader(header.getKey(), header.getValue());
                 }
 
@@ -114,11 +114,11 @@ public class RestProducer extends DefaultAsyncProducer {
             message.removeHeader(Exchange.CONTENT_TYPE);
 
             for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
-                request = request.putHeader(header.getKey(), header.getValue());
+                request = request.putHeader(header.getKey(), (String) header.getValue());
             }
 
             request.putHeader("Content-Type", contentType)
-                    .putHeader("Content-Length", buffer.length())
+                    .putHeader("Content-Length", String.valueOf(buffer.length()))
                     .end(buffer);
         }
 

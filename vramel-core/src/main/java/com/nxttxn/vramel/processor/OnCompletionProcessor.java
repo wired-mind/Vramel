@@ -154,7 +154,7 @@ public class OnCompletionProcessor extends ServiceSupport implements Processor {
             // must use a copy as we dont want it to cause side effects of the original exchange
             final Exchange copy = prepareExchange(exchange);
 
-            vramelContext.getVertx().runOnLoop(new Handler<Void>() {
+            vramelContext.getVertx().runOnContext(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
                     LOG.debug("Processing onComplete: {}", copy);
@@ -181,7 +181,7 @@ public class OnCompletionProcessor extends ServiceSupport implements Processor {
             copy.setException(null);
 
 
-            vramelContext.getVertx().runOnLoop(new Handler<Void>() {
+            vramelContext.getVertx().runOnContext(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
                     LOG.debug("Processing onFailure: {}", copy);

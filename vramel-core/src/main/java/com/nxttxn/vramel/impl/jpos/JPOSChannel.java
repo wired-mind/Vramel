@@ -25,17 +25,17 @@ public class JPOSChannel implements Handler<NetSocket> {
     private Handler<Void> disconnectedHandler;
 
 
+
     public JPOSChannel(JPOSChannelIn in, JPOSChannelOut out) {
         this.in = in;
         this.out = out;
     }
 
     @Override
-    public void handle(final NetSocket socket) {
-
-        socket.exceptionHandler(new Handler<Exception>() {
+    public void handle(NetSocket socket) {
+        socket.exceptionHandler(new Handler<Throwable>() {
             @Override
-            public void handle(Exception e) {
+            public void handle(Throwable e) {
                 logger.error("[JPOSChannel] socket exception", e);
             }
         });
@@ -46,7 +46,7 @@ public class JPOSChannel implements Handler<NetSocket> {
             }
         });
 
-        socket.closedHandler(new Handler<Void>() {
+        socket.closeHandler(new Handler<Void>() {
             @Override
             public void handle(Void event) {
                 logger.info("[JPOSChannel] Socket closed.");
@@ -64,6 +64,8 @@ public class JPOSChannel implements Handler<NetSocket> {
             connectedHandler.handle(null);
         }
     }
+
+
 
 
     public void connectedHandler(Handler<Void> connectedHandler) {

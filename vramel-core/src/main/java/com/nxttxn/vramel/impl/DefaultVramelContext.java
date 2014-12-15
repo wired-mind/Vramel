@@ -34,7 +34,8 @@ import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.deploy.Container;
+import org.vertx.java.platform.Container;
+
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -121,7 +122,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         this(busModBase.getVertx());
 
         container = busModBase.getContainer();
-        this.config = container.getConfig();
+        this.config = container.config();
     }
 
 

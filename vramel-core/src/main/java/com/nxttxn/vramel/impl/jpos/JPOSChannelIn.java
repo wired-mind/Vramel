@@ -17,12 +17,12 @@ import org.vertx.java.core.streams.WriteStream;
  * Time: 9:35 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JPOSChannelIn implements WriteStream {
+public class JPOSChannelIn implements WriteStream<JPOSChannelIn> {
 
 
     protected final Logger logger = LoggerFactory.getLogger(JPOSChannelIn.class);
     private Handler<Void> drainHandler;
-    private Handler<Exception> exceptionHandler;
+    private Handler<Throwable> exceptionHandler;
     private Handler<ISOMsg> newISOMsgHandler;
 
     public static final String ISOMSG_DELIM = "</isomsg>\n";
@@ -59,13 +59,15 @@ public class JPOSChannelIn implements WriteStream {
     }
 
     @Override
-    public void writeBuffer(Buffer data) {
+    public JPOSChannelIn write(Buffer data) {
         isoXmlParser.handle(data);
+        return this;
     }
 
     @Override
-    public void setWriteQueueMaxSize(int maxSize) {
+    public JPOSChannelIn setWriteQueueMaxSize(int maxSize) {
         //no op
+        return this;
     }
 
     @Override
@@ -74,15 +76,17 @@ public class JPOSChannelIn implements WriteStream {
     }
 
     @Override
-    public void drainHandler(Handler<Void> drainHandler) {
+    public JPOSChannelIn drainHandler(Handler<Void> drainHandler) {
 
         this.drainHandler = drainHandler;
+        return this;
     }
 
     @Override
-    public void exceptionHandler(Handler<Exception> exceptionHandler) {
+    public JPOSChannelIn exceptionHandler(Handler<Throwable> exceptionHandler) {
 
         this.exceptionHandler = exceptionHandler;
+        return this;
     }
 
 

@@ -48,7 +48,7 @@ public class RestConsumer extends DefaultConsumer {
             @Override
             public void handle(final HttpServerRequest request) {
 
-                logger.info(String.format("[Rest Consumer] Incoming request %s - %s", request.method, request.uri));
+                logger.info(String.format("[Rest Consumer] Incoming request %s - %s", request.method(), request.uri()));
 
                 if (corsSettings.enabled()) {
                     listener.setCORS(request, corsSettings);
@@ -60,22 +60,22 @@ public class RestConsumer extends DefaultConsumer {
                         Exchange exchange = getEndpoint().createExchange();
                         final Message in = exchange.getIn();
                         in.setBody(buffer.getBytes());
-                        for (Map.Entry<String, String> header : request.headers().entrySet()) {
+                        for (Map.Entry<String, String> header : request.headers().entries()) {
                             in.setHeader(header.getKey(), header.getValue());
                         }
 
-                        for (Map.Entry<String, String> param : request.params().entrySet()) {
+                        for (Map.Entry<String, String> param : request.params().entries()) {
                             in.setHeader(param.getKey(), param.getValue());
                         }
 
                         final String defaultContentType = in.getHeader(Exchange.CONTENT_TYPE, FALLBACK_CONTENT_TYPE, String.class);
-                        in.setHeader(Exchange.HTTP_METHOD, request.method);
+                        in.setHeader(Exchange.HTTP_METHOD, request.method());
 
                         try {
                             logger.debug("[Rest Consumer] Ready to process exchange: {}.", processor.toString(), exchange);
-                            getAsyncProcessor().process(exchange, createResponseHandler(request.response, defaultContentType));
+                            getAsyncProcessor().process(exchange, createResponseHandler(request.response(), defaultContentType));
                         } catch (Exception e) {
-                            handleInternalError(exchange, e, request.response, defaultContentType);
+                            handleInternalError(exchange, e, request.response(), defaultContentType);
                         }
                     }
                 });
@@ -131,7 +131,7 @@ public class RestConsumer extends DefaultConsumer {
         if (message.getHeader(Exchange.HTTP_STATUS_MESSAGE) != null) {
             statusMessage = message.getHeader(Exchange.HTTP_STATUS_MESSAGE, String.class);
         }
-        response.statusMessage = statusMessage;    //should be tied to statuscode probably
+        response.setStatusMessage(statusMessage);    //should be tied to statuscode probably
 
 
         Buffer buffer;
@@ -142,16 +142,16 @@ public class RestConsumer extends DefaultConsumer {
         }
 
 
-        response.statusCode = statusCode;
-        logger.info(String.format("Http result handler ready to respond with status: %s", response.statusCode));
+        response.setStatusCode(statusCode);
+        logger.info(String.format("Http result handler ready to respond with status: %s", response.getStatusCode()));
         response.end(buffer);
     }
 
     private void handleInternalError(Exchange exchange, Throwable ex, HttpServerResponse response, String defaultContentType) {
         response.setChunked(true); // or set Content-length
         response.putHeader("Content-Type", defaultContentType);
-        response.statusCode = 500;
-        response.statusMessage = "Internal Server Error";
+        response.setStatusCode(500);
+        response.setStatusMessage("Internal Server Error");
         response.write(new JsonObject().putString("error", "Internal server error").toString());
         response.end();
         logError(ex);

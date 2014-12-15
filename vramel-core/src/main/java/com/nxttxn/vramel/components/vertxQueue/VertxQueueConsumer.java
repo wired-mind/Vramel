@@ -1,10 +1,10 @@
 package com.nxttxn.vramel.components.vertxQueue;
 
+
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IQueue;
 import com.nxttxn.vramel.Endpoint;
-import com.nxttxn.vramel.AsyncProcessor;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.components.vertx.VertxChannelAdapter;
 import com.nxttxn.vramel.components.vertx.VertxConsumer;
@@ -51,7 +51,7 @@ public class VertxQueueConsumer extends DefaultConsumer {
             public void handle(Message<JsonObject> message) {
 
 
-                QueueMessage msg = new QueueMessage(handlerAddress, message.body.getObject("body"), message.body.getObject("headers"));
+                QueueMessage msg = new QueueMessage(handlerAddress, message.body().getObject("body"), message.body().getObject("headers"));
 
                 try {
                     logger.debug(String.format("[Vertx Queue Consumer][%s] Enqueuing message: %s", queueName, msg.toString()));

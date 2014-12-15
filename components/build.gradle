@@ -4,9 +4,9 @@ allprojects {
 
     repositories {
         maven { url 'https://repository.apache.org/content/groups/snapshots' }
-        mavenRepo name: 'jline', url: "http://jline.sourceforge.net/m2repo"
-        mavenRepo url: "http://jpos.org/maven"
-        mavenRepo name: 'oracle', url: "http://download.oracle.com/maven"
+        maven { url "http://jline.sourceforge.net/m2repo" }
+        maven { url "http://jpos.org/maven"}
+        maven { url "http://download.oracle.com/maven"}
         mavenCentral()
         mavenLocal()
     }
@@ -15,7 +15,7 @@ allprojects {
 
 
 subprojects {
-    apply plugin: 'maven'
+
     apply plugin: 'java'
 
 
@@ -27,5 +27,45 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.5'
+    gradleVersion = '2.0'
+}
+
+
+/*
+If you're uploading stuff to Maven, Gradle needs to generate a POM.
+Please edit the details below.
+ */
+def configurePom(def pom) {
+    pom.project {
+        name rootProject.name
+        description 'Description of your module here'
+        inceptionYear '2014'
+        packaging 'jar'
+
+        url 'Your project url'
+
+        developers {
+            developer {
+                id 'developer id (e.g. github username)'
+                name 'developer name'
+                email 'developer email'
+            }
+        }
+
+        scm {
+            url 'url to your repo - e.g. github repo url'
+        }
+
+        licenses {
+            license {
+                name 'The name of the license used, e.g.: The Apache Software License, Version 2.0'
+                url 'URl to the license, e.g.: http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        properties {
+            setProperty('project.build.sourceEncoding', 'UTF8')
+        }
+    }
 }
