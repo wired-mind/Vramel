@@ -58,7 +58,7 @@ dependencies {
     //jibx
     compile "org.jibx:jibx-run:1.2.5"
     //jpos
-    compile 'org.jpos:jpos:1.9.0'
+    compile 'org.jpos:jpos:1.9.8'
 
     //xmlsec (apache xml security) xml digsig/crypto
     compile "org.apache.santuario:xmlsec:1.5.5"
