@@ -19,6 +19,7 @@ package com.nxttxn.vramel.components.properties;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.util.IOHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
+import com.typesafe.config.ConfigValue;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -43,6 +44,11 @@ public class DefaultPropertiesResolver implements PropertiesResolver {
     public Properties resolveProperties(VramelContext context, boolean ignoreMissingLocation, String... uri) throws Exception {
         Properties answer = new Properties();
 
+        //also load properties from typesafe config
+        Properties configProps = loadPropertiesFromConfig(context);
+        configProps = prepareLoadedProperties(configProps);
+        answer.putAll(configProps);
+
         for (String path : uri) {
             if (path.startsWith("ref:")) {
                 Properties prop = loadPropertiesFromRegistry(context, ignoreMissingLocation, path);
@@ -60,6 +66,14 @@ public class DefaultPropertiesResolver implements PropertiesResolver {
             }
         }
 
+        return answer;
+    }
+
+    private Properties loadPropertiesFromConfig(VramelContext context) {
+        Properties answer = new Properties();
+        for (Map.Entry<String, ConfigValue> entry : context.getResolvedConfig().entrySet()) {
+            answer.put(entry.getKey(), entry.getValue());
+        }
         return answer;
     }
 

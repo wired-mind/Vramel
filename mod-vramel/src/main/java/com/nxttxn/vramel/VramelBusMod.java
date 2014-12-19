@@ -4,6 +4,9 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.nxttxn.vramel.components.properties.PropertiesComponent;
 import com.nxttxn.vramel.impl.DefaultVramelContext;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
 import org.reflections.Reflections;
 import org.reflections.scanners.*;
 import org.reflections.util.ClasspathHelper;
@@ -37,28 +40,29 @@ public class VramelBusMod extends BusModBase {
         vramelContext = new DefaultVramelContext(this);
         vramelContext.addComponent("properties", pc);
 
-            final Optional<String> packageName = Optional.fromNullable(getOptionalStringConfig("packageName", null));
-            if (packageName.isPresent()) {
-                List<Class<? extends FlowsBuilder>> nonConcreteSubtypesOf = Lists.newArrayList();
-                nonConcreteSubtypesOf.add(FlowsBuilder.class);
-                nonConcreteSubtypesOf.addAll(findAllNonConcreteSubtypesOf(FlowsBuilder.class));
-                nonConcreteSubtypesOf.addAll(additionalFlowsBuilderTypes());
+
+        final Config resolvedConfig = vramelContext.getResolvedConfig();
+        final String packageName = resolvedConfig.getString("package-name");
+
+        List<Class<? extends FlowsBuilder>> nonConcreteSubtypesOf = Lists.newArrayList();
+        nonConcreteSubtypesOf.add(FlowsBuilder.class);
+        nonConcreteSubtypesOf.addAll(findAllNonConcreteSubtypesOf(FlowsBuilder.class));
+        nonConcreteSubtypesOf.addAll(additionalFlowsBuilderTypes());
 
 
-                List<FlowsBuilder> flowsBuilders = Lists.newArrayList();
-                for (Class<? extends FlowsBuilder> flowBuilderType : nonConcreteSubtypesOf) {
-                    flowsBuilders.addAll(createConcreteInstances(packageName.get(), flowBuilderType));
-                }
+        List<FlowsBuilder> flowsBuilders = Lists.newArrayList();
+        for (Class<? extends FlowsBuilder> flowBuilderType : nonConcreteSubtypesOf) {
+            flowsBuilders.addAll(createConcreteInstances(packageName, flowBuilderType));
+        }
 
-                for (FlowsBuilder flow : flowsBuilders) {
-                    try {
-                        vramelContext.addFlowBuilder(flow);
-                    } catch (Exception e) {
-                        logger.error(String.format("Error adding Flowbuilder to context %s", flow), e);
-                    }
-                }
+        for (FlowsBuilder flow : flowsBuilders) {
+            try {
+                vramelContext.addFlowBuilder(flow);
+            } catch (Exception e) {
+                logger.error(String.format("Error adding Flowbuilder to context %s", flow), e);
             }
             doWithVramelContext(vramelContext);
+        }
 
         try {
             vramelContext.start();
