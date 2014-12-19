@@ -18,7 +18,9 @@ import java.net.URI;
  * To change this template use File | Settings | File Templates.
  */
 public interface ClientFactory {
+
     HttpClient createOrFindHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword);
+    HttpClient createOrFindHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword, Optional<String> truststorePath, Optional<String> truststorePassword);
 
     JPOSClient createOrFindJPOSClient(URI uri, String keyFields);
 }

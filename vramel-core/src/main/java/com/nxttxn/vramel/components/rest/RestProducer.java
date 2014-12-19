@@ -48,12 +48,14 @@ public class RestProducer extends DefaultAsyncProducer {
         final Number port = config.getNumber("port", 443);
         Optional<String> keystorePath = Optional.fromNullable(config.getString("keystorePath", null));
         Optional<String> keystorePassword = Optional.fromNullable(config.getString("keystorePassword", null));
+        Optional<String> truststorePath = Optional.fromNullable(config.getString("truststorePath", null));
+        Optional<String> truststorePassword = Optional.fromNullable(config.getString("truststorePassword", null));
 
         final String httpFormat = "http://%s:%s";
         final String httpsFormat = "https://%s:%s";
         final URI uri = URI.create(String.format(ssl ? httpsFormat : httpFormat, host, port));
 
-        httpClient = clientFactory.createOrFindHttpClient(uri, keystorePath, keystorePassword);
+        httpClient = clientFactory.createOrFindHttpClient(uri, keystorePath, keystorePassword, truststorePath, truststorePassword);
         final Optional<String> username = Optional.fromNullable(config.getString("username", null));
         final String password = config.getString("password", null);
         if (username.isPresent()) {

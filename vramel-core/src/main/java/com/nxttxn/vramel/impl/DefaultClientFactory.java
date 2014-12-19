@@ -41,7 +41,18 @@ public class DefaultClientFactory implements ClientFactory {
             return httpClients.get(uri);
         }
 
-        return createNewHttpClient(uri, keystorePath, keystorePassword);
+        return createNewHttpClient(uri, keystorePath, keystorePassword, null, null);
+    }
+
+    @Override
+    public HttpClient createOrFindHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword, Optional<String> truststorePath, Optional<String> truststorePassword) {
+        checkNotNull(uri);
+
+        if (httpClients.containsKey(uri)) {
+            return httpClients.get(uri);
+        }
+
+        return createNewHttpClient(uri, keystorePath, keystorePassword, truststorePath, truststorePassword);
     }
 
     @Override
@@ -61,6 +72,10 @@ public class DefaultClientFactory implements ClientFactory {
     }
 
     private HttpClient createNewHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword) {
+        return createNewHttpClient(uri, keystorePath, keystorePassword, null, null);
+    }
+
+    private HttpClient createNewHttpClient(URI uri, Optional<String> keystorePath, Optional<String> keystorePassword, Optional<String> truststorePath, Optional<String> truststorePassword) {
         boolean ssl = false;
         if (uri.getScheme().equals("https")) {
             ssl = true;
@@ -69,6 +84,10 @@ public class DefaultClientFactory implements ClientFactory {
         HttpClient httpClient = vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort());
         if (keystorePath.isPresent()) {
             httpClient = httpClient.setKeyStorePath(keystorePath.get()).setKeyStorePassword(keystorePassword.get());
+        }
+
+        if (truststorePath.isPresent()) {
+            httpClient = httpClient.setTrustStorePath(truststorePath.get()).setTrustStorePassword(truststorePassword.get());
         }
         return httpClient;
     }
