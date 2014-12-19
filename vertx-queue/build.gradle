@@ -15,7 +15,7 @@ dependencies {
     compile (group: 'org.apache.camel', name: 'camel-hazelcast', version:'2.11.0') {
         exclude module: 'hazelcast'
     }
-    compile 'com.hazelcast:hazelcast:3.2.3'
+    compile 'com.hazelcast:hazelcast:3.3.3'
 
 }
 
