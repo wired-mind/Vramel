@@ -27,6 +27,7 @@ import com.nxttxn.vramel.spi.TypeConverterRegistry;
 import com.nxttxn.vramel.spi.UuidGenerator;
 import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.*;
+import com.typesafe.config.Config;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ import org.vertx.java.platform.Container;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.typesafe.config.ConfigFactory;
 
 /**
  * Created with IntelliJ IDEA.
@@ -103,6 +105,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     private final StopWatch stopWatch = new StopWatch(false);
     private Date startDate;
     private Container container;
+    private Config resolvedConfigs;
 
     private UuidGenerator createDefaultUuidGenerator() {
         return new JavaUuidGenerator();
@@ -123,6 +126,19 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
 
         container = busModBase.getContainer();
         this.config = container.config();
+
+        //https://github.com/typesafehub/config#standard-behavior
+        final Config defaultConfig = ConfigFactory.load();
+
+        //load a production.conf if any
+        final String env = container.env().get("VRAMEL_ENV");
+        final Config envConfig = ConfigFactory.load(String.format("%s.conf", env));
+
+        final Config runtimeOverrides = ConfigFactory.parseMap(config.toMap(), "Runtime Overrides");
+
+        resolvedConfigs = runtimeOverrides
+                .withFallback(envConfig)
+                .withFallback(defaultConfig);
     }
 
 
@@ -1707,5 +1723,10 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     @Override
     public Container getContainer() {
         return container;
+    }
+
+    @Override
+    public Config getResolvedConfig() {
+        return resolvedConfigs;
     }
 }

@@ -6,6 +6,7 @@ import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.model.FlowsDefinition;
 import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.model.OnExceptionDefinition;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
@@ -199,6 +200,11 @@ public abstract class FlowBuilder extends BuilderSupport implements FlowsBuilder
             last = last == null ? onException(ex) : last.onException(ex);
         }
         return last != null ? last : onException(Exception.class);
+    }
+
+
+    protected Config getResolvedConfig() {
+        return getVramelContext().getResolvedConfig();
     }
 
 }

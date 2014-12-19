@@ -68,6 +68,8 @@ dependencies {
 
     compile 'com.hazelcast:hazelcast:3.3.3'
 
+    compile 'com.typesafe:config:1.2.1'
+
 
 
 }

@@ -5,6 +5,7 @@ import com.nxttxn.vramel.components.properties.PropertiesComponent;
 import com.nxttxn.vramel.model.DataFormatDefinition;
 import com.nxttxn.vramel.model.FlowDefinition;
 import com.nxttxn.vramel.spi.*;
+import com.typesafe.config.Config;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
@@ -195,4 +196,6 @@ public interface VramelContext {
     ProducerTemplate createProducerTemplate(int maximumCacheSize);
 
     Container getContainer();
+
+    Config getResolvedConfig();
 }
