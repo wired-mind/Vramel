@@ -125,7 +125,6 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         this(busModBase.getVertx());
 
         container = busModBase.getContainer();
-        this.config = container.config();
 
         //https://github.com/typesafehub/config#standard-behavior
         final Config defaultConfig = ConfigFactory.load();
@@ -134,8 +133,12 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         final String env = container.env().get("VRAMEL_ENV");
         final Config envConfig = ConfigFactory.load(String.format("%s.conf", env));
 
-        final Config runtimeOverrides = ConfigFactory.parseMap(config.toMap(), "Runtime Overrides");
+        this.config = container.config();
+        if (config == null) {
+            this.config = new JsonObject();
+        }
 
+        final Config runtimeOverrides = ConfigFactory.parseMap(config.toMap(), "Runtime Overrides");
         resolvedConfigs = runtimeOverrides
                 .withFallback(envConfig)
                 .withFallback(defaultConfig);
