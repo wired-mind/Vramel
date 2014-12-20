@@ -144,7 +144,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         final Config runtimeOverrides = ConfigFactory.parseMap(config.toMap(), "Runtime Overrides");
         resolvedConfigs = runtimeOverrides
                 .withFallback(envConfig)
-                .withFallback(defaultConfig);
+                .withFallback(defaultConfig).resolve();
     }
 
 
