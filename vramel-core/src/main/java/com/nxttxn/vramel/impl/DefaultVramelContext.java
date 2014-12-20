@@ -130,8 +130,11 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         final Config defaultConfig = ConfigFactory.load();
 
         //load a production.conf if any
-        final String env = container.env().get("VRAMEL_ENV");
-        final Config envConfig = ConfigFactory.load(String.format("%s.conf", env));
+        String env = container.env().get("VRAMEL_ENV");
+        if (env == null) {
+            env = "production";
+        }
+        final Config envConfig = ConfigFactory.parseResourcesAnySyntax(String.format("%s.conf", env));
 
         this.config = container.config();
         if (config == null) {
