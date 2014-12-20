@@ -19,6 +19,7 @@ package com.nxttxn.vramel.components.properties;
 import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.util.IOHelper;
 import com.nxttxn.vramel.util.ObjectHelper;
+import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 
 import java.io.FileInputStream;
@@ -72,7 +73,7 @@ public class DefaultPropertiesResolver implements PropertiesResolver {
     private Properties loadPropertiesFromConfig(VramelContext context) {
         Properties answer = new Properties();
         for (Map.Entry<String, ConfigValue> entry : context.getResolvedConfig().entrySet()) {
-            answer.put(entry.getKey(), entry.getValue());
+            answer.setProperty(entry.getKey(), entry.getValue().unwrapped().toString());
         }
         return answer;
     }
