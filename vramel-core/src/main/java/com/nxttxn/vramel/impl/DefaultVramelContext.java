@@ -28,6 +28,7 @@ import com.nxttxn.vramel.spi.UuidGenerator;
 import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.*;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigRenderOptions;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,15 +137,18 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         }
         final Config envConfig = ConfigFactory.parseResourcesAnySyntax(String.format("%s.conf", env));
 
-        this.config = container.config();
-        if (config == null) {
-            this.config = new JsonObject();
+        JsonObject runtimeConfig = container.config();
+        if (runtimeConfig == null) {
+            runtimeConfig = new JsonObject();
         }
 
-        final Config runtimeOverrides = ConfigFactory.parseMap(config.toMap(), "Runtime Overrides");
+        final Config runtimeOverrides = ConfigFactory.parseMap(runtimeConfig.toMap(), "Runtime Overrides");
         resolvedConfigs = runtimeOverrides
                 .withFallback(envConfig)
                 .withFallback(defaultConfig).resolve();
+
+        //To stay backwards compatible
+        this.config = new JsonObject(getResolvedConfig().root().render(ConfigRenderOptions.concise()));
     }
 
 

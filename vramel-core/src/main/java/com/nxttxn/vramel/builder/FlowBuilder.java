@@ -206,7 +206,7 @@ public abstract class FlowBuilder extends BuilderSupport implements FlowsBuilder
     }
 
     protected JsonObject getConfig() {
-        return new JsonObject(getResolvedConfig().root().render(ConfigRenderOptions.concise()));
+        return getVramelContext().getConfig();
     }
     protected JsonObject getConfigObject(String key) {
         return new JsonObject(getResolvedConfig().getObject(key).render(ConfigRenderOptions.concise()));
