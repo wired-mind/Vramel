@@ -66,7 +66,19 @@ Vertx Integration (mod-vramel)
 =================
 This project includes a base class for use in Vertx projects that will scan for Vramel flows and start them inside a Vramel Context automatically.
 
-Create a Verticle that extends VramelBusMod and pass a config setting called "packageName". Any classes in this package that extend FlowBuilder will be created and the flows added to a VramelContext. 
+Create a Verticle that extends VramelBusMod and pass a config setting called "package-name". Any classes in this package that extend FlowBuilder will be created and the flows added to a VramelContext. 
+
+Configuration
+==========
+Just introduced an enhanced config system in 1.0.3 based on this [typesafe library](https://github.com/typesafehub/config).
+Now it's much easier to do configuration with vramel. Just add an application.conf file to your resource folder and use
+json or [hocon](https://github.com/typesafehub/config#examples-of-hocon) syntax. You can define package-name in application.conf
+to set the scan package for vramel flows. You can also make environment specific overrides by defining the VRAMEL_ENV
+environment variable and then making a <env>.conf file. I.e. If you have a dev only setting, make a dev.conf and then
+start your app by doing VRAMEL_ENV=dev vertx runmod .....
+
+These conf files are also integrated with the vramel/camel [properties](http://camel.apache.org/properties.html) system now.
+This means you can use properties in routes, e.g. fromF("rest:GET:/api/{{version}}/mypath"). Very handy.
 
 DSL
 ===
