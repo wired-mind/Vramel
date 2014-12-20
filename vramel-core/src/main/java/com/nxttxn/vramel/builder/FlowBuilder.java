@@ -7,6 +7,7 @@ import com.nxttxn.vramel.model.FlowsDefinition;
 import com.nxttxn.vramel.model.ModelVramelContext;
 import com.nxttxn.vramel.model.OnExceptionDefinition;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigRenderOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
@@ -160,9 +161,6 @@ public abstract class FlowBuilder extends BuilderSupport implements FlowsBuilder
     }
 
 
-    protected JsonObject getConfig() {
-        return getContext().getConfig();
-    }
 
 
     @Override
@@ -207,4 +205,10 @@ public abstract class FlowBuilder extends BuilderSupport implements FlowsBuilder
         return getVramelContext().getResolvedConfig();
     }
 
+    protected JsonObject getConfig() {
+        return new JsonObject(getResolvedConfig().root().render(ConfigRenderOptions.concise()));
+    }
+    protected JsonObject getConfigObject(String key) {
+        return new JsonObject(getResolvedConfig().getObject(key).render(ConfigRenderOptions.concise()));
+    }
 }
