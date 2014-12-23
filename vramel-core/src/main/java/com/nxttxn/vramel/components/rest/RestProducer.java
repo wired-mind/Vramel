@@ -42,22 +42,21 @@ public class RestProducer extends DefaultAsyncProducer {
         this.endpoint = (RestChannelAdapter) endpoint;
 
         ClientFactory clientFactory = endpoint.getVramelContext().getClientFactory();
-        final JsonObject config = this.endpoint.getConfig();
-        final String host = config.getString("host");
-        final boolean ssl = config.getBoolean("ssl", true);
-        final Number port = config.getNumber("port", 443);
-        Optional<String> keystorePath = Optional.fromNullable(config.getString("keystorePath", null));
-        Optional<String> keystorePassword = Optional.fromNullable(config.getString("keystorePassword", null));
-        Optional<String> truststorePath = Optional.fromNullable(config.getString("truststorePath", null));
-        Optional<String> truststorePassword = Optional.fromNullable(config.getString("truststorePassword", null));
+        final String host = this.endpoint.getHost();
+        final boolean ssl = this.endpoint.isSsl();
+        final int port = this.endpoint.getPort();
+        Optional<String> keystorePath = Optional.fromNullable(this.endpoint.getKeystorePath());
+        Optional<String> keystorePassword = Optional.fromNullable(this.endpoint.getKeystorePassword());
+        Optional<String> truststorePath = Optional.fromNullable(this.endpoint.getTruststorePath());
+        Optional<String> truststorePassword = Optional.fromNullable(this.endpoint.getTruststorePassword());
 
         final String httpFormat = "http://%s:%s";
         final String httpsFormat = "https://%s:%s";
         final URI uri = URI.create(String.format(ssl ? httpsFormat : httpFormat, host, port));
 
         httpClient = clientFactory.createOrFindHttpClient(uri, keystorePath, keystorePassword, truststorePath, truststorePassword);
-        final Optional<String> username = Optional.fromNullable(config.getString("username", null));
-        final String password = config.getString("password", null);
+        final Optional<String> username = Optional.fromNullable(this.endpoint.getUsername());
+        final String password = this.endpoint.getPassword();
         if (username.isPresent()) {
             credentials = Optional.of(encodeCredentials(username.get(), password));
         }

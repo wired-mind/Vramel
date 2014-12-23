@@ -20,6 +20,21 @@ public class RestChannelAdapter extends DefaultEndpoint {
     private final String method;
     private final JsonObject config;
 
+    private String host = "localhost";
+    private int port = 8080;
+    private boolean ssl = false;
+    private String keystorePath;
+    private String keystorePassword;
+    private String truststorePath;
+    private String truststorePassword;
+
+    //basic auth
+    private String username;
+    private String password;
+
+    //cors (just a subset for now)
+    private boolean allowCredentials;
+
     public RestChannelAdapter(VramelContext vramelContext, String route, String method, JsonObject config) {
         super(String.format("rest:%s:%s", method, route), vramelContext);
 
@@ -54,5 +69,85 @@ public class RestChannelAdapter extends DefaultEndpoint {
     @Override
     public boolean isSingleton() {
         return true;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public boolean isSsl() {
+        return ssl;
+    }
+
+    public void setSsl(boolean ssl) {
+        this.ssl = ssl;
+    }
+
+    public String getKeystorePath() {
+        return keystorePath;
+    }
+
+    public void setKeystorePath(String keystorePath) {
+        this.keystorePath = keystorePath;
+    }
+
+    public String getKeystorePassword() {
+        return keystorePassword;
+    }
+
+    public void setKeystorePassword(String keystorePassword) {
+        this.keystorePassword = keystorePassword;
+    }
+
+    public String getTruststorePath() {
+        return truststorePath;
+    }
+
+    public void setTruststorePath(String truststorePath) {
+        this.truststorePath = truststorePath;
+    }
+
+    public String getTruststorePassword() {
+        return truststorePassword;
+    }
+
+    public void setTruststorePassword(String truststorePassword) {
+        this.truststorePassword = truststorePassword;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public boolean isAllowCredentials() {
+        return allowCredentials;
+    }
+
+    public void setAllowCredentials(boolean allowCredentials) {
+        this.allowCredentials = allowCredentials;
     }
 }

@@ -37,6 +37,7 @@ public class RestComponent extends DefaultComponent {
 
         final JsonObject config = new JsonObject(parameters).copy();
         final RestChannelAdapter restChannelAdapter = new RestChannelAdapter(getVramelContext(), route, method, config);
+        setProperties(restChannelAdapter, parameters);
         parameters.clear();
         return restChannelAdapter;
     }

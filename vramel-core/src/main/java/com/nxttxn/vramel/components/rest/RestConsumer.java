@@ -37,6 +37,12 @@ public class RestConsumer extends DefaultConsumer {
 
         ServerFactory serverFactory = endpoint.getVramelContext().getServerFactory();
         final JsonObject config = this.endpoint.getConfig();
+        //eventually we're going to remove this JsonObject config, but for now since it's so entrenched in this code.
+        //Let's just fix up a few of the settings. Just non strings are mandatory.
+        config.putNumber("port", this.endpoint.getPort());
+        config.putBoolean("ssl", this.endpoint.isSsl());
+        config.putBoolean("allowCredentials", this.endpoint.isAllowCredentials());
+
         final HTTPListener listener = serverFactory.createOrFindHttpListener(config);
         final CORSSettings corsSettings = CORSSettings.create(config);
 
