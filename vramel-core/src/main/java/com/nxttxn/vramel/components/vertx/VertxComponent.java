@@ -22,6 +22,7 @@ public class VertxComponent extends DefaultComponent {
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         final VertxChannelAdapter vertxChannelAdapter = new VertxChannelAdapter(getVramelContext(), remaining, new JsonObject(parameters).copy());
+        setProperties(vertxChannelAdapter, parameters);
         parameters.clear();
         return vertxChannelAdapter;
     }

@@ -16,6 +16,7 @@ import org.vertx.java.core.json.JsonObject;
 public class VertxChannelAdapter extends DefaultEndpoint {
     private final String address;
     private JsonObject config;
+    private boolean local;
 
     public VertxChannelAdapter(VramelContext vramelContext, String address, JsonObject config) {
         super(String.format("vertx:%s", address), vramelContext);
@@ -44,5 +45,13 @@ public class VertxChannelAdapter extends DefaultEndpoint {
 
     public JsonObject getConfig() {
         return config;
+    }
+
+    public boolean isLocal() {
+        return local;
+    }
+
+    public void setLocal(boolean local) {
+        this.local = local;
     }
 }
