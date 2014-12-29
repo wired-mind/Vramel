@@ -107,16 +107,16 @@ public class RestProducer extends DefaultAsyncProducer {
                     .putHeader("Accept", "*/*");
         }
 
+        for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
+            request = request.putHeader(header.getKey(), (String) header.getValue());
+        }
+
         if (buffer.length() == 0) {
             request.end();
         } else {
             // set the content type in the response.
             String contentType = message.getHeader(Exchange.CONTENT_TYPE, defaultContentType, String.class);
             message.removeHeader(Exchange.CONTENT_TYPE);
-
-            for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
-                request = request.putHeader(header.getKey(), (String) header.getValue());
-            }
 
             request.putHeader("Content-Type", contentType)
                     .putHeader("Content-Length", String.valueOf(buffer.length()))
