@@ -67,7 +67,7 @@ public class RestConsumer extends DefaultConsumer {
                         final Message in = exchange.getIn();
                         in.setBody(buffer.getBytes());
                         for (Map.Entry<String, String> header : request.headers().entries()) {
-                            in.setHeader(header.getKey(), header.getValue());
+                            in.setHeader(header.getKey().toLowerCase(), header.getValue());
                         }
 
                         for (Map.Entry<String, String> param : request.params().entries()) {
