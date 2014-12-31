@@ -169,8 +169,8 @@ public class SimpleFunctionExpression extends LiteralExpression {
                 locations = ObjectHelper.before(remainder, ":");
                 key = ObjectHelper.after(remainder, ":");
             }
-            throw new UnsupportedOperationException("No properties component yet");
-            //return ExpressionBuilder.propertiesComponentExpression(key, locations);
+
+            return ExpressionBuilder.propertiesComponentExpression(key, locations);
         }
 
         // ref: prefix

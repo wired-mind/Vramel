@@ -160,6 +160,8 @@ public interface VramelContext {
      */
     FactoryFinder getFactoryFinder(String path) throws NoFactoryAvailableException;
 
+    Component hasComponent(String componentName);
+
     /**
      * Gets the current shutdown strategy
      *

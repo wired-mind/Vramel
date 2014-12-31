@@ -80,6 +80,7 @@ start your app by doing VRAMEL_ENV=dev vertx runmod .....
 These conf files are also integrated with the vramel/camel [properties](http://camel.apache.org/properties.html) system now.
 This means you can use properties in routes, e.g. fromF("rest:GET:/api/{{version}}/mypath"). Very handy.
 
+
 DSL
 ===
 Right now Vramel only uses the Java DSL. In theory this could be extended to other implementations like Camel.

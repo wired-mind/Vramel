@@ -1310,6 +1310,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         }
     }
 
+    @Override
     public Component hasComponent(String componentName) {
         return components.get(componentName);
     }

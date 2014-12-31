@@ -18,6 +18,7 @@ package com.nxttxn.vramel.builder;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.components.bean.BeanInvocation;
+import com.nxttxn.vramel.components.properties.PropertiesComponent;
 import com.nxttxn.vramel.language.bean.BeanLanguage;
 import com.nxttxn.vramel.model.language.MethodCallExpression;
 import com.nxttxn.vramel.spi.Language;
@@ -1557,42 +1558,42 @@ public final class ExpressionBuilder {
         };
     }
 
-//    public static Expression propertiesComponentExpression(final String key, final String locations) {
-//        return new ExpressionAdapter() {
-//            public Object evaluate(Exchange exchange) {
-//                try {
-//                    if (locations != null) {
-//                        // the properties component is optional as we got locations
-//                        // getComponent will create a new component if none already exists
-//                        Component component = exchange.getContext().getComponent("properties");
-//                        PropertiesComponent pc = exchange.getContext().getTypeConverter()
-//                                .mandatoryConvertTo(PropertiesComponent.class, component);
-//                        // enclose key with {{ }} to force parsing
-//                        String[] paths = locations.split(",");
-//                        return pc.parseUri(pc.getPrefixToken() + key + pc.getSuffixToken(), paths);
-//                    } else {
-//                        // the properties component is mandatory if no locations provided
-//                        Component component = exchange.getContext().hasComponent("properties");
-//                        if (component == null) {
-//                            throw new IllegalArgumentException("PropertiesComponent with name properties must be defined"
-//                                    + " in CamelContext to support property placeholders in expressions");
-//                        }
-//                        PropertiesComponent pc = exchange.getContext().getTypeConverter()
-//                                .mandatoryConvertTo(PropertiesComponent.class, component);
-//                        // enclose key with {{ }} to force parsing
-//                        return pc.parseUri(pc.getPrefixToken() + key + pc.getSuffixToken());
-//                    }
-//                } catch (Exception e) {
-//                    throw ObjectHelper.wrapRuntimeCamelException(e);
-//                }
-//            }
-//
-//            @Override
-//            public String toString() {
-//                return "properties(" + key + ")";
-//            }
-//        };
-//    }
+    public static Expression propertiesComponentExpression(final String key, final String locations) {
+        return new ExpressionAdapter() {
+            public Object evaluate(Exchange exchange) {
+                try {
+                    if (locations != null) {
+                        // the properties component is optional as we got locations
+                        // getComponent will create a new component if none already exists
+                        Component component = exchange.getContext().getComponent("properties");
+                        PropertiesComponent pc = exchange.getContext().getTypeConverter()
+                                .mandatoryConvertTo(PropertiesComponent.class, component);
+                        // enclose key with {{ }} to force parsing
+                        String[] paths = locations.split(",");
+                        return pc.parseUri(pc.getPrefixToken() + key + pc.getSuffixToken(), paths);
+                    } else {
+                        // the properties component is mandatory if no locations provided
+                        Component component = exchange.getContext().hasComponent("properties");
+                        if (component == null) {
+                            throw new IllegalArgumentException("PropertiesComponent with name properties must be defined"
+                                    + " in CamelContext to support property placeholders in expressions");
+                        }
+                        PropertiesComponent pc = exchange.getContext().getTypeConverter()
+                                .mandatoryConvertTo(PropertiesComponent.class, component);
+                        // enclose key with {{ }} to force parsing
+                        return pc.parseUri(pc.getPrefixToken() + key + pc.getSuffixToken());
+                    }
+                } catch (Exception e) {
+                    throw ObjectHelper.wrapRuntimeCamelException(e);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "properties(" + key + ")";
+            }
+        };
+    }
 
     /**
      * Expression adapter for OGNL expression from Message Header or Exchange property
