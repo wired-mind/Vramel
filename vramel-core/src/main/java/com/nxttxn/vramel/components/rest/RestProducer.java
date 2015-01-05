@@ -6,6 +6,7 @@ import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Exchange;
 import com.nxttxn.vramel.Message;
 import com.nxttxn.vramel.impl.DefaultAsyncProducer;
+import com.nxttxn.vramel.impl.DefaultMessage;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
@@ -78,8 +79,14 @@ public class RestProducer extends DefaultAsyncProducer {
             @Override
             public void handle(final HttpClientResponse httpClientResponse) {
                 logger.info(String.format("[Rest Producer] [Reply] [%s - %s]: %s - %s", method, uri, httpClientResponse.statusCode(), httpClientResponse.statusMessage()));
+                Message old = exchange.getIn();
+
+                // create a new message container so we do not drag specialized message objects along
+                final Message msg = new DefaultMessage();
+                msg.copyFrom(old);
+
                 for (Map.Entry<String, String> header : httpClientResponse.headers().entries()) {
-                    exchange.getOut().setHeader(header.getKey(), header.getValue());
+                    msg.setHeader(header.getKey(), header.getValue());
                 }
 
                 httpClientResponse.exceptionHandler(exceptionHandler);
@@ -88,7 +95,8 @@ public class RestProducer extends DefaultAsyncProducer {
                     public void handle(Buffer buffer) {
 
                         logger.debug(String.format("[Rest Producer] [Reply] [%s - %s]: Response: %s", method, uri, buffer.toString()));
-                        exchange.getOut().setBody(buffer.getBytes());
+                        msg.setBody(buffer.getBytes());
+                        exchange.setOut(msg);
                         optionalAsyncResultHandler.done(exchange);
                     }
                 });
