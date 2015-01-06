@@ -1,7 +1,9 @@
-package com.nxttxn.vramel;
+package com.nxttxn.vramelmods;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.nxttxn.vramel.FlowsBuilder;
+import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.components.properties.PropertiesComponent;
 import com.nxttxn.vramel.impl.DefaultVramelContext;
 import com.typesafe.config.Config;
