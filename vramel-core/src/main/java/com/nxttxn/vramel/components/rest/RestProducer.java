@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.components.rest;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import com.nxttxn.vramel.ClientFactory;
 import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Exchange;
@@ -15,6 +16,7 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
+import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.json.impl.Base64;
 
@@ -78,14 +80,19 @@ public class RestProducer extends DefaultAsyncProducer {
         HttpClientRequest request = httpClient.request(method, uri, new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse httpClientResponse) {
-                logger.info(String.format("[Rest Producer] [Reply] [%s - %s]: %s - %s", method, uri, httpClientResponse.statusCode(), httpClientResponse.statusMessage()));
+                final int responseCode = httpClientResponse.statusCode();
+                final String statusMessage = httpClientResponse.statusMessage();
+                logger.info(String.format("[Rest Producer] [Reply] [%s - %s]: %s - %s", method, uri, responseCode, statusMessage));
+
+
                 Message old = exchange.getIn();
 
                 // create a new message container so we do not drag specialized message objects along
                 final Message msg = new DefaultMessage();
                 msg.copyFrom(old);
 
-                for (Map.Entry<String, String> header : httpClientResponse.headers().entries()) {
+                final Map<String, String> headers = extractHeaders(httpClientResponse);
+                for (Map.Entry<String, String> header : headers.entrySet()) {
                     msg.setHeader(header.getKey(), header.getValue());
                 }
 
@@ -94,9 +101,24 @@ public class RestProducer extends DefaultAsyncProducer {
                     @Override
                     public void handle(Buffer buffer) {
 
-                        logger.debug(String.format("[Rest Producer] [Reply] [%s - %s]: Response: %s", method, uri, buffer.toString()));
+                        final String copy = buffer.toString();
+                        logger.debug(String.format("[Rest Producer] [Reply] [%s - %s]: Response: %s", method, uri, copy));
                         msg.setBody(buffer.getBytes());
                         exchange.setOut(msg);
+
+                        if (responseCode > 299) {
+                            RestOperationFailedException answer;
+                            String locationHeader = headers.get("location");
+                            if (locationHeader != null && (responseCode >= 300 && responseCode < 400)) {
+                                answer = new RestOperationFailedException(uri, responseCode, statusMessage, locationHeader, headers, copy);
+                            } else {
+                                answer = new RestOperationFailedException(uri, responseCode, statusMessage, null, headers, copy);
+                            }
+
+                            exchange.setException(answer);
+                        }
+
+
                         optionalAsyncResultHandler.done(exchange);
                     }
                 });
@@ -115,11 +137,21 @@ public class RestProducer extends DefaultAsyncProducer {
                     .putHeader("Accept", "*/*");
         }
 
+        final boolean emptyBody = buffer.length() == 0;
+
+        if (emptyBody) {
+            for (String headerName : message.getHeaders().keySet()) {
+                if (headerName.equalsIgnoreCase("content-length")) {
+                    message.removeHeader(headerName);
+                }
+            }
+        }
+
         for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
             request = request.putHeader(header.getKey(), (String) header.getValue());
         }
 
-        if (buffer.length() == 0) {
+        if (emptyBody) {
             request.end();
         } else {
             // set the content type in the response.
@@ -133,6 +165,13 @@ public class RestProducer extends DefaultAsyncProducer {
 
         return false;
 
+    }
+    private Map<String, String> extractHeaders(HttpClientResponse httpClientResponse) {
+        Map<String, String> headers = Maps.newHashMap();
+        for (Map.Entry<String, String> entry : httpClientResponse.headers()) {
+            headers.put(entry.getKey(), entry.getValue());
+        }
+        return headers;
     }
 
     public void process(Exchange exchange) throws Exception {
