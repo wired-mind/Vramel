@@ -9,6 +9,6 @@ package com.nxttxn.vramel.model.dataformat;
  */
 public enum JsonLibrary {
 
-    XStream, Jackson, Gson
+    XStream, Jackson, Gson, Vertx
 
 }

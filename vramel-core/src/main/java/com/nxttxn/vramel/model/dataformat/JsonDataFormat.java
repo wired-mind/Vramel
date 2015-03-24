@@ -101,7 +101,10 @@ public class JsonDataFormat extends DataFormatDefinition {
             setProperty(this, "dataFormatName", "json-xstream");
         } else if (library == JsonLibrary.Jackson) {
             setProperty(this, "dataFormatName", "json-jackson");
-        } else {
+        } else if (library == JsonLibrary.Vertx) {
+            setProperty(this, "dataFormatName", "json-vertx");
+        }
+        else {
             setProperty(this, "dataFormatName", "json-gson");
         }
 
