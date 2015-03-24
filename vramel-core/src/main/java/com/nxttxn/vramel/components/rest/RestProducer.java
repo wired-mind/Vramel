@@ -22,7 +22,9 @@ import org.vertx.java.core.json.impl.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -140,9 +142,11 @@ public class RestProducer extends DefaultAsyncProducer {
         final boolean emptyBody = buffer.length() == 0;
 
         if (emptyBody) {
-            for (String headerName : message.getHeaders().keySet()) {
+            for (Iterator<Map.Entry<String, Object>> iterator = message.getHeaders().entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry<String, Object> entry = iterator.next();
+                final String headerName = entry.getKey();
                 if (headerName.equalsIgnoreCase("content-length")) {
-                    message.removeHeader(headerName);
+                    iterator.remove();
                 }
             }
         }
