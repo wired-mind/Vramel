@@ -2,6 +2,8 @@ package com.nxttxn.vramel.components.rest;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultEndpoint;
+import com.nxttxn.vramel.spi.HeaderFilterStrategy;
+import com.nxttxn.vramel.spi.HeaderFilterStrategyAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.json.JsonObject;
@@ -13,9 +15,9 @@ import org.vertx.java.core.json.JsonObject;
  * Time: 4:18 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RestChannelAdapter extends DefaultEndpoint {
+public class RestChannelAdapter extends DefaultEndpoint implements HeaderFilterStrategyAware {
     private static final Logger logger = LoggerFactory.getLogger(RestChannelAdapter.class);
-
+    private HeaderFilterStrategy headerFilterStrategy = new HttpHeaderFilterStrategy();
     private final String route;
     private final String method;
     private final JsonObject config;
@@ -149,5 +151,13 @@ public class RestChannelAdapter extends DefaultEndpoint {
 
     public void setAllowCredentials(boolean allowCredentials) {
         this.allowCredentials = allowCredentials;
+    }
+
+    public HeaderFilterStrategy getHeaderFilterStrategy() {
+        return headerFilterStrategy;
+    }
+
+    public void setHeaderFilterStrategy(HeaderFilterStrategy headerFilterStrategy) {
+        this.headerFilterStrategy = headerFilterStrategy;
     }
 }

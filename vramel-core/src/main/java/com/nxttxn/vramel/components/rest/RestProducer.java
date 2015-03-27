@@ -10,7 +10,9 @@ import com.nxttxn.vramel.impl.DefaultAsyncProducer;
 import com.nxttxn.vramel.impl.DefaultMessage;
 import com.nxttxn.vramel.impl.DefaultProducer;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import com.nxttxn.vramel.spi.HeaderFilterStrategy;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
+import com.nxttxn.vramel.util.ObjectHelper;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
@@ -22,9 +24,7 @@ import org.vertx.java.core.json.impl.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,6 +65,11 @@ public class RestProducer extends DefaultAsyncProducer {
         if (username.isPresent()) {
             credentials = Optional.of(encodeCredentials(username.get(), password));
         }
+    }
+
+    @Override
+    public RestChannelAdapter getEndpoint() {
+        return endpoint;
     }
 
     @Override
@@ -141,27 +146,46 @@ public class RestProducer extends DefaultAsyncProducer {
 
         final boolean emptyBody = buffer.length() == 0;
 
-        if (emptyBody) {
-            for (Iterator<Map.Entry<String, Object>> iterator = message.getHeaders().entrySet().iterator(); iterator.hasNext();) {
-                Map.Entry<String, Object> entry = iterator.next();
-                final String headerName = entry.getKey();
-                if (headerName.equalsIgnoreCase("content-length")) {
-                    iterator.remove();
+        String contentType = message.getHeader(Exchange.CONTENT_TYPE, defaultContentType, String.class);
+        HeaderFilterStrategy strategy = getEndpoint().getHeaderFilterStrategy();
+
+        // propagate headers as HTTP headers
+        for (Map.Entry<String, Object> entry : message.getHeaders().entrySet()) {
+            String key = entry.getKey();
+            Object headerValue = message.getHeader(key);
+
+            if (headerValue != null) {
+                // use an iterator as there can be multiple values. (must not use a delimiter, and allow empty values)
+                final Iterator<?> it = ObjectHelper.createIterator(headerValue, null, true);
+
+                // the value to add as request header
+                final List<String> values = new ArrayList<String>();
+
+                // if its a multi value then check each value if we can add it and for multi values they
+                // should be combined into a single value
+                while (it.hasNext()) {
+                    String value = exchange.getContext().getTypeConverter().convertTo(String.class, it.next());
+
+                    if (value != null && strategy != null && !strategy.applyFilterToCamelHeaders(key, value, exchange)) {
+                        values.add(value);
+                    }
+                }
+
+                // add the value(s) as a http request header
+                if (values.size() > 0) {
+                    // use the default toString of a ArrayList to create in the form [xxx, yyy]
+                    // if multi valued, for a single value, then just output the value as is
+                    String s =  values.size() > 1 ? values.toString() : values.get(0);
+                    request = request.putHeader(key, s);
                 }
             }
         }
 
-        for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
-            request = request.putHeader(header.getKey(), (String) header.getValue());
-        }
 
         if (emptyBody) {
             request.end();
         } else {
             // set the content type in the response.
-            String contentType = message.getHeader(Exchange.CONTENT_TYPE, defaultContentType, String.class);
-            message.removeHeader(Exchange.CONTENT_TYPE);
-
             request.putHeader("Content-Type", contentType)
                     .putHeader("Content-Length", String.valueOf(buffer.length()))
                     .end(buffer);
