@@ -182,6 +182,9 @@ public class RestProducer extends DefaultAsyncProducer {
         }
 
 
+
+        request.putHeader("Accept-Encoding", "gzip, deflate"); //if clients require customization beyond this we'll need to tweak
+
         if (emptyBody) {
             request.end();
         } else {

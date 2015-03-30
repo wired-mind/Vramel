@@ -32,6 +32,7 @@ public class HttpHeaderFilterStrategy extends DefaultHeaderFilterStrategy {
         getOutFilter().add("host");
         getOutFilter().add("content-length");
         getOutFilter().add("content-type");
+        getOutFilter().add("accept-encoding");
         // Add the filter for the Generic Message header
         // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.5
         getOutFilter().add("cache-control");
