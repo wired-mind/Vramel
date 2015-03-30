@@ -81,7 +81,7 @@ public class DefaultClientFactory implements ClientFactory {
             ssl = true;
         }
         logger.info("[DefaultClientFactory] - Creating http client : {}", uri.toString());
-        HttpClient httpClient = vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort());
+        HttpClient httpClient = vertx.createHttpClient().setKeepAlive(false).setMaxPoolSize(20).setHost(uri.getHost()).setSSL(ssl).setPort(uri.getPort()).setTryUseCompression(true);
         if (keystorePath.isPresent()) {
             httpClient = httpClient.setKeyStorePath(keystorePath.get()).setKeyStorePassword(keystorePassword.get());
         }
