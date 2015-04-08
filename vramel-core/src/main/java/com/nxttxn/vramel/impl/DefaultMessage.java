@@ -3,6 +3,7 @@ package com.nxttxn.vramel.impl;
 
 import com.google.common.collect.Maps;
 import com.nxttxn.vramel.*;
+import org.apache.camel.util.CaseInsensitiveMap;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,10 +202,35 @@ public class DefaultMessage implements Message {
         }
         return headers != null && !headers.isEmpty();
     }
+    /**
+     * A strategy method populate the initial set of headers on an inbound
+     * message from an underlying binding
+     *
+     * @param map is the empty header map to populate
+     */
+    protected void populateInitialHeaders(Map<String, Object> map) {
+        // do nothing by default
+    }
 
-    @Override
-    public <T> void setHeader(String key, T value) {
-        getHeaders().put(key, value);
+    /**
+     * A factory method to lazily create the headers to make it easy to create
+     * efficient Message implementations which only construct and populate the
+     * Map on demand
+     *
+     * @return return a newly constructed Map possibly containing headers from
+     *         the underlying inbound transport
+     */
+    protected Map<String, Object> createHeaders() {
+        Map<String, Object> map = new CaseInsensitiveMap();
+        populateInitialHeaders(map);
+        return map;
+    }
+
+    public void setHeader(String name, Object value) {
+        if (headers == null) {
+            headers = createHeaders();
+        }
+        headers.put(name, value);
     }
 
     @Override
