@@ -1,14 +1,15 @@
 package com.nxttxn.vramel.impl;
 
 
-import com.google.common.collect.Maps;
-import com.nxttxn.vramel.*;
-import org.apache.camel.util.CaseInsensitiveMap;
+import com.nxttxn.vramel.Exchange;
+import com.nxttxn.vramel.InvalidPayloadException;
+import com.nxttxn.vramel.Message;
+import com.nxttxn.vramel.TypeConverter;
+import com.nxttxn.vramel.util.CaseInsensitiveMap;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -99,10 +100,9 @@ public class DefaultMessage implements Message {
         throw new InvalidPayloadException(e, type, this);
     }
 
-    @Override
     public Map<String, Object> getHeaders() {
         if (headers == null) {
-            headers = Maps.newHashMap();
+            headers = createHeaders();
         }
         return headers;
     }
