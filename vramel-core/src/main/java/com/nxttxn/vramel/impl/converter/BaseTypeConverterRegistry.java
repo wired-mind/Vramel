@@ -37,6 +37,7 @@ import com.nxttxn.vramel.util.ObjectHelper;
 import org.apache.camel.util.LRUSoftCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * Base implementation of a type converter registry used for
@@ -644,7 +645,7 @@ public abstract class BaseTypeConverterRegistry extends ServiceSupport implement
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // noop
     }
 

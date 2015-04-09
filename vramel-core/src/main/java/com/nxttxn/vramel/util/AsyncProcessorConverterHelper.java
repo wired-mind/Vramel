@@ -18,6 +18,7 @@ package com.nxttxn.vramel.util;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +86,7 @@ public final class AsyncProcessorConverterHelper {
             }
         }
 
-        public void start() throws Exception {
+        public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
             ServiceHelper.startServices(processor);
         }
 

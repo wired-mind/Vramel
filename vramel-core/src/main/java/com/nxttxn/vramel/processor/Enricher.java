@@ -13,6 +13,7 @@ import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ExchangeHelper;
 import org.apache.camel.util.ServiceHelper;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,7 +75,7 @@ public class Enricher extends AggregationSupport implements AsyncProcessor {
         }
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startServices(aggregationStrategy, producer);
     }
 

@@ -20,10 +20,9 @@ import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.impl.DefaultEndpoint;
 import com.nxttxn.vramel.spi.UriEndpoint;
 import com.nxttxn.vramel.spi.UriParam;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.Date;
-import java.util.Timer;
-
 
 
 /**
@@ -58,8 +57,8 @@ public class TimerEndpoint extends DefaultEndpoint implements MultipleConsumersS
     }
 
     @Override
-    protected void doStart() throws Exception {
-        super.doStart();
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
+        super.doStart(asyncResultHandler);
         // do nothing, the timer will be set when the first consumer will request it
     }
 

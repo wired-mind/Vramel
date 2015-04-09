@@ -28,6 +28,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.spi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * The default implementation of {@link org.apache.camel.spi.UnitOfWork}
@@ -130,7 +131,7 @@ public class DefaultUnitOfWork implements UnitOfWork, Service {
     }
 
 
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         id = null;
     }
 

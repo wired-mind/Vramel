@@ -2,10 +2,12 @@ package com.nxttxn.vramel.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.nxttxn.vramel.CountDownFutureResult;
 import com.nxttxn.vramel.ServerFactory;
 import com.nxttxn.vramel.impl.jpos.JPOSServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
@@ -60,17 +62,20 @@ public class DefaultServerFactory implements ServerFactory {
     }
 
     @Override
-    public void startAllServers() {
+    public void startAllServers(AsyncResultHandler<Void> asyncResultHandler) {
+        final CountDownFutureResult<Void> countDownResult = new CountDownFutureResult<>(httpListeners.size() + jposServers.size());
+        countDownResult.setHandler(asyncResultHandler);
+
         for (HTTPListener httpListener : httpListeners) {
 
             logger.info("Starting http server: {} {}", httpListener.getHost(), httpListener.getPort());
-            httpListener.start();
+            httpListener.start(countDownResult);
         }
 
         for (Map.Entry<URI, JPOSServer> serverEntry : jposServers.entrySet()) {
             final URI uri = serverEntry.getKey();
             final JPOSServer jposServer = serverEntry.getValue();
-            jposServer.listen(uri.getPort(), uri.getHost());
+            jposServer.listen(uri.getPort(), uri.getHost(), countDownResult);
         }
     }
 

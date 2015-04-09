@@ -21,6 +21,7 @@ import com.nxttxn.vramel.Flow;
 import com.nxttxn.vramel.Service;
 import com.nxttxn.vramel.spi.FlowContext;
 import com.nxttxn.vramel.support.ServiceSupport;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,10 +101,11 @@ public abstract class DefaultFlow extends ServiceSupport implements Flow {
 
     /**
      * Do not invoke this method directly, use {@link org.apache.camel.CamelContext#startRoute(String)} to start a route.
+     * @param asyncResultHandler
      */
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
+        super.start(asyncResultHandler);
     }
 
     /**
@@ -120,7 +122,7 @@ public abstract class DefaultFlow extends ServiceSupport implements Flow {
     protected void addServices(List<Service> services) throws Exception {
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // noop
     }
 

@@ -18,9 +18,8 @@ package com.nxttxn.vramel.processor;
 
 
 import com.nxttxn.vramel.*;
-import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
-import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * Ensures a {@link Producer} is executed within an {@link org.apache.camel.spi.UnitOfWork}.
@@ -65,7 +64,7 @@ public final class UnitOfWorkProducer implements Producer {
 
 
 
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startService(processor);
     }
 

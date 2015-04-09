@@ -16,6 +16,7 @@ import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +93,7 @@ public abstract class MulticastSupport extends AggregationSupport {
     }
 
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startServices(getAggregationStrategy(), processors);
     }
 

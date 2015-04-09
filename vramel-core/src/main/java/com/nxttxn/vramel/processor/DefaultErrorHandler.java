@@ -23,6 +23,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.processor.exceptionpolicy.ExceptionPolicyStrategy;
 import com.nxttxn.vramel.spi.UnitOfWork;
 import com.nxttxn.vramel.util.*;
+import org.vertx.java.core.AsyncResultHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -293,7 +294,7 @@ public class DefaultErrorHandler extends ErrorHandlerSupport {
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startServices(output, outputAsync);
 
 

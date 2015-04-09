@@ -1,11 +1,14 @@
 package com.nxttxn.vramel.impl.jpos;
 
+import com.nxttxn.vramel.CountDownFutureResult;
 import com.nxttxn.vramel.components.jpos.DefaultJPOSServerRequest;
 import org.jpos.iso.ISOMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.net.NetServer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,7 +46,7 @@ public class JPOSServer {
         return this;
     }
 
-    public JPOSServer listen(int port, String host) {
+    public JPOSServer listen(int port, String host, final CountDownFutureResult<Void> countDownResult) {
         checkNotNull(jposServerRequestHandler);
 
         in.newISOMsgHandler(new Handler<ISOMsg>() {
@@ -55,7 +58,16 @@ public class JPOSServer {
         jposChannel = new JPOSChannel(in, out);
         vertx.createNetServer()
                 .connectHandler(jposChannel)
-                .listen(port, host);
+                .listen(port, host, new Handler<AsyncResult<NetServer>>() {
+                    @Override
+                    public void handle(AsyncResult<NetServer> event) {
+                        if (event.failed()) {
+                            countDownResult.setFailure(event.cause());
+                            return;
+                        }
+                        countDownResult.setResult(null);
+                    }
+                });
         return this;
     }
 }

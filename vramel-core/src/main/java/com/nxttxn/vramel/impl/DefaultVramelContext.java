@@ -33,6 +33,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.busmods.BusModBase;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
@@ -228,7 +230,11 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
                     boolean autoStartup = flowService.getFlowDefinition().isAutoStartup(this);
                     if (!addingRoutes || autoStartup) {
                         // start the route since auto start is enabled or we are starting a route (not adding new routes)
-                        flowService.start();
+                        flowService.start(new AsyncResultHandler<Void>() {
+                            @Override
+                            public void handle(AsyncResult<Void> event) {
+                            }
+                        });
                     }
                 }
             }
@@ -1141,7 +1147,11 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
             Service service = (Service) object;
 
             //Haven't implemented services fully. Just enough to startup DefaultTypeConverter for now.
-            service.start();
+            service.start(new AsyncResultHandler<Void>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                }
+            });
 
             //Services is hardly implemented at all right now. Just enough to start DefaultTypeConverter
 //            for (LifecycleStrategy strategy : lifecycleStrategies) {
@@ -1192,7 +1202,11 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
             addStartupListener(listener);
         }
 
-        service.start();
+        service.start(new AsyncResultHandler<Void>() {
+            @Override
+            public void handle(AsyncResult<Void> event) {
+            }
+        });
     }
 
     private void startServices(Collection<?> services) throws Exception {
@@ -1334,7 +1348,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         }
         return null;
     }
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         startDate = new Date();
         stopWatch.restart();
         log.info("Vramel " + getVersion() + " (VramelContext: " + getName() + ") is starting");
@@ -1351,7 +1365,7 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
         // super will invoke doStart which will prepare internal services and start routes etc.
         try {
             firstStartDone = true;
-            super.start();
+            super.start(asyncResultHandler);
         } catch (VetoCamelContextStartException e) {
             if (e.isRethrowException()) {
                 throw e;
@@ -1381,10 +1395,10 @@ public class DefaultVramelContext extends ServiceSupport implements ModelVramelC
     // Implementation methods
     // -----------------------------------------------------------------------
 
-    protected synchronized void doStart() throws Exception {
+    protected synchronized void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         try {
             doStartVramel();
-            getServerFactory().startAllServers();
+            getServerFactory().startAllServers(asyncResultHandler);
         } catch (Exception e) {
             // fire event that we failed to start
 //            EventHelper.notifyCamelContextStartupFailed(this, e);

@@ -22,6 +22,7 @@ import com.nxttxn.vramel.spi.FactoryFinder;
 import com.nxttxn.vramel.spi.Injector;
 import com.nxttxn.vramel.spi.PackageScanClassResolver;
 import com.nxttxn.vramel.util.ObjectHelper;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.Map;
 import java.util.Set;
@@ -114,8 +115,8 @@ public class LazyLoadingTypeConverter extends BaseTypeConverterRegistry {
     }
 
     @Override
-    protected void doStart() throws Exception {
-        super.doStart();
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
+        super.doStart(asyncResultHandler);
         // must load core type converters
         loadCoreTypeConverters();
     }

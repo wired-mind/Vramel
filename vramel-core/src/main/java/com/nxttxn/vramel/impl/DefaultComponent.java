@@ -8,6 +8,7 @@ import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.json.JsonObject;
 
 import java.net.URI;
@@ -36,7 +37,7 @@ public abstract class DefaultComponent extends ServiceSupport implements Compone
     protected DefaultComponent() {
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ObjectHelper.notNull(getVramelContext(), "vramelContext");
     }
 

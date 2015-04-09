@@ -23,6 +23,7 @@ import com.nxttxn.vramel.util.ExchangeHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 
 import static com.nxttxn.vramel.util.ObjectHelper.notNull;
@@ -55,7 +56,7 @@ public class OnCompletionProcessor extends ServiceSupport implements Processor {
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startService(processor);
     }
 

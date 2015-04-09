@@ -10,6 +10,7 @@ import com.nxttxn.vramel.processor.async.DoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.*;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.Iterator;
 
@@ -257,7 +258,7 @@ public class RoutingSlip extends PipelineSupport implements AsyncProcessor {
         }
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         if (producerCache == null) {
             producerCache = new ProducerCache(this, vramelContext);
         }

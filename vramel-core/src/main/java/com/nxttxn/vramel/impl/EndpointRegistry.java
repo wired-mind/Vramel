@@ -22,6 +22,7 @@ import com.nxttxn.vramel.VramelContext;
 import com.nxttxn.vramel.util.ServiceHelper;
 import com.nxttxn.vramel.util.VramelContextHelper;
 import org.apache.camel.util.LRUSoftCache;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.Map;
 
@@ -48,7 +49,7 @@ public class EndpointRegistry extends LRUSoftCache<EndpointKey, Endpoint> implem
     }
 
     @Override
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         resetStatistics();
     }
 

@@ -2,6 +2,7 @@ package com.nxttxn.vramel;
 
 import com.nxttxn.vramel.impl.HTTPListener;
 import com.nxttxn.vramel.impl.jpos.JPOSServer;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.json.JsonObject;
 
 import java.net.URI;
@@ -16,7 +17,7 @@ import java.net.URI;
 public interface ServerFactory {
     HTTPListener createOrFindHttpListener(JsonObject config);
 
-    void startAllServers();
+    void startAllServers(AsyncResultHandler<Void> asyncResultHandler);
 
     JPOSServer createOrFindJPOSServer(URI uri);
 }

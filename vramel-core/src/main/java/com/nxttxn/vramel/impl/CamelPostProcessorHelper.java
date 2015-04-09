@@ -32,6 +32,8 @@ import com.nxttxn.vramel.util.ServiceHelper;
 import com.nxttxn.vramel.util.VramelContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * A helper class for Camel based injector or post processing hooks which can be reused by
@@ -214,7 +216,11 @@ public class CamelPostProcessorHelper implements VramelContextAware {
         ProducerTemplate answer = new DefaultProducerTemplate(getVramelContext(), endpoint);
         // start the template so its ready to use
         try {
-            answer.start();
+            answer.start(new AsyncResultHandler<Void>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                }
+            });
         } catch (Exception e) {
             throw ObjectHelper.wrapRuntimeCamelException(e);
         }

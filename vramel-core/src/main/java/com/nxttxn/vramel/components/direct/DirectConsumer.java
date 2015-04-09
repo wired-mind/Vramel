@@ -21,6 +21,8 @@ import com.nxttxn.vramel.Endpoint;
 import com.nxttxn.vramel.Processor;
 import com.nxttxn.vramel.SuspendableService;
 import com.nxttxn.vramel.impl.DefaultConsumer;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * The direct consumer.
@@ -37,7 +39,7 @@ public class DirectConsumer extends DefaultConsumer implements SuspendableServic
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // add consumer to endpoint
         boolean existing = this == endpoint.getConsumer();
         if (!existing && endpoint.hasConsumer(this)) {
@@ -61,7 +63,12 @@ public class DirectConsumer extends DefaultConsumer implements SuspendableServic
     @Override
     protected void doResume() throws Exception {
         // resume by using the start logic
-        doStart();
+        doStart(new AsyncResultHandler<Void>() {
+            @Override
+            public void handle(AsyncResult<Void> event) {
+
+            }
+        });
     }
 
     public void prepareShutdown(boolean forced) {

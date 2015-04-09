@@ -1,5 +1,7 @@
 package com.nxttxn.vramel;
 
+import org.vertx.java.core.AsyncResultHandler;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chuck
@@ -13,8 +15,9 @@ public interface Service {
      * Starts the service
      *
      * @throws Exception is thrown if starting failed
+     * @param asyncResultHandler
      */
-    void start() throws Exception;
+    void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception;
 
     /**
      * Stops the service

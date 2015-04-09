@@ -5,6 +5,7 @@ import com.nxttxn.vramel.spi.DataFormat;
 import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.IOHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.io.InputStream;
 
@@ -65,7 +66,7 @@ public class UnmarshalProcessor extends ServiceSupport implements Processor, Vra
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // inject CamelContext on data format
         if (dataFormat instanceof VramelContextAware) {
             ((VramelContextAware) dataFormat).setVramelContext(vramelContext);

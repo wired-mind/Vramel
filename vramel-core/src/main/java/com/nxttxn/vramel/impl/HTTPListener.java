@@ -1,6 +1,7 @@
 package com.nxttxn.vramel.impl;
 
 import com.google.common.base.Optional;
+import com.nxttxn.vramel.CountDownFutureResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.*;
@@ -85,7 +86,7 @@ public class HTTPListener {
         }
     }
 
-    public void start() {
+    public void start(final CountDownFutureResult<Void> countDownResult) {
         httpServer = vertx.createHttpServer()
                 .requestHandler(routeMatcher);
         if (keystorePath.isPresent()) {
@@ -93,7 +94,17 @@ public class HTTPListener {
                     .setKeyStorePath(keystorePath.get())
                     .setKeyStorePassword(keystorePassword.get());
         }
-        httpServer = httpServer.listen(getPort().intValue(), getHost());
+        httpServer = httpServer.listen(getPort().intValue(), getHost(), new Handler<AsyncResult<HttpServer>>() {
+            @Override
+            public void handle(AsyncResult<HttpServer> event) {
+                if (event.failed()) {
+                    countDownResult.setFailure(event.cause());
+                    return;
+                }
+
+                countDownResult.setResult(null);
+            }
+        });
 
         logger.info(String.format("HttpServer listening on port %s", getPort()));
     }

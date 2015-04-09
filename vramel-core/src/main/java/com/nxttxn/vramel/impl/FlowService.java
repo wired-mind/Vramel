@@ -36,6 +36,7 @@ import com.nxttxn.vramel.support.ChildServiceSupport;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * Represents the runtime objects for a given {@link FlowDefinition} so that it can be stopped independently
@@ -153,7 +154,7 @@ public class FlowService extends ChildServiceSupport {
         }
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // ensure we are warmed up before starting the route
         warmUp();
 

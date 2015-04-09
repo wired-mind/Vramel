@@ -293,7 +293,7 @@ public class DefaultProducerTemplate extends ServiceSupport implements ProducerT
     }
 
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         if (producerCache == null) {
             if (maximumCacheSize > 0) {
                 producerCache = new ProducerCache(this, vramelContext, maximumCacheSize);

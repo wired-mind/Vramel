@@ -15,6 +15,9 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 import org.vertx.java.busmods.BusModBase;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
+import org.vertx.java.core.Future;
 import org.vertx.java.core.json.JsonObject;
 
 import java.lang.reflect.Modifier;
@@ -33,9 +36,8 @@ public class VramelBusMod extends BusModBase {
     private DefaultVramelContext vramelContext;
 
     @Override
-    public void start() {
-        super.start();
-
+    public void start(final Future<Void> startedResult) {
+        start();
         PropertiesComponent pc = new PropertiesComponent();
         //right now we'll just hard code this. if it works we can do something fancy
         pc.setLocation("classpath:vramel.properties");
@@ -68,13 +70,24 @@ public class VramelBusMod extends BusModBase {
         }
 
         try {
-            vramelContext.start();
+            vramelContext.start(new AsyncResultHandler<Void>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                    if (event.failed()) {
+                        startedResult.setFailure(event.cause());
+                        return;
+                    }
+
+                    startedResult.setResult(null);
+                }
+            });
         } catch (Exception e) {
             logger.error("Cannot start vramel context.", e);
         }
 
-
     }
+
+
 
     public Collection<? extends Class<? extends FlowsBuilder>> additionalFlowsBuilderTypes() {
         return Collections.emptyList();

@@ -18,7 +18,6 @@ package com.nxttxn.vramel.processor.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 
 import com.nxttxn.vramel.*;
 import com.nxttxn.vramel.model.ModelChannel;
@@ -32,6 +31,7 @@ import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 public class DefaultChannel extends ServiceSupport implements ModelChannel {
 
@@ -103,7 +103,7 @@ public class DefaultChannel extends ServiceSupport implements ModelChannel {
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // create route context processor to wrap output
         flowContextProcessor = new FlowContextProcessor(flowContext, getOutput());
         ServiceHelper.startServices(errorHandler, output, flowContextProcessor);

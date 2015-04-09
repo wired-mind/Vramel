@@ -20,6 +20,7 @@ package com.nxttxn.vramel.impl.converter;
 import com.nxttxn.vramel.spi.FactoryFinder;
 import com.nxttxn.vramel.spi.Injector;
 import com.nxttxn.vramel.spi.PackageScanClassResolver;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * Default implementation of a type converter registry used for
@@ -36,8 +37,8 @@ public class DefaultTypeConverter extends BaseTypeConverterRegistry {
     }
 
     @Override
-    protected void doStart() throws Exception {
-        super.doStart();
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
+        super.doStart(asyncResultHandler);
         // load type converters up front
         loadCoreTypeConverters();
         loadTypeConverters();

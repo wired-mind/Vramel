@@ -24,6 +24,7 @@ import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.VramelLogger;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * A processor which evaluates an {@link Expression} and logs it.
@@ -67,7 +68,7 @@ public class LogProcessor extends ServiceSupport implements AsyncProcessor {
 
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // noop
     }
 

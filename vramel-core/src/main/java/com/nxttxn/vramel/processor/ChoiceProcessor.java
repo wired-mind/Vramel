@@ -28,12 +28,12 @@ import com.nxttxn.vramel.processor.async.DefaultExchangeHandler;
 import com.nxttxn.vramel.processor.async.FixedSizeDoneStrategy;
 import com.nxttxn.vramel.processor.async.OptionalAsyncResultHandler;
 import com.nxttxn.vramel.support.MulticastSupport;
-import com.nxttxn.vramel.support.PipelineSupport;
 import com.nxttxn.vramel.util.AsyncProcessorConverterHelper;
 import com.nxttxn.vramel.util.AsyncProcessorHelper;
 import com.nxttxn.vramel.util.ServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * Implements a Choice structure where one or more predicates are used which if
@@ -155,7 +155,7 @@ public class ChoiceProcessor extends MulticastSupport implements AsyncProcessor,
         return otherwise != null || (filters != null && !filters.isEmpty());
     }
 
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ServiceHelper.startServices(filters, otherwise);
     }
 

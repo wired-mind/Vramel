@@ -45,6 +45,7 @@ import org.beanio.UnexpectedRecordException;
 import org.beanio.UnidentifiedRecordException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * A <a href="http://camel.apache.org/data-format.html">data format</a> (
@@ -73,7 +74,7 @@ public class BeanIODataFormat extends ServiceSupport implements DataFormat, Vram
     }
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         ObjectHelper.notNull(streamName, "Stream name not configured.");
         if (factory == null) {
             // Create the stream factory that will be used to read/write objects.

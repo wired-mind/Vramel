@@ -17,6 +17,8 @@
 package com.nxttxn.vramel.support;
 
 import com.nxttxn.vramel.util.ServiceHelper;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -25,7 +27,7 @@ import java.util.Set;
 public abstract class ChildServiceSupport extends ServiceSupport {
     private Set<Object> childServices;
 
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         start(true);
     }
 
@@ -39,7 +41,12 @@ public abstract class ChildServiceSupport extends ServiceSupport {
                         ServiceHelper.startServices(childServices);
                     }
                     childrenStarted = true;
-                    doStart();
+                    doStart(new AsyncResultHandler<Void>() {
+                        @Override
+                        public void handle(AsyncResult<Void> event) {
+
+                        }
+                    });
                 } catch (Exception e) {
                     ex = e;
                 } finally {

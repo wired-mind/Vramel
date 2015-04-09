@@ -26,6 +26,8 @@ import java.util.Set;
 import com.nxttxn.vramel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 
 /**
  * A collection of helper methods for working with {@link Service} objects
@@ -56,7 +58,11 @@ public final class ServiceHelper {
      * Starts all of the given services
      */
     public static void startService(Service service) throws Exception {
-        service.start();
+        service.start(new AsyncResultHandler<Void>() {
+            @Override
+            public void handle(AsyncResult<Void> event) {
+            }
+        });
     }
 
     /**

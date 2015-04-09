@@ -5,7 +5,7 @@ import com.nxttxn.vramel.support.ServiceSupport;
 import com.nxttxn.vramel.util.IntrospectionSupport;
 import com.nxttxn.vramel.util.ObjectHelper;
 import com.nxttxn.vramel.util.URISupport;
-import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.AsyncResultHandler;
 
 import java.util.Map;
 
@@ -150,7 +150,7 @@ public abstract class DefaultEndpoint extends ServiceSupport implements Endpoint
 
 
     @Override
-    protected void doStart() throws Exception {
+    protected void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         // noop
     }
 

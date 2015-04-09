@@ -26,6 +26,8 @@ import com.nxttxn.vramel.StatefulService;
 import com.nxttxn.vramel.util.IOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vertx.java.core.AsyncResultHandler;
+import org.vertx.java.core.impl.DefaultFutureResult;
 
 /**
  * A useful base class which ensures that a service is only initialized once and
@@ -50,16 +52,17 @@ public abstract class ServiceSupport implements StatefulService {
 
     private String version;
 
-    public void start() throws Exception {
+    public void start(AsyncResultHandler<Void> asyncResultHandler) throws Exception {
         if (isStarting() || isStarted()) {
             // only start service if not already started
             LOG.trace("Service already started");
+            asyncResultHandler.handle(new DefaultFutureResult<Void>());
             return;
         }
         if (starting.compareAndSet(false, true)) {
             LOG.trace("Starting service");
             try {
-                doStart();
+                doStart(asyncResultHandler);
                 started.set(true);
                 starting.set(false);
                 stopping.set(false);
@@ -71,6 +74,7 @@ public abstract class ServiceSupport implements StatefulService {
             } catch (Exception e) {
                 try {
                     stop();
+                    asyncResultHandler.handle(new DefaultFutureResult<Void>(e));
                 } catch (Exception e2) {
                     // Ignore exceptions as we want to show the original exception
                 }
@@ -238,8 +242,9 @@ public abstract class ServiceSupport implements StatefulService {
      * <b>Important: </b> See {@link #doStop()} for more details.
      *
      * @see #doStop()
+     * @param asyncResultHandler
      */
-    protected abstract void doStart() throws Exception;
+    protected abstract void doStart(AsyncResultHandler<Void> asyncResultHandler) throws Exception;
 
     /**
      * Implementations override this method to support customized start/stop.
@@ -251,7 +256,7 @@ public abstract class ServiceSupport implements StatefulService {
      * to do custom logic when the service is being stopped, such as when
      * {@link org.apache.camel.CamelContext} is shutting down.
      *
-     * @see #doStart()
+     * @see #doStart(org.vertx.java.core.AsyncResultHandler)
      */
     protected abstract void doStop() throws Exception;
 
