@@ -37,8 +37,8 @@ public class RestChannelAdapter extends DefaultEndpoint implements HeaderFilterS
     //cors (just a subset for now)
     private boolean allowCredentials;
 
-    public RestChannelAdapter(VramelContext vramelContext, String route, String method, JsonObject config) {
-        super(String.format("rest:%s:%s", method, route), vramelContext);
+    public RestChannelAdapter(String endpointURI, VramelContext vramelContext, String route, String method, JsonObject config) {
+        super(endpointURI, vramelContext);
 
         this.route = route;
         this.method = method;

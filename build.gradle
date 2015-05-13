@@ -18,7 +18,7 @@ group = 'com.nxttxn'
 subprojects {
 
     group = rootProject.group
-    version = '1.0.22'
+    version = '1.0.28'
 
 
     defaultTasks = ['assemble']
