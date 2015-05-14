@@ -64,6 +64,7 @@ public class RestConsumer extends DefaultConsumer {
                     @Override
                     public void handle(Buffer buffer) {
                         Exchange exchange = getEndpoint().createExchange();
+                        exchange.setProperties(config.toMap());
                         final Message in = exchange.getIn();
                         in.setBody(buffer.getBytes());
                         for (Map.Entry<String, String> header : request.headers().entries()) {
